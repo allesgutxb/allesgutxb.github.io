@@ -591,11 +591,13 @@
     </div>
 
     <!-- JavaScript 代码 -->
+    <!-- 修复点：确保以下库引入和客户端创建代码只存在一份 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
         // Supabase配置（需要替换为您的实际配置）
-        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';  // 替换为您的Supabase URL
-        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 替换为您的Supabase anon key
+        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';  // 请确保此URL正确
+        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 请确保此Key正确
+        // 修复点：以下supabase客户端创建语句在文档中应只出现一次
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 全局变量
