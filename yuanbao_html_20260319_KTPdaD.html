@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学校教务巡查系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 基础样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .page {
+            display: none;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px 20px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        /* 欢迎页面样式 */
+        .welcome-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .logo {
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .logo i {
+            font-size: 60px;
+            margin-bottom: 20px;
+        }
+
+        .logo h1 {
+            font-size: 28px;
+            font-weight: 600;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .welcome-btn {
+            background: white;
+            color: #333;
+            margin: 20px 0;
+        }
+
+        .query-btn {
+            border-left: 5px solid #4CAF50;
+        }
+
+        .inspect-btn {
+            border-left: 5px solid #2196F3;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .stat-item {
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 100px;
+            color: white;
+        }
+
+        .stat-item i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .stat-item span {
+            font-size: 24px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-item p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        /* 班级选择页面 */
+        .page-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: white;
+            cursor: pointer;
+            margin-right: 15px;
+        }
+
+        .page-title {
+            color: white;
+            font-size: 20px;
+        }
+
+        .search-box {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px 12px 45px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.9);
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .class-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .class-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .class-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .class-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* 填写表单页面 */
+        .form-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+        }
+
+        .class-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 15px;
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .class-info h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* 查询页面 */
+        .filter-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-group {
+            flex: 1;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .results-section {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .record-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .record-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .record-date {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .record-result {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .result-normal {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .result-abnormal {
+            background: #f44336;
+            color: white;
+        }
+
+        .record-details p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <!-- 欢迎页面 -->
+    <div id="welcomePage" class="page active">
+        <div class="welcome-container">
+            <div class="logo">
+                <i class="fas fa-chalkboard-teacher"></i>
+                <h1>教务巡查系统</h1>
+            </div>
+            
+            <button class="btn welcome-btn query-btn" onclick="showQueryPage()">
+                <i class="fas fa-search"></i>
+                <strong>查询巡查记录</strong>
+                <p>多条件筛选，查看历史记录</p>
+            </button>
+            
+            <button class="btn welcome-btn inspect-btn" onclick="showClassSelection()">
+                <i class="fas fa-edit"></i>
+                <strong>填写巡查记录</strong>
+                <p>选择班级，快速提交</p>
+            </button>
+            
+            <div class="stats">
+                <div class="stat-item">
+                    <i class="fas fa-school"></i>
+                    <span id="classCount">18</span>
+                    <p>班级总数</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-users"></i>
+                    <span id="teacherCount">58</span>
+                    <p>教师人数</p>
+                </div>
+                <div class="stat-item">
+                    <i class="fas fa-clipboard-check"></i>
+                    <span id="recordCount">0</span>
+                    <p>巡查记录</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 班级选择页面 -->
+    <div id="classSelectionPage" class="page">
+        <div class="page-header">
+            <button class="back-btn" onclick="showWelcomePage()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="page-title">选择班级</h2>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="classSearch" placeholder="搜索班级..." oninput="filterClasses()">
+            <i class="fas fa-search"></i>
+        </div>
+        
+        <div class="class-grid" id="classGrid">
+            <!-- 班级图标动态生成 -->
+        </div>
+    </div>
+
+    <!-- 填写表单页面 -->
+    <div id="inspectionFormPage" class="page">
+        <div class="page-header">
+            <button class="back-btn" onclick="showClassSelection()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="page-title">填写巡查记录</h2>
+        </div>
+        
+        <div class="form-container">
+            <div class="class-info">
+                <h3 id="currentClassName">请选择班级</h3>
+                <div class="info-row">
+                    <span>星期：</span>
+                    <span id="currentWeekDay">-</span>
+                </div>
+                <div class="info-row">
+                    <span>节次：</span>
+                    <span id="currentPeriod">-</span>
+                </div>
+                <div class="info-row">
+                    <span>科目：</span>
+                    <span id="currentSubject">-</span>
+                </div>
+                <div class="info-row">
+                    <span>任课教师：</span>
+                    <span id="currentTeacher">-</span>
+                </div>
+            </div>
+            
+            <form id="inspectionForm">
+                <div class="form-group">
+                    <label for="inspectionDate">巡查日期</label>
+                    <input type="date" id="inspectionDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="periodSelect">节次</label>
+                    <select id="periodSelect" onchange="updateClassInfo()" required>
+                        <option value="">请选择节次</option>
+                        <option value="1">第一节</option>
+                        <option value="2">第二节</option>
+                        <option value="3">第三节</option>
+                        <option value="4">第四节</option>
+                        <option value="5">第五节</option>
+                        <option value="6">第六节</option>
+                        <option value="7">第七节</option>
+                        <option value="8">第八节</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="weekdaySelect">星期</label>
+                    <select id="weekdaySelect" onchange="updateClassInfo()" required>
+                        <option value="">请选择星期</option>
+                        <option value="星期一">星期一</option>
+                        <option value="星期二">星期二</option>
+                        <option value="星期三">星期三</option>
+                        <option value="星期四">星期四</option>
+                        <option value="星期五">星期五</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="inspectorName">巡查人</label>
+                    <select id="inspectorName" required>
+                        <option value="">请选择巡查人</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="inspectionResult">巡查结果</label>
+                    <select id="inspectionResult" required>
+                        <option value="">请选择结果</option>
+                        <option value="正常">正常</option>
+                        <option value="异常">异常</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="remarks">备注说明</label>
+                    <textarea id="remarks" rows="3" placeholder="如有特殊情况请说明..."></textarea>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-paper-plane"></i> 提交巡查记录
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 查询页面 -->
+    <div id="queryPage" class="page">
+        <div class="page-header">
+            <button class="back-btn" onclick="showWelcomePage()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="page-title">查询巡查记录</h2>
+        </div>
+        
+        <div class="filter-section">
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>日期</label>
+                    <input type="date" id="filterDate">
+                </div>
+                <div class="filter-group">
+                    <label>班级</label>
+                    <select id="filterClass">
+                        <option value="">全部班级</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>星期</label>
+                    <select id="filterWeekday">
+                        <option value="">全部</option>
+                        <option value="星期一">星期一</option>
+                        <option value="星期二">星期二</option>
+                        <option value="星期三">星期三</option>
+                        <option value="星期四">星期四</option>
+                        <option value="星期五">星期五</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>任课老师</label>
+                    <select id="filterTeacher">
+                        <option value="">全部老师</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>巡查结果</label>
+                    <select id="filterResult">
+                        <option value="">全部</option>
+                        <option value="正常">正常</option>
+                        <option value="异常">异常</option>
+                    </select>
+                </div>
+                <button class="search-btn" onclick="searchInspections()">
+                    <i class="fas fa-search"></i> 搜索
+                </button>
+            </div>
+        </div>
+        
+        <div class="results-section">
+            <div class="results-header">
+                <h3>查询结果</h3>
+                <span id="resultsCount">0 条记录</span>
+            </div>
+            
+            <div id="resultsList">
+                <!-- 查询结果动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript 代码 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase配置（需要替换为您的实际配置）
+        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';  // 替换为您的Supabase URL
+        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 替换为您的Supabase anon key
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // 全局变量
+        let currentClass = '';
+        let allClasses = [];
+        let allTeachers = [];
+        let allInspectors = [];
+        let scheduleData = {};
+
+        // 页面切换函数
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function showWelcomePage() { showPage('welcomePage'); }
+        function showQueryPage() { 
+            showPage('queryPage');
+            loadFilterOptions();
+        }
+        function showClassSelection() { 
+            showPage('classSelectionPage');
+            loadClasses();
+        }
+        function showInspectionForm(className) { 
+            currentClass = className;
+            document.getElementById('currentClassName').textContent = className;
+            showPage('inspectionFormPage');
+            
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inspectionDate').value = today;
+            
+            // 加载巡查人选项
+            loadInspectors();
+        }
+
+        // 加载班级列表
+        async function loadClasses() {
+            const { data, error } = await supabase
+                .from('classes')
+                .select('class_name')
+                .order('class_name');
+            
+            if (error) {
+                console.error('加载班级失败:', error);
+                return;
+            }
+            
+            allClasses = data.map(item => item.class_name);
+            const classGrid = document.getElementById('classGrid');
+            classGrid.innerHTML = '';
+            
+            allClasses.forEach(className => {
+                const classCard = document.createElement('div');
+                classCard.className = 'class-card';
+                classCard.onclick = () => showInspectionForm(className);
+                classCard.innerHTML = `
+                    <div class="class-icon">
+                        <i class="fas fa-school"></i>
+                    </div>
+                    <div class="class-name">${className}</div>
+                `;
+                classGrid.appendChild(classCard);
+            });
+            
+            // 更新统计
+            document.getElementById('classCount').textContent = allClasses.length;
+        }
+
+        // 班级搜索过滤
+        function filterClasses() {
+            const searchTerm = document.getElementById('classSearch').value.toLowerCase();
+            const classCards = document.querySelectorAll('.class-card');
+            
+            classCards.forEach(card => {
+                const className = card.querySelector('.class-name').textContent.toLowerCase();
+                card.style.display = className.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        // 根据选择更新班级信息
+        async function updateClassInfo() {
+            const className = currentClass;
+            const period = document.getElementById('periodSelect').value;
+            const weekday = document.getElementById('weekdaySelect').value;
+            
+            if (!className || !period || !weekday) return;
+            
+            // 从数据库中查询课程信息
+            const { data, error } = await supabase
+                .from('schedule')
+                .select('subject, teacher_name')
+                .eq('class_name', className)
+                .eq('period', parseInt(period))
+                .eq('week_day', weekday)
+                .single();
+            
+            if (data && !error) {
+                document.getElementById('currentSubject').textContent = data.subject;
+                document.getElementById('currentTeacher').textContent = data.teacher_name;
+                document.getElementById('currentWeekDay').textContent = weekday;
+                document.getElementById('currentPeriod').textContent = `第${period}节`;
+            } else {
+                document.getElementById('currentSubject').textContent = '-';
+                document.getElementById('currentTeacher').textContent = '-';
+            }
+        }
+
+        // 加载巡查人列表
+        async function loadInspectors() {
+            const { data, error } = await supabase
+                .from('inspectors')
+                .select('inspector_name')
+                .order('inspector_name');
+            
+            if (error) {
+                console.error('加载巡查人失败:', error);
+                return;
+            }
+            
+            allInspectors = data.map(item => item.inspector_name);
+            const select = document.getElementById('inspectorName');
+            select.innerHTML = '<option value="">请选择巡查人</option>';
+            
+            allInspectors.forEach(name => {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = name;
+                select.appendChild(option);
+            });
+        }
+
+        // 提交巡查记录
+        document.getElementById('inspectionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const inspectionData = {
+                inspection_date: document.getElementById('inspectionDate').value,
+                class_name: currentClass,
+                period: parseInt(document.getElementById('periodSelect').value),
+                week_day: document.getElementById('weekdaySelect').value,
+                subject: document.getElementById('currentSubject').textContent,
+                teacher_name: document.getElementById('currentTeacher').textContent,
+                inspector: document.getElementById('inspectorName').value,
+                result: document.getElementById('inspectionResult').value,
+                remarks: document.getElementById('remarks').value
+            };
+            
+            const { error } = await supabase
+                .from('inspections')
+                .insert([inspectionData]);
+            
+            if (error) {
+                alert('提交失败: ' + error.message);
+            } else {
+                alert('巡查记录提交成功！');
+                this.reset();
+                showWelcomePage();
+            }
+        });
+
+        // 加载查询筛选选项
+        async function loadFilterOptions() {
+            // 加载班级选项
+            const { data: classes } = await supabase
+                .from('classes')
+                .select('class_name')
+                .order('class_name');
+            
+            const classSelect = document.getElementById('filterClass');
+            if (classes) {
+                classes.forEach(cls => {
+                    const option = document.createElement('option');
+                    option.value = cls.class_name;
+                    option.textContent = cls.class_name;
+                    classSelect.appendChild(option);
+                });
+            }
+            
+            // 加载教师选项
+            const { data: teachers } = await supabase
+                .from('teachers')
+                .select('teacher_name')
+                .order('teacher_name');
+            
+            const teacherSelect = document.getElementById('filterTeacher');
+            if (teachers) {
+                teachers.forEach(teacher => {
+                    const option = document.createElement('option');
+                    option.value = teacher.teacher_name;
+                    option.textContent = teacher.teacher_name;
+                    teacherSelect.appendChild(option);
+                });
+            }
+        }
+
+        // 查询巡查记录
+        async function searchInspections() {
+            let query = supabase
+                .from('inspections')
+                .select('*')
+                .order('inspection_date', { ascending: false });
+            
+            // 应用筛选条件
+            const filterDate = document.getElementById('filterDate').value;
+            const filterClass = document.getElementById('filterClass').value;
+            const filterWeekday = document.getElementById('filterWeekday').value;
+            const filterTeacher = document.getElementById('filterTeacher').value;
+            const filterResult = document.getElementById('filterResult').value;
+            
+            if (filterDate) query = query.eq('inspection_date', filterDate);
+            if (filterClass) query = query.eq('class_name', filterClass);
+            if (filterWeekday) query = query.eq('week_day', filterWeekday);
+            if (filterTeacher) query = query.eq('teacher_name', filterTeacher);
+            if (filterResult) query = query.eq('result', filterResult);
+            
+            const { data, error } = await query;
+            
+            if (error) {
+                console.error('查询失败:', error);
+                return;
+            }
+            
+            displayResults(data);
+        }
+
+        // 显示查询结果
+        function displayResults(records) {
+            const resultsList = document.getElementById('resultsList');
+            const resultsCount = document.getElementById('resultsCount');
+            
+            resultsCount.textContent = `${records.length} 条记录`;
+            
+            if (records.length === 0) {
+                resultsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">没有找到匹配的巡查记录</p>';
+                return;
+            }
+            
+            resultsList.innerHTML = records.map(record => `
+                <div class="record-card">
+                    <div class="record-header">
+                        <span class="record-date">${record.inspection_date} ${record.week_day}</span>
+                        <span class="record-result ${record.result === '正常' ? 'result-normal' : 'result-abnormal'}">
+                            ${record.result}
+                        </span>
+                    </div>
+                    <div class="record-details">
+                        <p><strong>班级：</strong>${record.class_name}</p>
+                        <p><strong>节次：</strong>第${record.period}节</p>
+                        <p><strong>科目/教师：</strong>${record.subject}（${record.teacher_name}）</p>
+                        <p><strong>巡查人：</strong>${record.inspector}</p>
+                        ${record.remarks ? `<p><strong>备注：</strong>${record.remarks}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 初始化函数
+        async function init() {
+            // 设置今天为默认日期
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inspectionDate').value = today;
+            document.getElementById('filterDate').value = today;
+            
+            // 加载初始数据
+            await loadClasses();
+            await loadInspectors();
+        }
+
+        // 页面加载完成后初始化
+        window.onload = init;
+    </script>
+</body>
+</html>
