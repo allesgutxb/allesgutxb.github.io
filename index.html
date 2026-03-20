@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -47,7 +46,7 @@
 
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
         }
 
         .btn i {
@@ -74,7 +73,7 @@
         .logo h1 {
             font-size: 28px;
             font-weight: 600;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
 
         .welcome-btn {
@@ -99,7 +98,7 @@
         }
 
         .stat-item {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255,255,255,0.2);
             backdrop-filter: blur(10px);
             border-radius: 12px;
             padding: 15px;
@@ -155,7 +154,7 @@
             border: none;
             border-radius: 10px;
             font-size: 16px;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255,255,255,0.9);
         }
 
         .search-box i {
@@ -183,7 +182,7 @@
 
         .class-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
         }
 
         .class-icon {
@@ -370,7 +369,6 @@
         }
     </style>
 </head>
-
 <body>
     <!-- 欢迎页面 -->
     <div id="welcomePage" class="page active">
@@ -379,19 +377,19 @@
                 <i class="fas fa-chalkboard-teacher"></i>
                 <h1>教务巡查系统</h1>
             </div>
-
+            
             <button class="btn welcome-btn query-btn" onclick="showQueryPage()">
                 <i class="fas fa-search"></i>
                 <strong>查询巡查记录</strong>
                 <p>多条件筛选，查看历史记录</p>
             </button>
-
+            
             <button class="btn welcome-btn inspect-btn" onclick="showClassSelection()">
                 <i class="fas fa-edit"></i>
                 <strong>填写巡查记录</strong>
                 <p>选择班级，快速提交</p>
             </button>
-
+            
             <div class="stats">
                 <div class="stat-item">
                     <i class="fas fa-school"></i>
@@ -420,14 +418,14 @@
             </button>
             <h2 class="page-title">选择班级</h2>
         </div>
-
+        
         <div class="search-box">
             <input type="text" id="classSearch" placeholder="搜索班级..." oninput="filterClasses()">
             <i class="fas fa-search"></i>
         </div>
-
+        
         <div class="class-grid" id="classGrid">
-            <!-- 班级图标动态生成 -->
+            <!-- 班级图标将按楼层分组动态生成 -->
         </div>
     </div>
 
@@ -439,7 +437,7 @@
             </button>
             <h2 class="page-title">填写巡查记录</h2>
         </div>
-
+        
         <div class="form-container">
             <div class="class-info">
                 <h3 id="currentClassName">请选择班级</h3>
@@ -460,13 +458,13 @@
                     <span id="currentTeacher">-</span>
                 </div>
             </div>
-
+            
             <form id="inspectionForm">
                 <div class="form-group">
                     <label for="inspectionDate">巡查日期</label>
                     <input type="date" id="inspectionDate" required>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="periodSelect">节次</label>
                     <select id="periodSelect" onchange="updateClassInfo()" required>
@@ -481,7 +479,7 @@
                         <option value="8">第八节</option>
                     </select>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="weekdaySelect">星期</label>
                     <select id="weekdaySelect" onchange="updateClassInfo()" required>
@@ -493,14 +491,14 @@
                         <option value="星期五">星期五</option>
                     </select>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="inspectorName">巡查人</label>
                     <select id="inspectorName" required>
                         <option value="">请选择巡查人</option>
                     </select>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="inspectionResult">巡查结果</label>
                     <select id="inspectionResult" required>
@@ -509,12 +507,12 @@
                         <option value="异常">异常</option>
                     </select>
                 </div>
-
+                
                 <div class="form-group">
                     <label for="remarks">备注说明</label>
                     <textarea id="remarks" rows="3" placeholder="如有特殊情况请说明..."></textarea>
                 </div>
-
+                
                 <button type="submit" class="submit-btn">
                     <i class="fas fa-paper-plane"></i> 提交巡查记录
                 </button>
@@ -530,7 +528,7 @@
             </button>
             <h2 class="page-title">查询巡查记录</h2>
         </div>
-
+        
         <div class="filter-section">
             <div class="filter-row">
                 <div class="filter-group">
@@ -544,7 +542,7 @@
                     </select>
                 </div>
             </div>
-
+            
             <div class="filter-row">
                 <div class="filter-group">
                     <label>星期</label>
@@ -564,7 +562,32 @@
                     </select>
                 </div>
             </div>
-
+            
+            <!-- 新增的筛选行：节次和科目 -->
+            <div class="filter-row">
+                <div class="filter-group">
+                    <label>节次</label>
+                    <select id="filterPeriod">
+                        <option value="">全部节次</option>
+                        <option value="1">第1节</option>
+                        <option value="2">第2节</option>
+                        <option value="3">第3节</option>
+                        <option value="4">第4节</option>
+                        <option value="5">第5节</option>
+                        <option value="6">第6节</option>
+                        <option value="7">第7节</option>
+                        <option value="8">第8节</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>科目</label>
+                    <select id="filterSubject">
+                        <option value="">全部科目</option>
+                        <!-- 科目选项将通过JavaScript动态加载 -->
+                    </select>
+                </div>
+            </div>
+            
             <div class="filter-row">
                 <div class="filter-group">
                     <label>巡查结果</label>
@@ -579,13 +602,13 @@
                 </button>
             </div>
         </div>
-
+        
         <div class="results-section">
             <div class="results-header">
                 <h3>查询结果</h3>
                 <span id="resultsCount">0 条记录</span>
             </div>
-
+            
             <div id="resultsList">
                 <!-- 查询结果动态生成 -->
             </div>
@@ -593,17 +616,11 @@
     </div>
 
     <!-- JavaScript 代码 -->
-    <!-- 修复点：确保以下库引入和客户端创建代码只存在一份 -->
-    <!-- 选项A: 使用 jsDelivr CDN (国内访问可能更稳定) -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
-
-    <!-- 选项B: 明确指定版本并使用 unpkg 的完整UMD构建 -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // Supabase配置（需要替换为您的实际配置）
-        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';  // 请确保此URL正确
-        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 请确保此Key正确
-        // 修复点：以下supabase客户端创建语句在文档中应只出现一次
+        // Supabase配置（请确认以下信息是您自己的）
+        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // 全局变量
@@ -620,65 +637,80 @@
         }
 
         function showWelcomePage() { showPage('welcomePage'); }
-        function showQueryPage() {
+        function showQueryPage() { 
             showPage('queryPage');
             loadFilterOptions();
         }
-        function showClassSelection() {
+        function showClassSelection() { 
             showPage('classSelectionPage');
             loadClasses();
         }
-        function showInspectionForm(className) {
+        function showInspectionForm(className) { 
             currentClass = className;
             document.getElementById('currentClassName').textContent = className;
             showPage('inspectionFormPage');
-
+            
             // 设置默认日期为今天
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inspectionDate').value = today;
-
+            
             // 加载巡查人选项
             loadInspectors();
         }
 
-        // 加载班级列表
+        // 加载班级列表（按楼层分组）--- 已优化
         async function loadClasses() {
-            const { data, error } = await supabase
-                .from('classes')
-                .select('class_name')
-                .order('class_name');
+            // 定义按楼层分组的班级顺序
+            const classGroups = [
+                { title: "一层（九年级）", classes: ["九1班", "九2班", "九3班", "九4班", "九5班"] },
+                { title: "二层（九年级+八年级）", classes: ["九6班", "八1班", "八2班", "八3班"] },
+                { title: "三层（七年级+八年级）", classes: ["七1班", "八4班", "八5班", "八6班"] },
+                { title: "四层（七年级）", classes: ["七2班", "七3班", "七4班", "七5班", "七6班"] }
+            ];
 
-            if (error) {
-                console.error('加载班级失败:', error);
-                return;
-            }
-
-            allClasses = data.map(item => item.class_name);
             const classGrid = document.getElementById('classGrid');
             classGrid.innerHTML = '';
 
-            allClasses.forEach(className => {
-                const classCard = document.createElement('div');
-                classCard.className = 'class-card';
-                classCard.onclick = () => showInspectionForm(className);
-                classCard.innerHTML = `
-                    <div class="class-icon">
-                        <i class="fas fa-school"></i>
-                    </div>
-                    <div class="class-name">${className}</div>
-                `;
-                classGrid.appendChild(classCard);
+            // 为每个分组创建标题和班级卡片
+            classGroups.forEach(group => {
+                // 添加分组标题
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'group-title';
+                groupTitle.style.gridColumn = '1 / -1';
+                groupTitle.style.fontSize = '16px';
+                groupTitle.style.fontWeight = '600';
+                groupTitle.style.marginTop = '15px';
+                groupTitle.style.marginBottom = '8px';
+                groupTitle.style.color = '#fff';
+                groupTitle.style.paddingLeft = '5px';
+                groupTitle.textContent = group.title;
+                classGrid.appendChild(groupTitle);
+
+                // 为该分组添加班级卡片
+                group.classes.forEach(className => {
+                    const classCard = document.createElement('div');
+                    classCard.className = 'class-card';
+                    classCard.onclick = () => showInspectionForm(className);
+                    classCard.innerHTML = `
+                        <div class="class-icon">
+                            <i class="fas fa-school"></i>
+                        </div>
+                        <div class="class-name">${className}</div>
+                    `;
+                    classGrid.appendChild(classCard);
+                });
             });
 
             // 更新统计
-            document.getElementById('classCount').textContent = allClasses.length;
+            const totalClasses = classGroups.reduce((sum, group) => sum + group.classes.length, 0);
+            document.getElementById('classCount').textContent = totalClasses;
         }
 
         // 班级搜索过滤
         function filterClasses() {
             const searchTerm = document.getElementById('classSearch').value.toLowerCase();
             const classCards = document.querySelectorAll('.class-card');
-
+            
             classCards.forEach(card => {
                 const className = card.querySelector('.class-name').textContent.toLowerCase();
                 card.style.display = className.includes(searchTerm) ? 'block' : 'none';
@@ -690,9 +722,9 @@
             const className = currentClass;
             const period = document.getElementById('periodSelect').value;
             const weekday = document.getElementById('weekdaySelect').value;
-
+            
             if (!className || !period || !weekday) return;
-
+            
             // 从数据库中查询课程信息
             const { data, error } = await supabase
                 .from('schedule')
@@ -701,7 +733,7 @@
                 .eq('period', parseInt(period))
                 .eq('week_day', weekday)
                 .single();
-
+            
             if (data && !error) {
                 document.getElementById('currentSubject').textContent = data.subject;
                 document.getElementById('currentTeacher').textContent = data.teacher_name;
@@ -719,16 +751,16 @@
                 .from('inspectors')
                 .select('inspector_name')
                 .order('inspector_name');
-
+            
             if (error) {
                 console.error('加载巡查人失败:', error);
                 return;
             }
-
+            
             allInspectors = data.map(item => item.inspector_name);
             const select = document.getElementById('inspectorName');
             select.innerHTML = '<option value="">请选择巡查人</option>';
-
+            
             allInspectors.forEach(name => {
                 const option = document.createElement('option');
                 option.value = name;
@@ -738,9 +770,9 @@
         }
 
         // 提交巡查记录
-        document.getElementById('inspectionForm').addEventListener('submit', async function (e) {
+        document.getElementById('inspectionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-
+            
             const inspectionData = {
                 inspection_date: document.getElementById('inspectionDate').value,
                 class_name: currentClass,
@@ -752,11 +784,11 @@
                 result: document.getElementById('inspectionResult').value,
                 remarks: document.getElementById('remarks').value
             };
-
+            
             const { error } = await supabase
                 .from('inspections')
                 .insert([inspectionData]);
-
+            
             if (error) {
                 alert('提交失败: ' + error.message);
             } else {
@@ -766,14 +798,14 @@
             }
         });
 
-        // 加载查询筛选选项
+        // 加载查询筛选选项 --- 已优化，增加科目加载
         async function loadFilterOptions() {
             // 加载班级选项
             const { data: classes } = await supabase
                 .from('classes')
                 .select('class_name')
                 .order('class_name');
-
+            
             const classSelect = document.getElementById('filterClass');
             if (classes) {
                 classes.forEach(cls => {
@@ -783,13 +815,13 @@
                     classSelect.appendChild(option);
                 });
             }
-
+            
             // 加载教师选项
             const { data: teachers } = await supabase
                 .from('teachers')
                 .select('teacher_name')
                 .order('teacher_name');
-
+            
             const teacherSelect = document.getElementById('filterTeacher');
             if (teachers) {
                 teachers.forEach(teacher => {
@@ -799,35 +831,59 @@
                     teacherSelect.appendChild(option);
                 });
             }
+            
+            // 【新增】加载科目选项
+            const { data: subjects } = await supabase
+                .from('schedule')
+                .select('subject')
+                .order('subject');
+
+            const subjectSelect = document.getElementById('filterSubject');
+            if (subjects) {
+                // 使用Set去除重复的科目名
+                const uniqueSubjects = [...new Set(subjects.map(item => item.subject))];
+                uniqueSubjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject;
+                    option.textContent = subject;
+                    subjectSelect.appendChild(option);
+                });
+            }
         }
 
-        // 查询巡查记录
+        // 查询巡查记录 --- 已优化，增加节次和科目筛选
         async function searchInspections() {
             let query = supabase
                 .from('inspections')
                 .select('*')
                 .order('inspection_date', { ascending: false });
-
+            
             // 应用筛选条件
             const filterDate = document.getElementById('filterDate').value;
             const filterClass = document.getElementById('filterClass').value;
             const filterWeekday = document.getElementById('filterWeekday').value;
             const filterTeacher = document.getElementById('filterTeacher').value;
             const filterResult = document.getElementById('filterResult').value;
-
+            // 【新增】获取新筛选条件的值
+            const filterPeriod = document.getElementById('filterPeriod').value;
+            const filterSubject = document.getElementById('filterSubject').value;
+            
             if (filterDate) query = query.eq('inspection_date', filterDate);
             if (filterClass) query = query.eq('class_name', filterClass);
             if (filterWeekday) query = query.eq('week_day', filterWeekday);
             if (filterTeacher) query = query.eq('teacher_name', filterTeacher);
             if (filterResult) query = query.eq('result', filterResult);
-
+            // 【新增】应用新筛选条件
+            if (filterPeriod) query = query.eq('period', parseInt(filterPeriod));
+            if (filterSubject) query = query.eq('subject', filterSubject);
+            
             const { data, error } = await query;
-
+            
             if (error) {
                 console.error('查询失败:', error);
                 return;
             }
-
+            
             displayResults(data);
         }
 
@@ -835,14 +891,14 @@
         function displayResults(records) {
             const resultsList = document.getElementById('resultsList');
             const resultsCount = document.getElementById('resultsCount');
-
+            
             resultsCount.textContent = `${records.length} 条记录`;
-
+            
             if (records.length === 0) {
                 resultsList.innerHTML = '<p style="text-align: center; color: #666; padding: 20px;">没有找到匹配的巡查记录</p>';
                 return;
             }
-
+            
             resultsList.innerHTML = records.map(record => `
                 <div class="record-card">
                     <div class="record-header">
@@ -868,7 +924,7 @@
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inspectionDate').value = today;
             document.getElementById('filterDate').value = today;
-
+            
             // 加载初始数据
             await loadClasses();
             await loadInspectors();
@@ -878,5 +934,4 @@
         window.onload = init;
     </script>
 </body>
-
 </html>
