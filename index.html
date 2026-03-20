@@ -543,12 +543,12 @@
         (function () {
             // 只初始化一次，避免重复声明
             if (!window.myAppSupabase) {
+                // 【关键修正】此处必须填写您项目的真实URL
                 const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
                 const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
                 window.myAppSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
         })();
-
         // 创建一个全局别名，保持代码其他部分不变
         const supabase = window.myAppSupabase;
 
