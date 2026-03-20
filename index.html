@@ -538,24 +538,19 @@
     </div>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // ====== 【关键修改开始：增强的防御性代码，解决扩展冲突】 ======
-        // 终极防御：如果全局 supabase 变量已存在（可能由扩展注入），则直接使用它。
-        if (window.supabase && !window.myAppSupabase) {
-            window.myAppSupabase = window.supabase;
-        }
-        // ====== 【关键修改结束】 ======
-
-        // 原有的IIFE和单例检查逻辑保持不变
+        // ====== 【核心修复：使用唯一变量名避免扩展冲突】 ======
+        // 使用一个独特的变量名，避免与浏览器扩展冲突
         (function () {
-            // 只初始化一次，避免重复声明
-            if (!window.myAppSupabase) {
+            // 只初始化一次
+            if (!window.myUniqueSupabaseClient) {
                 const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
                 const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-                window.myAppSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                window.myUniqueSupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
             }
         })();
-        // 创建一个全局别名，保持代码其他部分不变
-        const supabase = window.myAppSupabase;
+        // 使用新的变量名
+        const mySupabaseClient = window.myUniqueSupabaseClient;
+        // ====== 修复结束 ======
 
         let currentClass = '';
         let allClasses = [];
@@ -619,7 +614,7 @@
             const period = document.getElementById('periodSelect').value;
             const weekday = document.getElementById('weekdaySelect').value;
             if (!className || !period || !weekday) return;
-            const { data, error } = await supabase.from('schedule').select('subject, teacher_name')
+            const { data, error } = await mySupabaseClient.from('schedule').select('subject, teacher_name')
                 .eq('class_name', className).eq('period', parseInt(period)).eq('week_day', weekday).single();
             if (data && !error) {
                 document.getElementById('currentSubject').textContent = data.subject;
@@ -633,7 +628,7 @@
         }
 
         async function loadInspectors() {
-            const { data, error } = await supabase.from('inspectors').select('inspector_name').order('inspector_name');
+            const { data, error } = await mySupabaseClient.from('inspectors').select('inspector_name').order('inspector_name');
             if (error) { console.error('加载巡查人失败:', error); return; }
             allInspectors = data.map(i => i.inspector_name);
             const select = document.getElementById('inspectorName');
@@ -654,21 +649,21 @@
                 result: document.getElementById('inspectionResult').value,
                 remarks: document.getElementById('remarks').value
             };
-            const { error } = await supabase.from('inspections').insert([inspectionData]);
+            const { error } = await mySupabaseClient.from('inspections').insert([inspectionData]);
             if (error) alert('提交失败: ' + error.message);
             else { alert('巡查记录提交成功！'); this.reset(); showWelcomePage(); }
         });
 
         async function loadFilterOptions() {
-            const { data: classes } = await supabase.from('classes').select('class_name').order('class_name');
+            const { data: classes } = await mySupabaseClient.from('classes').select('class_name').order('class_name');
             const classSelect = document.getElementById('filterClass');
             if (classes) classes.forEach(c => { const opt = document.createElement('option'); opt.value = c.class_name; opt.textContent = c.class_name; classSelect.appendChild(opt); });
 
-            const { data: teachers } = await supabase.from('teachers').select('teacher_name').order('teacher_name');
+            const { data: teachers } = await mySupabaseClient.from('teachers').select('teacher_name').order('teacher_name');
             const teacherSelect = document.getElementById('filterTeacher');
             if (teachers) teachers.forEach(t => { const opt = document.createElement('option'); opt.value = t.teacher_name; opt.textContent = t.teacher_name; teacherSelect.appendChild(opt); });
 
-            const { data: subjects } = await supabase.from('schedule').select('subject').order('subject');
+            const { data: subjects } = await mySupabaseClient.from('schedule').select('subject').order('subject');
             const subjectSelect = document.getElementById('filterSubject');
             if (subjects) {
                 const unique = [...new Set(subjects.map(s => s.subject))];
@@ -677,7 +672,7 @@
         }
 
         async function searchInspections() {
-            let query = supabase.from('inspections').select('*').order('inspection_date', { ascending: false });
+            let query = mySupabaseClient.from('inspections').select('*').order('inspection_date', { ascending: false });
             const filters = [
                 { id: 'filterDate', fn: (q, v) => v ? q.eq('inspection_date', v) : q },
                 { id: 'filterClass', fn: (q, v) => v ? q.eq('class_name', v) : q },
