@@ -538,12 +538,17 @@
     </div>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // 【关键修复点】Supabase 配置 - 整个文件中确保只出现一次！
-        // 【关键修复点】Supabase 配置 - 封装在IIFE中避免与扩展冲突
+        // ====== 【关键修改开始：增强的防御性代码，解决扩展冲突】 ======
+        // 终极防御：如果全局 supabase 变量已存在（可能由扩展注入），则直接使用它。
+        if (window.supabase && !window.myAppSupabase) {
+            window.myAppSupabase = window.supabase;
+        }
+        // ====== 【关键修改结束】 ======
+
+        // 原有的IIFE和单例检查逻辑保持不变
         (function () {
             // 只初始化一次，避免重复声明
             if (!window.myAppSupabase) {
-                // 【关键修正】此处必须填写您项目的真实URL
                 const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
                 const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
                 window.myAppSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
