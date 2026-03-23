@@ -6,6 +6,7 @@
     <title>学校教务巡查系统</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* 样式部分保持不变，这里为简洁省略，实际使用时包含完整样式 */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Microsoft YaHei', sans-serif; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
@@ -124,12 +125,12 @@
         <div id="homePage" class="header">
             <h1><i class="fas fa-chalkboard-teacher"></i> 学校教务巡查系统</h1>
             <div class="action-buttons">
-                <button class="action-btn btn-fill" onclick="window.showPage('fillPage')">
+                <button class="action-btn btn-fill" id="fillBtn">
                     <i class="fas fa-edit"></i>
                     <strong>填写巡查记录</strong>
                     <p>选择班级，填写巡查信息</p>
                 </button>
-                <button class="action-btn btn-query" onclick="window.showPage('queryPage')">
+                <button class="action-btn btn-query" id="queryBtn">
                     <i class="fas fa-search"></i>
                     <strong>查询巡查记录</strong>
                     <p>多条件筛选，查看历史记录</p>
@@ -140,7 +141,7 @@
         <!-- 填写记录页面 -->
         <div id="fillPage" class="main-content">
             <div class="page-header">
-                <button class="back-btn" onclick="window.showPage('homePage')">
+                <button class="back-btn" id="backFromFill">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <h2 class="page-title"><i class="fas fa-edit"></i> 填写巡查记录</h2>
@@ -149,14 +150,13 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="inspectionDate" class="required">巡查日期</label>
-                        <input type="date" id="inspectionDate" required onchange="window.updateWeekday()">
+                        <input type="date" id="inspectionDate" required>
                         <div class="weekday-display" id="weekdayDisplay"></div>
                     </div>
                     <div class="form-group">
                         <label for="classSelect" class="required">班级</label>
                         <select id="classSelect" required>
                             <option value="">请选择班级</option>
-                            <!-- 班级选项由JavaScript动态加载 -->
                         </select>
                     </div>
                 </div>
@@ -175,7 +175,6 @@
                         <label for="inspectorSelect" class="required">巡查人</label>
                         <select id="inspectorSelect" required>
                             <option value="">请选择巡查人</option>
-                            <!-- 巡查人选项由JavaScript动态加载 -->
                         </select>
                     </div>
                 </div>
@@ -227,7 +226,7 @@
         <!-- 查询记录页面 -->
         <div id="queryPage" class="main-content">
             <div class="page-header">
-                <button class="back-btn" onclick="window.showPage('homePage')">
+                <button class="back-btn" id="backFromQuery">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <h2 class="page-title"><i class="fas fa-search"></i> 查询巡查记录</h2>
@@ -240,10 +239,10 @@
                 <select id="searchInspector">
                     <option value="">全部巡查人</option>
                 </select>
-                <button class="search-btn" onclick="window.searchInspections()">
+                <button class="search-btn" id="searchBtn">
                     <i class="fas fa-search"></i> 搜索
                 </button>
-                <button class="export-btn" onclick="window.downloadData()">
+                <button class="export-btn" id="downloadBtn">
                     <i class="fas fa-download"></i> 下载
                 </button>
             </div>
@@ -263,12 +262,6 @@
                     </thead>
                     <tbody id="inspectionsBody">
                         <!-- 数据行由JavaScript动态插入 -->
-                        <tr>
-                            <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
-                                <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
-                                暂无巡查记录，请填写第一条记录
-                            </td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -279,339 +272,370 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
     <script>
-        // ==================== 【终极修复：彻底解决所有问题】 ====================
+        // ==================== 【完全隔离的解决方案】 ====================
+        // 不使用任何全局函数，所有代码都在立即执行函数中
         
-        // 1. 首先清除任何可能的重复声明
-        if (typeof window.supabase !== 'undefined') {
-            console.log('检测到已存在的supabase变量，正在清理...');
+        (function() {
+            'use strict';
+            
+            // 清除任何可能的冲突
+            if (typeof window.supabase !== 'undefined') {
+                console.log('清理已存在的supabase变量...');
+                try {
+                    delete window.supabase;
+                } catch (e) {
+                    window._supabase_backup = window.supabase;
+                    window.supabase = undefined;
+                }
+            }
+            
+            // 使用您提供的配置
+            const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+            const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+            
+            // 创建一个完全独立的Supabase客户端
+            let mySupabaseClient = null;
             try {
-                delete window.supabase;
-            } catch (e) {
-                // 如果无法删除，就重命名
-                window._oldSupabase = window.supabase;
-                window.supabase = undefined;
-            }
-        }
-        
-        // 2. 使用您提供的密钥（请确认这些是正确的）
-        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        
-        // 3. 使用一个唯一命名的变量来创建客户端
-        if (!window.mySchoolInspectionSystemSupabase) {
-            window.mySchoolInspectionSystemSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        }
-        
-        // 4. 为我们的代码创建一个局部引用
-        const supabase = window.mySchoolInspectionSystemSupabase;
-        
-        // 5. 确保所有函数都附加到window对象，这样HTML的onclick才能找到它们
-        window.showPage = function(pageId) {
-            // 隐藏首页
-            document.getElementById('homePage').style.display = (pageId === 'homePage') ? 'block' : 'none';
-            
-            // 隐藏所有内容页
-            document.querySelectorAll('.main-content').forEach(page => {
-                page.classList.remove('active');
-            });
-            
-            // 显示选中的内容页
-            if (pageId !== 'homePage') {
-                document.getElementById(pageId).classList.add('active');
+                mySupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            } catch (error) {
+                console.error('创建Supabase客户端失败:', error);
+                // 如果创建失败，尝试备用方案
+                const supabaseScript = document.createElement('script');
+                supabaseScript.src = 'https://unpkg.com/@supabase/supabase-js@2';
+                supabaseScript.onload = function() {
+                    mySupabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    initializeApp();
+                };
+                document.head.appendChild(supabaseScript);
+                return;
             }
             
-            // 如果是查询页，自动加载数据
-            if (pageId === 'queryPage') {
-                window.searchInspections();
-            }
-        };
-        
-        // 全局变量
-        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        
-        // 页面加载初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initPage();
-        });
-        
-        async function initPage() {
-            // 设置默认日期为今天
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('inspectionDate').value = today;
-            document.getElementById('searchDate').value = today;
-            window.updateWeekday();
+            // 工具函数
+            const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             
-            // 加载班级和巡查人列表
-            await loadClasses();
-            await loadInspectorList();
-            
-            // 设置表单提交事件
-            document.getElementById('inspectionForm').addEventListener('submit', submitInspection);
-        }
-        
-        // 根据日期更新星期显示
-        window.updateWeekday = function() {
-            const dateInput = document.getElementById('inspectionDate');
-            const display = document.getElementById('weekdayDisplay');
-            if (dateInput.value) {
-                const date = new Date(dateInput.value);
-                display.textContent = weekdays[date.getDay()];
-            } else {
-                display.textContent = '';
-            }
-        };
-        
-        // 加载班级列表
-        async function loadClasses() {
-            const classGroups = [
-                { title: "九年级", classes: ["九1班", "九2班", "九3班", "九4班", "九5班", "九6班"] },
-                { title: "八年级", classes: ["八1班", "八2班", "八3班", "八4班", "八5班", "八6班"] },
-                { title: "七年级", classes: ["七1班", "七2班", "七3班", "七4班", "七5班", "七6班"] }
-            ];
-            const allClasses = classGroups.flatMap(g => g.classes);
-            
-            // 填充到两个选择框
-            allClasses.forEach(className => {
-                ['classSelect', 'searchClass'].forEach(selectId => {
-                    const option = document.createElement('option');
-                    option.value = className;
-                    option.textContent = className;
-                    document.getElementById(selectId).appendChild(option);
+            // 页面管理
+            function showPage(pageId) {
+                document.getElementById('homePage').style.display = (pageId === 'homePage') ? 'block' : 'none';
+                document.querySelectorAll('.main-content').forEach(page => {
+                    page.classList.remove('active');
                 });
-            });
-        }
-        
-        // 加载巡查人列表
-        async function loadInspectorList() {
-            const allInspectors = ['张主任', '李老师', '王督导', '赵老师', '刘老师'];
+                if (pageId !== 'homePage') {
+                    document.getElementById(pageId).classList.add('active');
+                }
+                if (pageId === 'queryPage') {
+                    searchInspections();
+                }
+            }
             
-            allInspectors.forEach(name => {
-                ['inspectorSelect', 'searchInspector'].forEach(selectId => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    document.getElementById(selectId).appendChild(option);
+            // 更新星期显示
+            function updateWeekday() {
+                const dateInput = document.getElementById('inspectionDate');
+                const display = document.getElementById('weekdayDisplay');
+                if (dateInput.value) {
+                    const date = new Date(dateInput.value);
+                    display.textContent = weekdays[date.getDay()];
+                } else {
+                    display.textContent = '';
+                }
+            }
+            
+            // 加载班级列表
+            async function loadClasses() {
+                const classGroups = [
+                    { title: "九年级", classes: ["九1班", "九2班", "九3班", "九4班", "九5班", "九6班"] },
+                    { title: "八年级", classes: ["八1班", "八2班", "八3班", "八4班", "八5班", "八6班"] },
+                    { title: "七年级", classes: ["七1班", "七2班", "七3班", "七4班", "七5班", "七6班"] }
+                ];
+                const allClasses = classGroups.flatMap(g => g.classes);
+                
+                allClasses.forEach(className => {
+                    ['classSelect', 'searchClass'].forEach(selectId => {
+                        const option = document.createElement('option');
+                        option.value = className;
+                        option.textContent = className;
+                        document.getElementById(selectId).appendChild(option);
+                    });
                 });
-            });
-        }
-        
-        // 提交巡查记录
-        async function submitInspection(e) {
-            e.preventDefault();
+            }
             
-            const formData = {
-                inspection_date: document.getElementById('inspectionDate').value,
-                class_name: document.getElementById('classSelect').value,
-                period: parseInt(document.getElementById('periodSelect').value),
-                inspector: document.getElementById('inspectorSelect').value,
-                arrival_status: document.getElementById('arrivalStatus').value,
-                student_status: document.getElementById('studentStatus').value,
-                subject: document.getElementById('subjectInput').value,
-                teacher_name: document.getElementById('teacherInput').value,
-                environment: document.getElementById('environmentInput').value,
-                remarks: document.getElementById('remarksInput').value
-            };
+            // 加载巡查人列表
+            async function loadInspectorList() {
+                const allInspectors = ['张主任', '李老师', '王督导', '赵老师', '刘老师'];
+                
+                allInspectors.forEach(name => {
+                    ['inspectorSelect', 'searchInspector'].forEach(selectId => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        document.getElementById(selectId).appendChild(option);
+                    });
+                });
+            }
             
-            try {
-                const { error } = await supabase
+            // 提交巡查记录
+            async function submitInspection(e) {
+                e.preventDefault();
+                
+                const formData = {
+                    inspection_date: document.getElementById('inspectionDate').value,
+                    class_name: document.getElementById('classSelect').value,
+                    period: parseInt(document.getElementById('periodSelect').value),
+                    inspector: document.getElementById('inspectorSelect').value,
+                    arrival_status: document.getElementById('arrivalStatus').value,
+                    student_status: document.getElementById('studentStatus').value,
+                    subject: document.getElementById('subjectInput').value,
+                    teacher_name: document.getElementById('teacherInput').value,
+                    environment: document.getElementById('environmentInput').value,
+                    remarks: document.getElementById('remarksInput').value
+                };
+                
+                try {
+                    const { error } = await mySupabaseClient
+                        .from('inspections')
+                        .insert([formData]);
+                    
+                    if (error) throw error;
+                    
+                    showToast('巡查记录提交成功！', 'success');
+                    document.getElementById('inspectionForm').reset();
+                    updateWeekday();
+                    showPage('queryPage');
+                    
+                } catch (error) {
+                    console.error('提交失败:', error);
+                    showToast('提交失败: ' + error.message, 'error');
+                }
+            }
+            
+            // 搜索巡查记录
+            async function searchInspections() {
+                const searchDate = document.getElementById('searchDate').value;
+                const searchClass = document.getElementById('searchClass').value;
+                const searchInspector = document.getElementById('searchInspector').value;
+                
+                let query = mySupabaseClient
                     .from('inspections')
-                    .insert([formData]);
+                    .select('*')
+                    .order('inspection_date', { ascending: false });
                 
-                if (error) throw error;
+                if (searchDate) query = query.eq('inspection_date', searchDate);
+                if (searchClass) query = query.eq('class_name', searchClass);
+                if (searchInspector) query = query.eq('inspector', searchInspector);
                 
-                showToast('巡查记录提交成功！', 'success');
-                document.getElementById('inspectionForm').reset();
-                window.updateWeekday();
-                // 提交后自动跳转到查询页查看结果
-                window.showPage('queryPage');
-                
-            } catch (error) {
-                console.error('提交失败:', error);
-                showToast('提交失败: ' + error.message, 'error');
-            }
-        }
-        
-        // 搜索巡查记录
-        window.searchInspections = async function() {
-            const searchDate = document.getElementById('searchDate').value;
-            const searchClass = document.getElementById('searchClass').value;
-            const searchInspector = document.getElementById('searchInspector').value;
-            
-            let query = supabase
-                .from('inspections')
-                .select('*')
-                .order('inspection_date', { ascending: false });
-            
-            if (searchDate) query = query.eq('inspection_date', searchDate);
-            if (searchClass) query = query.eq('class_name', searchClass);
-            if (searchInspector) query = query.eq('inspector', searchInspector);
-            
-            try {
-                const { data, error } = await query;
-                if (error) throw error;
-                displayInspections(data || []);
-            } catch (error) {
-                console.error('搜索失败:', error);
-                showToast('搜索失败: ' + error.message, 'error');
-            }
-        };
-        
-        // 显示巡查记录表格
-        function displayInspections(records) {
-            const tbody = document.getElementById('inspectionsBody');
-            
-            if (records.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
-                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
-                            没有找到匹配的巡查记录
-                        </td>
-                    </tr>
-                `;
-                return;
+                try {
+                    const { data, error } = await query;
+                    if (error) throw error;
+                    displayInspections(data || []);
+                } catch (error) {
+                    console.error('搜索失败:', error);
+                    showToast('搜索失败: ' + error.message, 'error');
+                }
             }
             
-            let html = '';
-            records.forEach(record => {
-                // 确定状态显示样式
-                let statusClass = 'status-ok';
-                if (record.arrival_status === '迟到') statusClass = 'status-late';
-                if (record.arrival_status === '旷课') statusClass = 'status-absent';
+            // 显示巡查记录表格
+            function displayInspections(records) {
+                const tbody = document.getElementById('inspectionsBody');
                 
-                html += `
-                    <tr>
-                        <td>
-                            <div>${record.inspection_date}</div>
-                            <div style="font-size: 12px; color: #666;">
-                                ${new Date(record.inspection_date).toLocaleDateString('zh-CN', {weekday: 'short'})}
-                            </div>
-                        </td>
-                        <td>${record.class_name}</td>
-                        <td>第${record.period}节</td>
-                        <td>${record.inspector}</td>
-                        <td><span class="${statusClass}">${record.arrival_status}</span></td>
-                        <td>
-                            <div>${record.subject || '-'}</div>
-                            <div style="font-size: 12px; color: #666;">${record.teacher_name || ''}</div>
-                        </td>
-                        <td>${record.student_status || '-'}</td>
-                        <td>
-                            <div class="action-buttons-small">
-                                <button class="btn-edit" onclick="window.editRecord('${record.id}')">编辑</button>
-                                <button class="btn-delete" onclick="window.deleteRecord('${record.id}')">删除</button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            tbody.innerHTML = html;
-        }
-        
-        // 下载数据
-        window.downloadData = function() {
-            const currentInspector = document.getElementById('inspectorSelect').value;
-            
-            // 权限检查：只有巡查人才能下载
-            if (!currentInspector || currentInspector === '请选择巡查人') {
-                showToast('请先在填写页面选择您的巡查人身份，以便验证下载权限。', 'error');
-                return;
-            }
-            
-            const table = document.getElementById('inspectionsTable');
-            const rows = table.querySelectorAll('tr');
-            let csv = [];
-            
-            // 获取表头
-            const headerRow = [];
-            rows[0].querySelectorAll('th').forEach(th => {
-                headerRow.push(`"${th.textContent.replace(/"/g, '""')}"`);
-            });
-            csv.push(headerRow.join(','));
-            
-            // 获取数据行
-            for (let i = 1; i < rows.length; i++) {
-                const rowData = [];
-                const cells = rows[i].querySelectorAll('td');
-                
-                // 检查是否是"无数据"行
-                if (cells.length === 1 && cells[0].colSpan === 8) {
-                    continue;
+                if (records.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
+                                <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block; opacity: 0.5;"></i>
+                                没有找到匹配的巡查记录
+                            </td>
+                        </tr>
+                    `;
+                    return;
                 }
                 
-                cells.forEach(cell => {
-                    // 跳过操作按钮
-                    if (!cell.querySelector('.btn-edit, .btn-delete')) {
-                        let cellText = cell.textContent.replace(/\s+/g, ' ').trim();
-                        if (cellText.includes(',') || cellText.includes('"')) {
-                            cellText = '"' + cellText.replace(/"/g, '""') + '"';
-                        }
-                        rowData.push(cellText);
+                let html = '';
+                records.forEach(record => {
+                    let statusClass = 'status-ok';
+                    if (record.arrival_status === '迟到') statusClass = 'status-late';
+                    if (record.arrival_status === '旷课') statusClass = 'status-absent';
+                    
+                    html += `
+                        <tr>
+                            <td>
+                                <div>${record.inspection_date}</div>
+                                <div style="font-size: 12px; color: #666;">
+                                    ${new Date(record.inspection_date).toLocaleDateString('zh-CN', {weekday: 'short'})}
+                                </div>
+                            </td>
+                            <td>${record.class_name}</td>
+                            <td>第${record.period}节</td>
+                            <td>${record.inspector}</td>
+                            <td><span class="${statusClass}">${record.arrival_status}</span></td>
+                            <td>
+                                <div>${record.subject || '-'}</div>
+                                <div style="font-size: 12px; color: #666;">${record.teacher_name || ''}</div>
+                            </td>
+                            <td>${record.student_status || '-'}</td>
+                            <td>
+                                <div class="action-buttons-small">
+                                    <button class="btn-edit" data-id="${record.id}">编辑</button>
+                                    <button class="btn-delete" data-id="${record.id}">删除</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+                
+                // 为编辑和删除按钮添加事件监听
+                tbody.querySelectorAll('.btn-edit').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        editRecord(this.getAttribute('data-id'));
+                    });
+                });
+                
+                tbody.querySelectorAll('.btn-delete').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        deleteRecord(this.getAttribute('data-id'));
+                    });
+                });
+            }
+            
+            // 下载数据
+            function downloadData() {
+                const currentInspector = document.getElementById('inspectorSelect').value;
+                
+                if (!currentInspector || currentInspector === '请选择巡查人') {
+                    showToast('请先在填写页面选择您的巡查人身份，以便验证下载权限。', 'error');
+                    return;
+                }
+                
+                const table = document.getElementById('inspectionsTable');
+                const rows = table.querySelectorAll('tr');
+                let csv = [];
+                
+                // 获取表头
+                const headerRow = [];
+                rows[0].querySelectorAll('th').forEach(th => {
+                    headerRow.push(`"${th.textContent.replace(/"/g, '""')}"`);
+                });
+                csv.push(headerRow.join(','));
+                
+                // 获取数据行
+                for (let i = 1; i < rows.length; i++) {
+                    const rowData = [];
+                    const cells = rows[i].querySelectorAll('td');
+                    
+                    if (cells.length === 1 && cells[0].colSpan === 8) {
+                        continue;
                     }
-                });
+                    
+                    cells.forEach(cell => {
+                        if (!cell.querySelector('.btn-edit, .btn-delete')) {
+                            let cellText = cell.textContent.replace(/\s+/g, ' ').trim();
+                            if (cellText.includes(',') || cellText.includes('"')) {
+                                cellText = '"' + cellText.replace(/"/g, '""') + '"';
+                            }
+                            rowData.push(cellText);
+                        }
+                    });
+                    
+                    if (rowData.length > 0) {
+                        csv.push(rowData.join(','));
+                    }
+                }
                 
-                if (rowData.length > 0) {
-                    csv.push(rowData.join(','));
+                const csvContent = csv.join('\n');
+                const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                
+                link.setAttribute('href', url);
+                link.setAttribute('download', `巡查记录_${new Date().toISOString().split('T')[0]}.csv`);
+                link.style.visibility = 'hidden';
+                
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('数据下载开始，请检查浏览器的下载列表。', 'success');
+            }
+            
+            // 编辑记录
+            function editRecord(recordId) {
+                showToast('编辑功能开发中，记录ID: ' + recordId, 'success');
+            }
+            
+            // 删除记录
+            async function deleteRecord(recordId) {
+                if (!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
+                
+                try {
+                    const { error } = await mySupabaseClient
+                        .from('inspections')
+                        .delete()
+                        .eq('id', recordId);
+                    
+                    if (error) throw error;
+                    
+                    showToast('记录删除成功！', 'success');
+                    searchInspections();
+                    
+                } catch (error) {
+                    console.error('删除失败:', error);
+                    showToast('删除失败: ' + error.message, 'error');
                 }
             }
             
-            const csvContent = csv.join('\n');
-            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `巡查记录_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showToast('数据下载开始，请检查浏览器的下载列表。', 'success');
-        };
-        
-        // 编辑记录
-        window.editRecord = function(recordId) {
-            showToast('编辑功能开发中，记录ID: ' + recordId, 'success');
-        };
-        
-        // 删除记录
-        window.deleteRecord = async function(recordId) {
-            if (!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
-            
-            try {
-                const { error } = await supabase
-                    .from('inspections')
-                    .delete()
-                    .eq('id', recordId);
+            // 显示提示消息
+            function showToast(message, type) {
+                const existingToasts = document.querySelectorAll('.toast');
+                existingToasts.forEach(toast => toast.remove());
                 
-                if (error) throw error;
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
                 
-                showToast('记录删除成功！', 'success');
-                window.searchInspections(); // 刷新列表
-                
-            } catch (error) {
-                console.error('删除失败:', error);
-                showToast('删除失败: ' + error.message, 'error');
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
             }
-        };
-        
-        // 显示提示消息
-        function showToast(message, type) {
-            const existingToasts = document.querySelectorAll('.toast');
-            existingToasts.forEach(toast => toast.remove());
             
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
+            // 初始化应用
+            function initializeApp() {
+                // 设置默认日期
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('inspectionDate').value = today;
+                document.getElementById('searchDate').value = today;
+                
+                // 设置日期变更监听
+                document.getElementById('inspectionDate').addEventListener('change', updateWeekday);
+                
+                // 初始更新星期显示
+                updateWeekday();
+                
+                // 加载数据
+                loadClasses();
+                loadInspectorList();
+                
+                // 设置事件监听
+                document.getElementById('fillBtn').addEventListener('click', () => showPage('fillPage'));
+                document.getElementById('queryBtn').addEventListener('click', () => showPage('queryPage'));
+                document.getElementById('backFromFill').addEventListener('click', () => showPage('homePage'));
+                document.getElementById('backFromQuery').addEventListener('click', () => showPage('homePage'));
+                document.getElementById('searchBtn').addEventListener('click', searchInspections);
+                document.getElementById('downloadBtn').addEventListener('click', downloadData);
+                document.getElementById('inspectionForm').addEventListener('submit', submitInspection);
+                
+                // 初始加载查询页数据
+                searchInspections();
+                
+                console.log('教务巡查系统初始化完成');
+            }
             
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
+            // 当Supabase客户端就绪后初始化应用
+            if (mySupabaseClient) {
+                initializeApp();
+            }
+            
+        })();
     </script>
 </body>
 </html>
