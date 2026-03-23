@@ -296,10 +296,10 @@
                 <select id="searchInspector">
                     <option value="">全部巡查人</option>
                 </select>
-                <button class="search-btn" id="searchBtn">
+                <button class="search-btn" id="searchBtn" type="button">
                     <i class="fas fa-search"></i> 搜索
                 </button>
-                <button class="export-btn" id="downloadBtn">
+                <button class="export-btn" id="downloadBtn" type="button">
                     <i class="fas fa-download"></i> 下载
                 </button>
             </div>
@@ -337,10 +337,12 @@
         <div class="password-box">
             <h3 style="margin-bottom: 15px;"><i class="fas fa-lock"></i> 管理员验证</h3>
             <p style="margin-bottom: 10px; color: #666;">请输入管理员密码以下载数据：</p>
-            <input type="password" id="adminPassword" class="password-input" placeholder="输入管理员密码">
+            <form id="passwordForm" onsubmit="event.preventDefault(); document.getElementById('confirmDownload').click();">
+                <input type="password" id="adminPassword" class="password-input" placeholder="输入管理员密码">
+            </form>
             <div class="modal-buttons">
-                <button class="search-btn" id="confirmDownload">确认下载</button>
-                <button class="export-btn" style="background: #666;" id="cancelDownload">取消</button>
+                <button class="search-btn" id="confirmDownload" type="button">确认下载</button>
+                <button class="export-btn" style="background: #666;" id="cancelDownload" type="button">取消</button>
             </div>
         </div>
     </div>
@@ -349,6 +351,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
     <script>
+        // 立即执行函数，避免全局污染
         (function() {
             "use strict";
             
@@ -357,11 +360,20 @@
             const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R'; // 替换为您的 anon public key
             // =================================================================================
             
-            // 创建 Supabase 客户端 - 使用自执行函数避免重复声明
-            if (typeof window.supabaseClient === 'undefined') {
-                window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // 检查Supabase库是否已加载
+            if (typeof supabase === 'undefined') {
+                console.error('Supabase 库未加载，请检查网络连接');
+                showToast('Supabase 库加载失败，请刷新页面重试', 'error');
+                return;
             }
-            const supabase = window.supabaseClient;
+            
+            // 创建 Supabase 客户端
+            const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+                auth: {
+                    persistSession: false, // 禁用会话持久化，避免Tracking Prevention问题
+                    autoRefreshToken: false
+                }
+            });
             
             // 星期映射表
             const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
@@ -370,8 +382,6 @@
             // 全局变量
             let currentInspector = localStorage.getItem('currentInspector') || '';
             let editingRecordId = null; // 当前正在编辑的记录ID
-            
-            // 系统状态
             let systemReady = false;
             
             // 页面加载初始化
@@ -380,12 +390,13 @@
                 initSystem();
             });
             
+            // 初始化系统
             async function initSystem() {
                 try {
                     console.log('正在初始化教务巡查系统...');
                     
                     // 测试 Supabase 连接
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('classes')
                         .select('count', { count: 'exact', head: true })
                         .limit(1);
@@ -424,7 +435,7 @@
                     
                     systemReady = true;
                     console.log('系统初始化完成');
-                    showToast('系统初始化完成', 'success');
+                    showToast('系统初始化完成，可以开始使用', 'success');
                     
                 } catch (error) {
                     console.error('系统初始化失败:', error);
@@ -444,7 +455,10 @@
                 if (pageId === 'homePage') {
                     document.getElementById('homePage').style.display = 'block';
                 } else {
-                    document.getElementById(pageId).classList.add('active');
+                    const pageElement = document.getElementById(pageId);
+                    if (pageElement) {
+                        pageElement.classList.add('active');
+                    }
                     
                     // 如果是查询页面，加载数据
                     if (pageId === 'queryPage') {
@@ -579,7 +593,7 @@
             // 加载班级列表
             async function loadClasses() {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('classes')
                         .select('class_name')
                         .order('class_name');
@@ -618,7 +632,7 @@
             // 加载巡查人列表
             async function loadInspectors() {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('inspectors')
                         .select('inspector_name')
                         .order('inspector_name');
@@ -657,7 +671,7 @@
             // 加载科目列表
             async function loadSubjects() {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('schedule')
                         .select('subject')
                         .order('subject');
@@ -684,7 +698,7 @@
             // 加载教师列表
             async function loadTeachers() {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('teachers')
                         .select('teacher_name')
                         .order('teacher_name');
@@ -765,7 +779,7 @@
                 const weekdayChinese = weekdays[weekdayIndex];
                 
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('schedule')
                         .select('subject, teacher_name')
                         .eq('class_name', classSelect.value)
@@ -846,7 +860,7 @@
                     
                     if (editingRecordId) {
                         // 更新现有记录
-                        result = await supabase
+                        result = await supabaseClient
                             .from('inspections')
                             .update(formData)
                             .eq('id', editingRecordId);
@@ -856,7 +870,7 @@
                         editingRecordId = null;
                     } else {
                         // 插入新记录
-                        result = await supabase
+                        result = await supabaseClient
                             .from('inspections')
                             .insert([formData]);
                         
@@ -897,7 +911,7 @@
                         `;
                     }
                     
-                    let query = supabase
+                    let query = supabaseClient
                         .from('inspections')
                         .select('*')
                         .order('inspection_date', { ascending: false })
@@ -993,7 +1007,7 @@
             // 编辑记录
             window.editRecord = async function(recordId) {
                 try {
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('inspections')
                         .select('*')
                         .eq('id', recordId)
@@ -1042,7 +1056,7 @@
                 }
                 
                 try {
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('inspections')
                         .delete()
                         .eq('id', recordId);
@@ -1084,7 +1098,7 @@
                 
                 try {
                     // 获取所有记录
-                    const { data, error } = await supabase
+                    const { data, error } = await supabaseClient
                         .from('inspections')
                         .select('*')
                         .order('inspection_date', { ascending: false });
