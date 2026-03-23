@@ -287,9 +287,10 @@
         // 终极防护：使用一个极不可能冲突的全局变量名来创建和管理客户端
         (function() {
             if (!window.__schoolInspectionSys) {
-                window.__schoolInspectionSys = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                window.__schoolInspectionSys = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         })();
+        
         // 为业务代码创建一个局部常量引用
         const supabase = window.__schoolInspectionSys;
         // ==================== 初始化结束 ====================
@@ -298,6 +299,27 @@
         const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
         let allClasses = [];
         let allInspectors = [];
+
+        // 页面切换函数 - 这个函数是必须的，否则会报错！
+        function showPage(pageId) {
+            // 隐藏首页
+            document.getElementById('homePage').style.display = (pageId === 'homePage') ? 'block' : 'none';
+            
+            // 隐藏所有内容页
+            document.querySelectorAll('.main-content').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // 显示选中的内容页
+            if (pageId !== 'homePage') {
+                document.getElementById(pageId).classList.add('active');
+            }
+            
+            // 如果是查询页，自动加载数据
+            if (pageId === 'queryPage') {
+                searchInspections();
+            }
+        }
 
         // 页面加载初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -317,20 +339,6 @@
             
             // 设置表单提交事件
             document.getElementById('inspectionForm').addEventListener('submit', submitInspection);
-        }
-
-        // 页面切换函数
-        function showPage(pageId) {
-            document.getElementById('homePage').style.display = (pageId === 'homePage') ? 'block' : 'none';
-            document.querySelectorAll('.main-content').forEach(page => {
-                page.classList.remove('active');
-            });
-            if (pageId !== 'homePage') {
-                document.getElementById(pageId).classList.add('active');
-            }
-            if (pageId === 'queryPage') {
-                searchInspections(); // 进入查询页时自动加载数据
-            }
         }
 
         // 根据日期更新星期显示
@@ -520,7 +528,7 @@
                 const rowData = [];
                 const cells = rows[i].querySelectorAll('td');
                 
-                // 检查是否是“无数据”行
+                // 检查是否是"无数据"行
                 if (cells.length === 1 && cells[0].colSpan === 8) {
                     continue;
                 }
