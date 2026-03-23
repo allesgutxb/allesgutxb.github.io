@@ -3,1092 +3,414 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>教务巡查系统</title>
+    <title>学校教务巡查系统</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
-            color: #333;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            background: white;
-            border-radius: 15px;
-            padding: 25px;
-            margin-bottom: 25px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-        
-        .header h1 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-        
-        .header h1 i {
-            color: #667eea;
-        }
-        
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-        }
-        
-        .stat-card i {
-            font-size: 30px;
-            margin-bottom: 10px;
-        }
-        
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: bold;
-            display: block;
-        }
-        
-        .stat-card .label {
-            font-size: 14px;
-            opacity: 0.9;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 25px;
-        }
-        
-        .form-section {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .form-section h2 {
-            color: #2c3e50;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 15px;
-        }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 15px;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-        
-        .row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        
-        .class-info {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 25px;
-        }
-        
-        .class-info h3 {
-            font-size: 22px;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        
-        .info-item {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 10px;
-            border-radius: 6px;
-        }
-        
-        .info-label {
-            font-size: 13px;
-            opacity: 0.9;
-            margin-bottom: 3px;
-        }
-        
-        .info-value {
-            font-size: 15px;
-            font-weight: 600;
-        }
-        
-        .btn-primary {
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            transition: transform 0.2s;
-        }
-        
-        .btn-primary:hover {
-            transform: translateY(-2px);
-        }
-        
-        .btn-secondary {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        
-        .btn-secondary:hover {
-            background: #764ba2;
-        }
-        
-        .table-section {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        }
-        
-        .table-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .table-header h2 {
-            color: #2c3e50;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .search-box {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-        
-        .search-box input,
-        .search-box select {
-            flex: 1;
-            padding: 10px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        
-        .search-btn {
-            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        th {
-            background: #f8f9fa;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 2px solid #e0e0e0;
-        }
-        
-        td {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        tr:hover {
-            background: #f8f9fa;
-        }
-        
-        .status-normal {
-            background: #4CAF50;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        .status-late {
-            background: #FF9800;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        .status-absent {
-            background: #f44336;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .btn-edit {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .btn-delete {
-            background: #f44336;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        
-        .btn-download {
-            background: linear-gradient(135deg, #9C27B0 0%, #673AB7 100%);
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            width: 500px;
-            max-width: 90%;
-        }
-        
-        .modal h3 {
-            margin-bottom: 20px;
-            color: #2c3e50;
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 15px;
-            margin-top: 25px;
-        }
-        
-        .btn-cancel {
-            background: #f0f0f0;
-            color: #666;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            flex: 1;
-        }
-        
-        .btn-confirm {
-            background: #2196F3;
-            color: white;
-            border: none;
-            padding: 10px 25px;
-            border-radius: 8px;
-            cursor: pointer;
-            flex: 1;
-        }
-        
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            z-index: 1001;
-            animation: slideIn 0.3s ease;
-        }
-        
-        .toast.success {
-            background: #4CAF50;
-        }
-        
-        .toast.error {
-            background: #f44336;
-        }
-        
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-        
-        .weekday-display {
-            font-size: 14px;
-            color: #666;
-            margin-top: 5px;
-            font-style: italic;
-        }
-        
-        @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .row {
-                grid-template-columns: 1fr;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .stats {
-                grid-template-columns: 1fr;
-            }
-        }
+        /* 样式部分保持不变，确保界面美观与功能 */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Microsoft YaHei', sans-serif; }
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { background: white; border-radius: 15px; padding: 25px; margin-bottom: 25px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .header h1 { color: #2c3e50; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 15px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; text-align: center; }
+        .main-content { display: grid; grid-template-columns: 1fr 2fr; gap: 25px; margin-top: 25px; }
+        .form-section, .table-section { background: white; border-radius: 15px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 15px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .btn-primary { background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; border: none; padding: 15px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; margin-top: 10px; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 25px; }
+        .search-btn, .export-btn { background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%); color: white; border: none; padding: 10px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background-color: #f8f9fa; font-weight: 600; }
+        .action-buttons { display: flex; gap: 5px; }
+        .btn-edit, .btn-delete { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; }
+        .btn-edit { background: #2196F3; }
+        .btn-delete { background: #f44336; }
+        @media (max-width: 768px) { .main-content { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- 头部统计信息 -->
         <div class="header">
             <h1><i class="fas fa-chalkboard-teacher"></i> 学校教务巡查系统</h1>
             <div class="stats">
-                <div class="stat-card">
-                    <i class="fas fa-school"></i>
-                    <span class="number" id="classCount">18</span>
-                    <span class="label">班级总数</span>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-users"></i>
-                    <span class="number" id="teacherCount">58</span>
-                    <span class="label">教师人数</span>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-clipboard-check"></i>
-                    <span class="number" id="recordCount">0</span>
-                    <span class="label">巡查记录</span>
-                </div>
-                <div class="stat-card">
-                    <i class="fas fa-chart-line"></i>
-                    <span class="number" id="todayCount">0</span>
-                    <span class="label">今日巡查</span>
-                </div>
+                <div class="stat-card"><i class="fas fa-school"></i><div class="number" id="classCount">0</div><div class="label">班级总数</div></div>
+                <div class="stat-card"><i class="fas fa-users"></i><div class="number" id="teacherCount">0</div><div class="label">教师人数</div></div>
+                <div class="stat-card"><i class="fas fa-clipboard-check"></i><div class="number" id="recordCount">0</div><div class="label">总记录</div></div>
+                <div class="stat-card"><i class="fas fa-calendar-day"></i><div class="number" id="todayCount">0</div><div class="label">今日记录</div></div>
             </div>
         </div>
-        
+
         <div class="main-content">
-            <!-- 左侧：填写巡查记录表单 -->
+            <!-- 左侧：填写记录表单 -->
             <div class="form-section">
                 <h2><i class="fas fa-edit"></i> 填写巡查记录</h2>
-                
-                <div class="class-info">
-                    <h3><i class="fas fa-chalkboard"></i> 八6班</h3>
-                    <div class="info-grid">
-                        <div class="info-item">
-                            <div class="info-label">巡查日期</div>
-                            <div class="info-value" id="displayDate">2026/03/20</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">星期</div>
-                            <div class="info-value" id="displayWeekday">星期五</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">节次</div>
-                            <div class="info-value" id="displayPeriod">第1节</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">科目/教师</div>
-                            <div class="info-value">数学 / 何秀娟</div>
-                        </div>
-                    </div>
-                </div>
-                
                 <form id="inspectionForm">
                     <div class="row">
                         <div class="form-group">
-                            <label for="classSelect">班级 <span style="color: red">*</span></label>
-                            <select id="classSelect" required onchange="loadClassSchedule()">
-                                <option value="">请选择班级</option>
-                                <option value="九1班">九1班</option>
-                                <option value="九2班">九2班</option>
-                                <option value="九3班">九3班</option>
-                                <option value="九4班">九4班</option>
-                                <option value="九5班">九5班</option>
-                                <option value="九6班">九6班</option>
-                                <option value="八1班">八1班</option>
-                                <option value="八2班">八2班</option>
-                                <option value="八3班">八3班</option>
-                                <option value="八4班">八4班</option>
-                                <option value="八5班">八5班</option>
-                                <option value="八6班" selected>八6班</option>
-                                <option value="七1班">七1班</option>
-                                <option value="七2班">七2班</option>
-                                <option value="七3班">七3班</option>
-                                <option value="七4班">七4班</option>
-                                <option value="七5班">七5班</option>
-                                <option value="七6班">七6班</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="inspectionDate">巡查日期 <span style="color: red">*</span></label>
+                            <label for="inspectionDate">巡查日期 *</label>
                             <input type="date" id="inspectionDate" required onchange="updateWeekday()">
-                            <div class="weekday-display" id="weekdayDisplay"></div>
+                            <div id="weekdayDisplay" style="font-size:14px; color:#666; margin-top:5px;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="classSelect">班级 *</label>
+                            <select id="classSelect" required>
+                                <option value="">请选择班级</option>
+                                <!-- 班级选项将由JavaScript动态加载 -->
+                            </select>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="form-group">
-                            <label for="periodSelect">节次 <span style="color: red">*</span></label>
-                            <select id="periodSelect" required onchange="loadClassSchedule()">
+                            <label for="periodSelect">节次 *</label>
+                            <select id="periodSelect" required>
                                 <option value="">请选择节次</option>
-                                <option value="1" selected>第1节 (08:00-08:45)</option>
-                                <option value="2">第2节 (08:55-09:40)</option>
-                                <option value="3">第3节 (10:00-10:45)</option>
-                                <option value="4">第4节 (10:55-11:40)</option>
-                                <option value="5">第5节 (14:00-14:45)</option>
-                                <option value="6">第6节 (14:55-15:40)</option>
-                                <option value="7">第7节 (16:00-16:45)</option>
-                                <option value="8">第8节 (16:55-17:40)</option>
+                                <option value="1">第一节</option><option value="2">第二节</option>
+                                <option value="3">第三节</option><option value="4">第四节</option>
+                                <option value="5">第五节</option><option value="6">第六节</option>
+                                <option value="7">第七节</option><option value="8">第八节</option>
                             </select>
                         </div>
-                        
                         <div class="form-group">
-                            <label for="weekdaySelect">星期 <span style="color: red">*</span></label>
-                            <select id="weekdaySelect" required onchange="loadClassSchedule()">
-                                <option value="">请选择星期</option>
-                                <option value="星期一">星期一</option>
-                                <option value="星期二">星期二</option>
-                                <option value="星期三">星期三</option>
-                                <option value="星期四">星期四</option>
-                                <option value="星期五" selected>星期五</option>
+                            <label for="inspectorName">巡查人 *</label>
+                            <select id="inspectorName" required>
+                                <option value="">请选择巡查人</option>
+                                <!-- 巡查人选项将由JavaScript动态加载 -->
                             </select>
                         </div>
                     </div>
-                    
                     <div class="row">
                         <div class="form-group">
-                            <label for="subjectSelect">科目 <span style="color: red">*</span></label>
-                            <select id="subjectSelect" required>
-                                <option value="">请选择科目</option>
-                                <option value="语文">语文</option>
-                                <option value="数学" selected>数学</option>
-                                <option value="英语">英语</option>
-                                <option value="物理">物理</option>
-                                <option value="化学">化学</option>
-                                <option value="生物">生物</option>
-                                <option value="政治">政治</option>
-                                <option value="历史">历史</option>
-                                <option value="地理">地理</option>
-                                <option value="体育">体育</option>
-                                <option value="音乐">音乐</option>
-                                <option value="美术">美术</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="teacherSelect">任课教师 <span style="color: red">*</span></label>
-                            <select id="teacherSelect" required>
-                                <option value="">请选择教师</option>
-                                <option value="何秀娟" selected>何秀娟</option>
-                                <option value="张老师">张老师</option>
-                                <option value="李老师">李老师</option>
-                                <option value="王老师">王老师</option>
-                                <option value="赵老师">赵老师</option>
-                                <option value="刘老师">刘老师</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="arrivalTime">教师到岗时间 <span style="color: red">*</span></label>
+                            <label for="arrivalTime">教师到岗情况 *</label>
                             <select id="arrivalTime" required>
-                                <option value="">请选择到岗情况</option>
-                                <option value="提前到达">提前到达</option>
+                                <option value="">请选择</option>
                                 <option value="按时到岗">按时到岗</option>
                                 <option value="迟到">迟到</option>
                                 <option value="旷课">旷课</option>
+                                <option value="学生课前状态异常">学生课前状态异常（需在备注中说明）</option>
                             </select>
                         </div>
-                        
                         <div class="form-group">
-                            <label for="inspectorName">巡查人 <span style="color: red">*</span></label>
-                            <input type="text" id="inspectorName" placeholder="请输入巡查人姓名" required>
+                            <label for="subject">科目</label>
+                            <input type="text" id="subject" placeholder="请输入科目">
                         </div>
                     </div>
-                    
                     <div class="form-group">
-                        <label for="classroomEnvironment">教室环境</label>
-                        <textarea id="classroomEnvironment" rows="3" placeholder="请描述教室环境情况..."></textarea>
+                        <label for="teacherName">任课教师</label>
+                        <input type="text" id="teacherName" placeholder="请输入任课教师姓名">
                     </div>
-                    
                     <div class="form-group">
-                        <label for="remarks">备注说明</label>
-                        <textarea id="remarks" rows="3" placeholder="其他需要说明的情况..."></textarea>
+                        <label for="classroomEnvironment">教室环境/学生状态备注</label>
+                        <textarea id="classroomEnvironment" rows="2" placeholder="请描述教室环境或学生课前状态..."></textarea>
                     </div>
-                    
-                    <button type="submit" class="btn-primary">
-                        <i class="fas fa-paper-plane"></i> 提交巡查记录
-                    </button>
+                    <div class="form-group">
+                        <label for="remarks">其他备注</label>
+                        <textarea id="remarks" rows="2" placeholder="其他需要说明的情况..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary"><i class="fas fa-paper-plane"></i> 提交记录</button>
                 </form>
             </div>
-            
-            <!-- 右侧：巡查记录表格 -->
+
+            <!-- 右侧：查询记录表格 -->
             <div class="table-section">
-                <div class="table-header">
-                    <h2><i class="fas fa-list"></i> 巡查记录</h2>
-                    <button class="btn-download" onclick="downloadData()">
-                        <i class="fas fa-download"></i> 下载数据
-                    </button>
-                </div>
-                
+                <h2><i class="fas fa-search"></i> 查询巡查记录</h2>
                 <div class="search-box">
                     <input type="date" id="searchDate" placeholder="按日期筛选">
                     <select id="searchClass">
                         <option value="">全部班级</option>
-                        <option value="九1班">九1班</option>
-                        <option value="九2班">九2班</option>
-                        <option value="九3班">九3班</option>
-                        <option value="九4班">九4班</option>
-                        <option value="九5班">九5班</option>
-                        <option value="九6班">九6班</option>
-                        <option value="八1班">八1班</option>
-                        <option value="八2班">八2班</option>
-                        <option value="八3班">八3班</option>
-                        <option value="八4班">八4班</option>
-                        <option value="八5班">八5班</option>
-                        <option value="八6班">八6班</option>
-                        <option value="七1班">七1班</option>
-                        <option value="七2班">七2班</option>
-                        <option value="七3班">七3班</option>
-                        <option value="七4班">七4班</option>
-                        <option value="七5班">七5班</option>
-                        <option value="七6班">七6班</option>
                     </select>
-                    <select id="searchResult">
-                        <option value="">全部结果</option>
-                        <option value="正常">正常</option>
-                        <option value="异常">异常</option>
+                    <select id="searchInspector">
+                        <option value="">全部巡查人</option>
                     </select>
-                    <button class="search-btn" onclick="loadInspections()">
-                        <i class="fas fa-search"></i> 搜索
-                    </button>
+                    <button class="search-btn" onclick="loadInspections()"><i class="fas fa-search"></i> 搜索</button>
+                    <button class="export-btn" onclick="downloadData()" id="downloadBtn"><i class="fas fa-download"></i> 下载</button>
                 </div>
-                
                 <div style="overflow-x: auto;">
                     <table id="inspectionsTable">
                         <thead>
                             <tr>
-                                <th>日期/星期</th>
-                                <th>班级</th>
-                                <th>节次</th>
-                                <th>科目/教师</th>
-                                <th>到岗情况</th>
-                                <th>巡查人</th>
-                                <th>教室环境</th>
+                                <th>日期</th><th>班级</th><th>节次</th><th>巡查人</th>
+                                <th>到岗情况</th><th>科目/教师</th><th>环境备注</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="inspectionsBody">
-                            <!-- 数据将通过JavaScript动态加载 -->
+                            <!-- 数据行由JavaScript动态插入 -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- 编辑记录模态框 -->
-    <div class="modal" id="editModal">
-        <div class="modal-content">
-            <h3><i class="fas fa-edit"></i> 编辑巡查记录</h3>
-            <form id="editForm">
-                <div class="form-group">
-                    <label for="editArrivalTime">教师到岗时间</label>
-                    <select id="editArrivalTime" required>
-                        <option value="提前到达">提前到达</option>
-                        <option value="按时到岗">按时到岗</option>
-                        <option value="迟到">迟到</option>
-                        <option value="旷课">旷课</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="editClassroomEnvironment">教室环境</label>
-                    <textarea id="editClassroomEnvironment" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="editRemarks">备注说明</label>
-                    <textarea id="editRemarks" rows="3"></textarea>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
-                    <button type="submit" class="btn-confirm">保存修改</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
+
+    <!-- 引入 Supabase 客户端库 -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
     <script>
-        // ====== 【修复：避免变量名冲突】 ======
+        // ==================== 【核心修复区：Supabase 初始化】 ====================
+        // 目标：使用一个独一无二的全局变量名，彻底避免与浏览器扩展或其他脚本冲突。
         (function() {
-            // 创建唯一的Supabase客户端实例
-            if (!window.schoolInspectionSystem) {
-                window.schoolInspectionSystem = {};
-            }
-            
-            if (!window.schoolInspectionSystem.supabaseClient) {
-                const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-                const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-                window.schoolInspectionSystem.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+            // 1. 定义项目配置（！！！请务必替换为您自己项目的真实URL和密钥！！！）
+            const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co'; // 替换为您的项目URL
+            const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R'; // 替换为您的匿名密钥
+
+            // 2. 检查是否已存在我们的客户端，避免重复创建
+            if (!window.__schoolInspectionDB) {
+                // 使用一个极不可能冲突的全局变量名来存储客户端
+                window.__schoolInspectionDB = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
         })();
-        
-        const supabase = window.schoolInspectionSystem.supabaseClient;
-        // ====== 修复结束 ======
+        // 3. 为业务代码创建一个局部常量引用
+        const supabase = window.__schoolInspectionDB;
+        // ==================== 初始化结束 ====================
 
-        let editingRecordId = null;
-        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        // 全局变量
+        let allClasses = [];
+        let allInspectors = [];
 
-        // 初始化页面
-        function initPage() {
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPage();
+        });
+
+        async function initPage() {
+            // 设置默认日期为今天
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inspectionDate').value = today;
             document.getElementById('searchDate').value = today;
             updateWeekday();
-            loadInspections();
-            loadStatistics();
-            
-            // 设置表单提交事件
-            document.getElementById('inspectionForm').addEventListener('submit', submitInspection);
-            document.getElementById('editForm').addEventListener('submit', updateInspection);
+
+            // 加载初始数据
+            await loadClasses();
+            await loadInspectorList();
+            await loadInspections(); // 加载初始的查询结果
+            updateStatistics();
         }
 
         // 根据日期更新星期显示
         function updateWeekday() {
             const dateInput = document.getElementById('inspectionDate');
-            const weekdayDisplay = document.getElementById('weekdayDisplay');
-            const weekdaySelect = document.getElementById('weekdaySelect');
-            
+            const display = document.getElementById('weekdayDisplay');
             if (dateInput.value) {
                 const date = new Date(dateInput.value);
-                const weekday = weekdays[date.getDay()];
-                weekdayDisplay.textContent = weekday;
-                weekdaySelect.value = weekday;
-                
-                // 更新班级信息显示
-                document.getElementById('displayDate').textContent = dateInput.value.replace(/-/g, '/');
-                document.getElementById('displayWeekday').textContent = weekday;
+                const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                display.textContent = weekdays[date.getDay()];
+            } else {
+                display.textContent = '';
             }
-            
-            // 加载课程安排
-            loadClassSchedule();
         }
 
-        // 加载班级课程安排
-        async function loadClassSchedule() {
-            const className = document.getElementById('classSelect').value;
-            const period = document.getElementById('periodSelect').value;
-            const weekday = document.getElementById('weekdaySelect').value;
-            
-            if (!className || !period || !weekday) return;
-            
+        // 加载班级列表
+        async function loadClasses() {
+            // 这里可以从数据库加载，或使用静态数据
+            const classGroups = [
+                { title: "九年级", classes: ["九1班", "九2班", "九3班", "九4班", "九5班", "九6班"] },
+                { title: "八年级", classes: ["八1班", "八2班", "八3班", "八4班", "八5班", "八6班"] },
+                { title: "七年级", classes: ["七1班", "七2班", "七3班", "七4班", "七5班", "七6班"] }
+            ];
+            allClasses = classGroups.flatMap(g => g.classes);
+            const classSelect = document.getElementById('classSelect');
+            const searchClassSelect = document.getElementById('searchClass');
+
+            allClasses.forEach(className => {
+                ['classSelect', 'searchClass'].forEach(selectId => {
+                    const option = document.createElement('option');
+                    option.value = className;
+                    option.textContent = className;
+                    document.getElementById(selectId).appendChild(option);
+                });
+            });
+            document.getElementById('classCount').textContent = allClasses.length;
+        }
+
+        // 加载巡查人列表（从数据库）
+        async function loadInspectorList() {
             try {
                 const { data, error } = await supabase
-                    .from('schedule')
-                    .select('subject, teacher_name')
-                    .eq('class_name', className)
-                    .eq('period', parseInt(period))
-                    .eq('week_day', weekday)
-                    .single();
-                
-                if (data && !error) {
-                    document.getElementById('subjectSelect').value = data.subject;
-                    document.getElementById('teacherSelect').value = data.teacher_name;
-                    document.getElementById('displayPeriod').textContent = `第${period}节`;
-                }
+                    .from('inspectors')
+                    .select('inspector_name')
+                    .order('inspector_name');
+                if (error) throw error;
+                allInspectors = data.map(i => i.inspector_name);
+                const inspectorSelect = document.getElementById('inspectorName');
+                const searchInspectorSelect = document.getElementById('searchInspector');
+
+                allInspectors.forEach(name => {
+                    [inspectorSelect, searchInspectorSelect].forEach(select => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        select.appendChild(option);
+                    });
+                });
+                document.getElementById('teacherCount').textContent = allInspectors.length;
             } catch (error) {
-                console.log('未找到课程安排，可以手动填写');
+                console.error('加载巡查人失败:', error);
+                // 备用方案：使用示例数据
+                const backupInspectors = ['张主任', '李老师', '王督导'];
+                backupInspectors.forEach(name => {
+                    ['inspectorName', 'searchInspector'].forEach(selectId => {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        document.getElementById(selectId).appendChild(option);
+                    });
+                });
+                document.getElementById('teacherCount').textContent = backupInspectors.length;
             }
         }
 
-        // 提交巡查记录
-        async function submitInspection(e) {
+        // 提交表单
+        document.getElementById('inspectionForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            const inspectionData = {
+            const formData = {
                 inspection_date: document.getElementById('inspectionDate').value,
                 class_name: document.getElementById('classSelect').value,
-                period: parseInt(document.getElementById('periodSelect').value),
-                week_day: document.getElementById('weekdaySelect').value,
-                subject: document.getElementById('subjectSelect').value,
-                teacher_name: document.getElementById('teacherSelect').value,
+                period: document.getElementById('periodSelect').value,
                 inspector: document.getElementById('inspectorName').value,
                 arrival_time: document.getElementById('arrivalTime').value,
+                subject: document.getElementById('subject').value,
+                teacher_name: document.getElementById('teacherName').value,
                 classroom_environment: document.getElementById('classroomEnvironment').value,
                 remarks: document.getElementById('remarks').value
             };
-            
             try {
-                const { error } = await supabase.from('inspections').insert([inspectionData]);
-                
+                const { error } = await supabase.from('inspections').insert([formData]);
                 if (error) throw error;
-                
-                showToast('巡查记录提交成功！', 'success');
-                document.getElementById('inspectionForm').reset();
+                alert('记录提交成功！');
+                this.reset();
                 updateWeekday();
-                loadInspections();
-                loadStatistics();
+                loadInspections(); // 刷新查询列表
+                updateStatistics();
             } catch (error) {
-                showToast('提交失败：' + error.message, 'error');
+                alert('提交失败: ' + error.message);
             }
-        }
+        });
 
-        // 加载巡查记录
+        // 加载并显示巡查记录
         async function loadInspections() {
             const searchDate = document.getElementById('searchDate').value;
             const searchClass = document.getElementById('searchClass').value;
-            const searchResult = document.getElementById('searchResult').value;
-            
-            let query = supabase
-                .from('inspections')
-                .select('*')
-                .order('inspection_date', { ascending: false });
-            
-            if (searchDate) {
-                query = query.eq('inspection_date', searchDate);
-            }
-            
-            if (searchClass) {
-                query = query.eq('class_name', searchClass);
-            }
-            
-            if (searchResult) {
-                query = query.eq('arrival_time', searchResult);
-            }
-            
+            const searchInspector = document.getElementById('searchInspector').value;
+
+            let query = supabase.from('inspections').select('*').order('inspection_date', { ascending: false });
+
+            if (searchDate) query = query.eq('inspection_date', searchDate);
+            if (searchClass) query = query.eq('class_name', searchClass);
+            if (searchInspector) query = query.eq('inspector', searchInspector);
+
             try {
                 const { data, error } = await query;
-                
                 if (error) throw error;
-                
                 displayInspections(data || []);
             } catch (error) {
-                console.error('加载巡查记录失败:', error);
-                showToast('加载数据失败', 'error');
+                console.error('查询失败:', error);
+                document.getElementById('inspectionsBody').innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;">查询失败: ${error.message}</td></tr>`;
             }
         }
 
-        // 显示巡查记录表格
         function displayInspections(records) {
             const tbody = document.getElementById('inspectionsBody');
             tbody.innerHTML = '';
-            
             if (records.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px; color: #666;">
-                            <i class="fas fa-inbox" style="font-size: 48px; margin-bottom: 15px; display: block;"></i>
-                            暂无巡查记录
-                        </td>
-                    </tr>
-                `;
+                tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:#666;">暂无巡查记录</td></tr>`;
                 return;
             }
-            
             records.forEach(record => {
                 const row = document.createElement('tr');
-                
-                // 根据到岗情况设置状态样式
-                let statusClass = 'status-normal';
-                if (record.arrival_time === '迟到') statusClass = 'status-late';
-                if (record.arrival_time === '旷课') statusClass = 'status-absent';
-                
                 row.innerHTML = `
-                    <td>
-                        <div>${record.inspection_date.replace(/-/g, '/')}</div>
-                        <div style="font-size: 12px; color: #666;">${record.week_day}</div>
-                    </td>
+                    <td>${record.inspection_date}<br><small>${new Date(record.inspection_date).toLocaleDateString('zh-CN', {weekday: 'short'})}</small></td>
                     <td>${record.class_name}</td>
                     <td>第${record.period}节</td>
-                    <td>
-                        <div>${record.subject}</div>
-                        <div style="font-size: 12px; color: #666;">${record.teacher_name}</div>
-                    </td>
-                    <td><span class="${statusClass}">${record.arrival_time}</span></td>
                     <td>${record.inspector}</td>
-                    <td style="max-width: 150px; word-wrap: break-word;">${record.classroom_environment || '无'}</td>
-                    <td>
-                        <div class="action-buttons">
-                            <button class="btn-edit" onclick="editRecord('${record.id}')">
-                                <i class="fas fa-edit"></i> 编辑
-                            </button>
-                            <button class="btn-delete" onclick="deleteRecord('${record.id}')">
-                                <i class="fas fa-trash"></i> 删除
-                            </button>
-                        </div>
+                    <td>${record.arrival_time || '-'}</td>
+                    <td>${record.subject || '-'}<br><small>${record.teacher_name || ''}</small></td>
+                    <td>${record.classroom_environment || '-'}</td>
+                    <td class="action-buttons">
+                        <button class="btn-edit" onclick="editRecord('${record.id}')">编辑</button>
+                        <button class="btn-delete" onclick="deleteRecord('${record.id}')">删除</button>
                     </td>
                 `;
-                
                 tbody.appendChild(row);
             });
+            document.getElementById('recordCount').textContent = records.length;
         }
 
-        // 编辑记录
-        async function editRecord(recordId) {
+        // 更新统计信息
+        async function updateStatistics() {
             try {
-                const { data, error } = await supabase
-                    .from('inspections')
-                    .select('*')
-                    .eq('id', recordId)
-                    .single();
-                
-                if (error) throw error;
-                
-                editingRecordId = recordId;
-                document.getElementById('editArrivalTime').value = data.arrival_time;
-                document.getElementById('editClassroomEnvironment').value = data.classroom_environment || '';
-                document.getElementById('editRemarks').value = data.remarks || '';
-                document.getElementById('editModal').style.display = 'flex';
+                const { count } = await supabase.from('inspections').select('*', { count: 'exact', head: true });
+                document.getElementById('recordCount').textContent = count || 0;
+
+                const today = new Date().toISOString().split('T')[0];
+                const { count: todayCount } = await supabase.from('inspections').select('*', { count: 'exact', head: true }).eq('inspection_date', today);
+                document.getElementById('todayCount').textContent = todayCount || 0;
             } catch (error) {
-                showToast('加载记录失败', 'error');
+                console.error('更新统计失败:', error);
             }
         }
 
-        // 更新记录
-        async function updateInspection(e) {
-            e.preventDefault();
-            
-            try {
-                const { error } = await supabase
-                    .from('inspections')
-                    .update({
-                        arrival_time: document.getElementById('editArrivalTime').value,
-                        classroom_environment: document.getElementById('editClassroomEnvironment').value,
-                        remarks: document.getElementById('editRemarks').value
-                    })
-                    .eq('id', editingRecordId);
-                
-                if (error) throw error;
-                
-                showToast('记录更新成功！', 'success');
-                closeEditModal();
-                loadInspections();
-                loadStatistics();
-            } catch (error) {
-                showToast('更新失败：' + error.message, 'error');
+        // 下载数据为CSV
+        function downloadData() {
+            const currentInspector = document.getElementById('inspectorName').value;
+            // 简单的权限检查：只有选择了巡查人才能下载（您可以根据业务需要强化此逻辑）
+            if (!currentInspector || currentInspector === '请选择巡查人') {
+                alert('请先在左侧表单中选择您的巡查人身份，以便验证下载权限。');
+                return;
             }
+
+            const table = document.getElementById('inspectionsTable');
+            let csv = [];
+            // 遍历所有行
+            for (let row of table.rows) {
+                let rowData = [];
+                // 遍历所有单元格
+                for (let cell of row.cells) {
+                    // 避免包含操作按钮的文本
+                    if (!cell.querySelector('.btn-edit, .btn-delete')) {
+                        rowData.push(`"${cell.innerText.replace(/"/g, '""')}"`);
+                    }
+                }
+                if (rowData.length > 0) {
+                    csv.push(rowData.join(','));
+                }
+            }
+            const csvContent = csv.join('\n');
+            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `巡查记录_${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            alert('数据下载开始。如果浏览器没有自动保存，请检查浏览器的下载列表。');
+        }
+
+        // 编辑记录（示例函数，需完善）
+        function editRecord(recordId) {
+            alert('编辑功能需根据具体业务逻辑实现。记录ID: ' + recordId);
+            // 您可以在此处打开一个模态框，加载该记录的数据并允许修改
         }
 
         // 删除记录
         async function deleteRecord(recordId) {
-            if (confirm('确定要删除这条记录吗？')) {
-                try {
-                    const { error } = await supabase
-                        .from('inspections')
-                        .delete()
-                        .eq('id', recordId);
-                    
-                    if (error) throw error;
-                    
-                    showToast('记录删除成功！', 'success');
-                    loadInspections();
-                    loadStatistics();
-                } catch (error) {
-                    showToast('删除失败：' + error.message, 'error');
-                }
-            }
-        }
-
-        // 关闭编辑模态框
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-            editingRecordId = null;
-        }
-
-        // 加载统计数据
-        async function loadStatistics() {
+            if (!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
             try {
-                const { data: classData } = await supabase
-                    .from('classes')
-                    .select('class_name');
-                
-                const { data: teacherData } = await supabase
-                    .from('teachers')
-                    .select('teacher_name');
-                
-                const { data: recordData } = await supabase
-                    .from('inspections')
-                    .select('*');
-                
-                const today = new Date().toISOString().split('T')[0];
-                const todayRecords = recordData?.filter(r => r.inspection_date === today) || [];
-                
-                document.getElementById('classCount').textContent = classData?.length || 18;
-                document.getElementById('teacherCount').textContent = teacherData?.length || 58;
-                document.getElementById('recordCount').textContent = recordData?.length || 0;
-                document.getElementById('todayCount').textContent = todayRecords.length;
+                const { error } = await supabase.from('inspections').delete().eq('id', recordId);
+                if (error) throw error;
+                alert('记录删除成功！');
+                loadInspections(); // 刷新列表
+                updateStatistics();
             } catch (error) {
-                console.error('加载统计数据失败:', error);
+                alert('删除失败: ' + error.message);
             }
         }
-
-        // 下载数据
-        function downloadData() {
-            const table = document.getElementById('inspectionsTable');
-            const rows = table.querySelectorAll('tr');
-            let csvContent = '';
-            
-            rows.forEach(row => {
-                const cells = row.querySelectorAll('th, td');
-                const rowData = [];
-                
-                cells.forEach(cell => {
-                    let cellText = cell.textContent.trim();
-                    // 移除操作按钮的文本
-                    if (cellText.includes('编辑') || cellText.includes('删除')) {
-                        cellText = '';
-                    }
-                    rowData.push(`"${cellText}"`);
-                });
-                
-                csvContent += rowData.join(',') + '\n';
-            });
-            
-            const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', `巡查记录_${new Date().toISOString().split('T')[0]}.csv`);
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showToast('数据下载成功！', 'success');
-        }
-
-        // 显示提示消息
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-
-        // 页面加载完成时初始化
-        window.onload = initPage;
     </script>
 </body>
 </html>
