@@ -124,12 +124,12 @@
         <div id="homePage" class="header">
             <h1><i class="fas fa-chalkboard-teacher"></i> 学校教务巡查系统</h1>
             <div class="action-buttons">
-                <button class="action-btn btn-fill" onclick="showPage('fillPage')">
+                <button class="action-btn btn-fill" onclick="window.showPage('fillPage')">
                     <i class="fas fa-edit"></i>
                     <strong>填写巡查记录</strong>
                     <p>选择班级，填写巡查信息</p>
                 </button>
-                <button class="action-btn btn-query" onclick="showPage('queryPage')">
+                <button class="action-btn btn-query" onclick="window.showPage('queryPage')">
                     <i class="fas fa-search"></i>
                     <strong>查询巡查记录</strong>
                     <p>多条件筛选，查看历史记录</p>
@@ -140,7 +140,7 @@
         <!-- 填写记录页面 -->
         <div id="fillPage" class="main-content">
             <div class="page-header">
-                <button class="back-btn" onclick="showPage('homePage')">
+                <button class="back-btn" onclick="window.showPage('homePage')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <h2 class="page-title"><i class="fas fa-edit"></i> 填写巡查记录</h2>
@@ -149,7 +149,7 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label for="inspectionDate" class="required">巡查日期</label>
-                        <input type="date" id="inspectionDate" required onchange="updateWeekday()">
+                        <input type="date" id="inspectionDate" required onchange="window.updateWeekday()">
                         <div class="weekday-display" id="weekdayDisplay"></div>
                     </div>
                     <div class="form-group">
@@ -227,7 +227,7 @@
         <!-- 查询记录页面 -->
         <div id="queryPage" class="main-content">
             <div class="page-header">
-                <button class="back-btn" onclick="showPage('homePage')">
+                <button class="back-btn" onclick="window.showPage('homePage')">
                     <i class="fas fa-arrow-left"></i>
                 </button>
                 <h2 class="page-title"><i class="fas fa-search"></i> 查询巡查记录</h2>
@@ -240,10 +240,10 @@
                 <select id="searchInspector">
                     <option value="">全部巡查人</option>
                 </select>
-                <button class="search-btn" onclick="searchInspections()">
+                <button class="search-btn" onclick="window.searchInspections()">
                     <i class="fas fa-search"></i> 搜索
                 </button>
-                <button class="export-btn" onclick="downloadData()">
+                <button class="export-btn" onclick="window.downloadData()">
                     <i class="fas fa-download"></i> 下载
                 </button>
             </div>
@@ -279,29 +279,34 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 
     <script>
-        // ==================== 【核心修复：Supabase 初始化 - 请替换配置】 ====================
-        // ！！！重要：请将以下两个值替换为您自己 Supabase 项目的真实值 ！！！
-        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co'; // 替换为您的 Project URL
-        const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R'; // 替换为您的 anon public key
-
-        // 终极防护：使用一个极不可能冲突的全局变量名来创建和管理客户端
-        (function() {
-            if (!window.__schoolInspectionSys) {
-                window.__schoolInspectionSys = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            }
-        })();
+        // ==================== 【终极修复：彻底解决所有问题】 ====================
         
-        // 为业务代码创建一个局部常量引用
-        const supabase = window.__schoolInspectionSys;
-        // ==================== 初始化结束 ====================
-
-        // 全局变量和工具函数
-        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        let allClasses = [];
-        let allInspectors = [];
-
-        // 页面切换函数 - 这个函数是必须的，否则会报错！
-        function showPage(pageId) {
+        // 1. 首先清除任何可能的重复声明
+        if (typeof window.supabase !== 'undefined') {
+            console.log('检测到已存在的supabase变量，正在清理...');
+            try {
+                delete window.supabase;
+            } catch (e) {
+                // 如果无法删除，就重命名
+                window._oldSupabase = window.supabase;
+                window.supabase = undefined;
+            }
+        }
+        
+        // 2. 使用您提供的密钥（请确认这些是正确的）
+        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        
+        // 3. 使用一个唯一命名的变量来创建客户端
+        if (!window.mySchoolInspectionSystemSupabase) {
+            window.mySchoolInspectionSystemSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        
+        // 4. 为我们的代码创建一个局部引用
+        const supabase = window.mySchoolInspectionSystemSupabase;
+        
+        // 5. 确保所有函数都附加到window对象，这样HTML的onclick才能找到它们
+        window.showPage = function(pageId) {
             // 隐藏首页
             document.getElementById('homePage').style.display = (pageId === 'homePage') ? 'block' : 'none';
             
@@ -317,22 +322,25 @@
             
             // 如果是查询页，自动加载数据
             if (pageId === 'queryPage') {
-                searchInspections();
+                window.searchInspections();
             }
-        }
-
+        };
+        
+        // 全局变量
+        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+        
         // 页面加载初始化
         document.addEventListener('DOMContentLoaded', function() {
             initPage();
         });
-
+        
         async function initPage() {
             // 设置默认日期为今天
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inspectionDate').value = today;
             document.getElementById('searchDate').value = today;
-            updateWeekday();
-
+            window.updateWeekday();
+            
             // 加载班级和巡查人列表
             await loadClasses();
             await loadInspectorList();
@@ -340,9 +348,9 @@
             // 设置表单提交事件
             document.getElementById('inspectionForm').addEventListener('submit', submitInspection);
         }
-
+        
         // 根据日期更新星期显示
-        function updateWeekday() {
+        window.updateWeekday = function() {
             const dateInput = document.getElementById('inspectionDate');
             const display = document.getElementById('weekdayDisplay');
             if (dateInput.value) {
@@ -351,8 +359,8 @@
             } else {
                 display.textContent = '';
             }
-        }
-
+        };
+        
         // 加载班级列表
         async function loadClasses() {
             const classGroups = [
@@ -360,7 +368,7 @@
                 { title: "八年级", classes: ["八1班", "八2班", "八3班", "八4班", "八5班", "八6班"] },
                 { title: "七年级", classes: ["七1班", "七2班", "七3班", "七4班", "七5班", "七6班"] }
             ];
-            allClasses = classGroups.flatMap(g => g.classes);
+            const allClasses = classGroups.flatMap(g => g.classes);
             
             // 填充到两个选择框
             allClasses.forEach(className => {
@@ -372,11 +380,10 @@
                 });
             });
         }
-
-        // 加载巡查人列表（示例，您应该从数据库加载）
+        
+        // 加载巡查人列表
         async function loadInspectorList() {
-            // 这里应该是从您的 `inspectors` 表加载，以下为示例数据
-            allInspectors = ['张主任', '李老师', '王督导', '赵老师', '刘老师'];
+            const allInspectors = ['张主任', '李老师', '王督导', '赵老师', '刘老师'];
             
             allInspectors.forEach(name => {
                 ['inspectorSelect', 'searchInspector'].forEach(selectId => {
@@ -387,7 +394,7 @@
                 });
             });
         }
-
+        
         // 提交巡查记录
         async function submitInspection(e) {
             e.preventDefault();
@@ -414,18 +421,18 @@
                 
                 showToast('巡查记录提交成功！', 'success');
                 document.getElementById('inspectionForm').reset();
-                updateWeekday();
+                window.updateWeekday();
                 // 提交后自动跳转到查询页查看结果
-                showPage('queryPage');
+                window.showPage('queryPage');
                 
             } catch (error) {
                 console.error('提交失败:', error);
                 showToast('提交失败: ' + error.message, 'error');
             }
         }
-
+        
         // 搜索巡查记录
-        async function searchInspections() {
+        window.searchInspections = async function() {
             const searchDate = document.getElementById('searchDate').value;
             const searchClass = document.getElementById('searchClass').value;
             const searchInspector = document.getElementById('searchInspector').value;
@@ -447,8 +454,8 @@
                 console.error('搜索失败:', error);
                 showToast('搜索失败: ' + error.message, 'error');
             }
-        }
-
+        };
+        
         // 显示巡查记录表格
         function displayInspections(records) {
             const tbody = document.getElementById('inspectionsBody');
@@ -491,8 +498,8 @@
                         <td>${record.student_status || '-'}</td>
                         <td>
                             <div class="action-buttons-small">
-                                <button class="btn-edit" onclick="editRecord('${record.id}')">编辑</button>
-                                <button class="btn-delete" onclick="deleteRecord('${record.id}')">删除</button>
+                                <button class="btn-edit" onclick="window.editRecord('${record.id}')">编辑</button>
+                                <button class="btn-delete" onclick="window.deleteRecord('${record.id}')">删除</button>
                             </div>
                         </td>
                     </tr>
@@ -501,9 +508,9 @@
             
             tbody.innerHTML = html;
         }
-
+        
         // 下载数据
-        function downloadData() {
+        window.downloadData = function() {
             const currentInspector = document.getElementById('inspectorSelect').value;
             
             // 权限检查：只有巡查人才能下载
@@ -563,15 +570,15 @@
             document.body.removeChild(link);
             
             showToast('数据下载开始，请检查浏览器的下载列表。', 'success');
-        }
-
+        };
+        
         // 编辑记录
-        function editRecord(recordId) {
+        window.editRecord = function(recordId) {
             showToast('编辑功能开发中，记录ID: ' + recordId, 'success');
-        }
-
+        };
+        
         // 删除记录
-        async function deleteRecord(recordId) {
+        window.deleteRecord = async function(recordId) {
             if (!confirm('确定要删除这条记录吗？此操作不可撤销。')) return;
             
             try {
@@ -583,14 +590,14 @@
                 if (error) throw error;
                 
                 showToast('记录删除成功！', 'success');
-                searchInspections(); // 刷新列表
+                window.searchInspections(); // 刷新列表
                 
             } catch (error) {
                 console.error('删除失败:', error);
                 showToast('删除失败: ' + error.message, 'error');
             }
-        }
-
+        };
+        
         // 显示提示消息
         function showToast(message, type) {
             const existingToasts = document.querySelectorAll('.toast');
