@@ -8,25 +8,19 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
             font-family: 'Microsoft YaHei', sans-serif; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f7fa;
             min-height: 100vh;
-        }
-        .container { 
-            max-width: 1200px; 
-            margin: 0 auto; 
-            padding: 20px; 
         }
         
         /* 顶部导航栏 */
         .navbar {
-            background: white;
-            border-radius: 12px;
+            background: linear-gradient(135deg, #3498db 0%, #2c3e50 100%);
+            color: white;
             padding: 15px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .logo { 
             display: flex; 
@@ -34,122 +28,69 @@
             gap: 10px; 
         }
         .logo h1 { 
-            color: #2c3e50; 
-            font-size: 24px; 
+            font-size: 20px; 
+            font-weight: 600; 
         }
         .logo-icon { 
-            color: #3498db; 
-            font-size: 28px; 
-        }
-        .user-info { 
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-        }
-        .user-avatar { 
-            width: 40px; 
-            height: 40px; 
-            background: #3498db; 
-            color: white; 
-            border-radius: 50%; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            font-weight: bold; 
+            font-size: 24px; 
         }
         
-        /* 主内容区域 */
-        .main-content {
+        /* 主容器 */
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        
+        /* 功能卡片容器 */
+        .function-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 30px;
-        }
-        .welcome-card {
-            background: white;
-            border-radius: 15px;
-            padding: 40px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        .welcome-card h2 { 
-            color: #2c3e50; 
-            font-size: 28px; 
-            margin-bottom: 20px; 
-        }
-        .welcome-card p { 
-            color: #7f8c8d; 
-            line-height: 1.6; 
-            margin-bottom: 20px; 
+            margin-top: 40px;
         }
         
         /* 功能卡片 */
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        .feature-card {
+        .function-card {
             background: white;
             border-radius: 12px;
             padding: 30px;
-            text-align: center;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
             cursor: pointer;
+            text-align: center;
+            border: 2px solid transparent;
         }
-        .feature-card:hover {
+        .function-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border-color: #3498db;
         }
-        .feature-card i { 
+        .function-card i { 
             font-size: 48px; 
-            color: #3498db; 
             margin-bottom: 20px; 
         }
-        .feature-card h3 { 
+        .function-card h3 { 
             color: #2c3e50; 
+            font-size: 20px; 
             margin-bottom: 10px; 
         }
-        .feature-card p { 
+        .function-card p { 
             color: #7f8c8d; 
             font-size: 14px; 
+            line-height: 1.5; 
         }
-        .feature-card.query { border-top: 4px solid #2ecc71; }
-        .feature-card.record { border-top: 4px solid #e74c3c; }
-        
-        /* 班级展示页面样式 */
-        .class-grid {
-            display: grid;
-            grid-template-columns: repeat(6, 1fr);
-            gap: 15px;
-            margin-top: 20px;
+        .function-card.query { 
+            border-top: 4px solid #2ecc71; 
         }
-        .class-item {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        .function-card.query i { 
+            color: #2ecc71; 
         }
-        .class-item:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-            background: #f0f8ff;
+        .function-card.record { 
+            border-top: 4px solid #e74c3c; 
         }
-        .class-item i { 
-            font-size: 24px; 
-            color: #3498db; 
-            margin-bottom: 10px; 
-        }
-        .class-item .class-name { 
-            font-weight: bold; 
-            color: #2c3e50; 
-            margin-bottom: 5px; 
-        }
-        .class-item .grade { 
-            color: #7f8c8d; 
-            font-size: 12px; 
+        .function-card.record i { 
+            color: #e74c3c; 
         }
         
         /* 登录模态框 */
@@ -167,109 +108,209 @@
         }
         .modal-content { 
             background: white; 
-            border-radius: 15px; 
+            border-radius: 12px; 
             width: 90%; 
             max-width: 400px; 
-            padding: 30px; 
+            overflow: hidden; 
         }
         .modal-header { 
+            background: #3498db; 
+            color: white; 
+            padding: 20px; 
             display: flex; 
             justify-content: space-between; 
             align-items: center; 
-            margin-bottom: 20px; 
         }
         .modal-header h3 { 
-            color: #2c3e50; 
+            font-size: 18px; 
+            font-weight: 600; 
         }
         .close-modal { 
             background: none; 
             border: none; 
-            font-size: 24px; 
+            color: white; 
+            font-size: 20px; 
             cursor: pointer; 
-            color: #7f8c8d; 
+        }
+        .modal-body { 
+            padding: 30px; 
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            color: #2c3e50; 
+            font-weight: 600; 
+        }
+        .form-group select { 
+            width: 100%; 
+            padding: 12px 15px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            background: white; 
+        }
+        .form-group select:focus { 
+            border-color: #3498db; 
+            outline: none; 
+        }
+        .modal-footer { 
+            padding: 0 30px 30px; 
+        }
+        .btn-login { 
+            background: #2ecc71; 
+            color: white; 
+            border: none; 
+            padding: 12px; 
+            width: 100%; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            font-weight: 600; 
+            cursor: pointer; 
+        }
+        .btn-login:hover { 
+            background: #27ae60; 
+        }
+        
+        /* 班级展示页面 */
+        .class-container { 
+            display: none; 
+        }
+        .back-button { 
+            background: none; 
+            border: none; 
+            color: #3498db; 
+            font-size: 16px; 
+            cursor: pointer; 
+            margin-bottom: 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
+        .class-grid { 
+            display: grid; 
+            grid-template-columns: repeat(6, 1fr); 
+            gap: 15px; 
+            margin-top: 20px; 
+        }
+        .class-item { 
+            background: white; 
+            border-radius: 10px; 
+            padding: 20px; 
+            text-align: center; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1); 
+            border: 2px solid #e0e0e0; 
+        }
+        .class-item:hover { 
+            transform: scale(1.05); 
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15); 
+            border-color: #3498db; 
+        }
+        .class-item i { 
+            font-size: 24px; 
+            color: #3498db; 
+            margin-bottom: 10px; 
+        }
+        .class-item .class-name { 
+            font-weight: 600; 
+            color: #2c3e50; 
+            margin-bottom: 5px; 
+        }
+        
+        /* 年级筛选 */
+        .grade-filter { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+        }
+        .filter-btn { 
+            padding: 8px 20px; 
+            border: 2px solid #ddd; 
+            border-radius: 20px; 
+            background: white; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
+        .filter-btn:hover, 
+        .filter-btn.active { 
+            background: #3498db; 
+            color: white; 
+            border-color: #3498db; 
         }
         
         /* 响应式设计 */
         @media (max-width: 768px) {
-            .main-content { grid-template-columns: 1fr; }
             .class-grid { grid-template-columns: repeat(3, 1fr); }
-            .navbar { flex-direction: column; gap: 15px; }
         }
         @media (max-width: 480px) {
             .class-grid { grid-template-columns: repeat(2, 1fr); }
+            .function-container { grid-template-columns: 1fr; }
         }
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
-    <div class="container">
-        <!-- 顶部导航栏 -->
-        <nav class="navbar">
-            <div class="logo">
-                <i class="fas fa-school logo-icon"></i>
-                <h1>锦艺初中教务巡查系统</h1>
-            </div>
-            <div class="user-info" id="userInfo">
-                <!-- 登录后显示用户信息 -->
-            </div>
-        </nav>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-school logo-icon"></i>
+            <h1>锦艺初中教务巡查系统</h1>
+        </div>
+        <div id="userStatus" style="font-size: 14px;">
+            <!-- 用户状态显示 -->
+        </div>
+    </nav>
+    
+    <!-- 主页面 -->
+    <div class="container" id="mainPage">
+        <div style="margin-top: 30px; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.1);">
+            <h2 style="color: #2c3e50; margin-bottom: 10px;">功能选择</h2>
+            <p style="color: #7f8c8d;">请选择您要使用的功能</p>
+        </div>
         
-        <!-- 主内容区 -->
-        <div class="main-content">
-            <!-- 欢迎卡片 -->
-            <div class="welcome-card">
-                <h2>欢迎使用教务巡查系统</h2>
-                <p>本系统用于帮助巡查老师记录和查询课堂巡查情况，提高教学质量和管理效率。</p>
-                <p>请选择您要执行的操作：</p>
+        <div class="function-container">
+            <!-- 查询巡课记录 -->
+            <div class="function-card query" onclick="goToQuery()">
+                <i class="fas fa-search"></i>
+                <h3>查询巡课记录</h3>
+                <p>查看历史巡查记录，支持按班级、日期、老师等条件筛选</p>
             </div>
             
-            <!-- 功能卡片网格 -->
-            <div class="feature-grid">
-                <!-- 查询巡课记录 -->
-                <div class="feature-card query" onclick="goToQuery()">
-                    <i class="fas fa-search"></i>
-                    <h3>查询巡课记录</h3>
-                    <p>查看历史巡查记录，支持按班级、日期、老师等条件筛选</p>
-                </div>
-                
-                <!-- 填写巡课记录 -->
-                <div class="feature-card record" onclick="goToRecord()">
-                    <i class="fas fa-edit"></i>
-                    <h3>填写巡课记录</h3>
-                    <p>录入新的课堂巡查记录，包括上课情况、存在问题等</p>
-                </div>
+            <!-- 填写巡课记录 -->
+            <div class="function-card record" onclick="goToRecord()">
+                <i class="fas fa-edit"></i>
+                <h3>填写巡课记录</h3>
+                <p>录入新的课堂巡查记录，包括上课情况、存在问题等</p>
             </div>
         </div>
     </div>
     
-    <!-- 班级选择页面（查询页面） -->
-    <div id="queryPage" style="display: none;">
-        <div class="container">
-            <div class="navbar">
-                <div class="logo" onclick="goBackToHome()" style="cursor: pointer;">
-                    <i class="fas fa-arrow-left" style="margin-right: 10px;"></i>
-                    <h1>查询巡课记录</h1>
-                </div>
-                <div class="user-info" id="queryUserInfo"></div>
-            </div>
-            
-            <div class="welcome-card">
-                <h2>请选择班级查看巡查记录</h2>
-                <p>点击班级名称查看该班级的巡课记录</p>
-                
-                <!-- 年级筛选 -->
-                <div style="margin: 20px 0; display: flex; gap: 10px;">
-                    <button class="grade-filter active" data-grade="all">全部年级</button>
-                    <button class="grade-filter" data-grade="7">七年级</button>
-                    <button class="grade-filter" data-grade="8">八年级</button>
-                    <button class="grade-filter" data-grade="9">九年级</button>
-                </div>
-                
-                <!-- 班级网格 -->
-                <div class="class-grid" id="classGrid">
-                    <!-- 班级将由JavaScript动态生成 -->
-                </div>
-            </div>
+    <!-- 班级选择页面 -->
+    <div class="container class-container" id="queryPage">
+        <button class="back-button" onclick="goBackToHome()">
+            <i class="fas fa-arrow-left"></i> 返回首页
+        </button>
+        
+        <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px;">
+            <h2 style="color: #2c3e50; margin-bottom: 10px;">查询巡课记录</h2>
+            <p style="color: #7f8c8d;">请选择班级查看巡查记录</p>
+        </div>
+        
+        <!-- 年级筛选 -->
+        <div class="grade-filter">
+            <button class="filter-btn active" onclick="filterClasses('all')">全部年级</button>
+            <button class="filter-btn" onclick="filterClasses('7')">七年级</button>
+            <button class="filter-btn" onclick="filterClasses('8')">八年级</button>
+            <button class="filter-btn" onclick="filterClasses('9')">九年级</button>
+        </div>
+        
+        <!-- 班级网格 -->
+        <div class="class-grid" id="classGrid">
+            <!-- 班级将由JavaScript动态生成 -->
         </div>
     </div>
     
@@ -281,224 +322,80 @@
                 <button class="close-modal" onclick="closeLoginModal()">&times;</button>
             </div>
             
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; margin-bottom: 8px;">选择巡查人：</label>
-                <div id="inspectorOptions" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                    <!-- 巡查人选项将由JS生成 -->
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="inspectorSelect">选择巡查人：</label>
+                    <select id="inspectorSelect">
+                        <!-- 巡查人选项将由JavaScript动态生成 -->
+                        <option value="">请选择巡查人</option>
+                        <option value="1">王老师</option>
+                        <option value="2">李老师</option>
+                        <option value="3">张主任</option>
+                        <option value="4">刘校长</option>
+                        <option value="5">陈老师</option>
+                        <option value="6">赵老师</option>
+                    </select>
                 </div>
             </div>
             
-            <div class="form-group" style="margin-bottom: 20px;">
-                <label for="loginPassword" style="display: block; margin-bottom: 8px;">密码：</label>
-                <input type="password" id="loginPassword" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;" 
-                       value="123456" placeholder="请输入密码">
-                <small style="color: #666; display: block; margin-top: 5px;">测试密码：123456</small>
+            <div class="modal-footer">
+                <button class="btn-login" onclick="performLogin()">登录</button>
             </div>
-            
-            <div style="margin: 20px 0;">
-                <input type="checkbox" id="rememberLogin" checked>
-                <label for="rememberLogin" style="margin-left: 5px;">记住登录状态（7天内免登录）</label>
-            </div>
-            
-            <button onclick="performLogin()" style="
-                background: #2ecc71; 
-                color: white; 
-                border: none; 
-                padding: 12px; 
-                width: 100%; 
-                border-radius: 5px; 
-                font-size: 16px; 
-                cursor: pointer;">
-                登录
-            </button>
-            
-            <div id="loginError" style="color: #e74c3c; margin-top: 10px; display: none;"></div>
         </div>
     </div>
 
     <script>
-        // Supabase配置
-        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        // 当前巡查人信息
+        let currentInspector = null;
         
-        let supabase = null;
-        let currentUser = null;
-        let inspectors = [];
-        
-        // 初始化应用
-        async function initApp() {
-            console.log('初始化应用...');
+        // 初始化
+        function initApp() {
+            console.log('系统初始化...');
             
-            // 初始化Supabase
-            try {
-                // 动态加载Supabase库
-                if (typeof supabase === 'undefined') {
-                    await loadSupabaseLibrary();
-                }
-                
-                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-                    auth: { persistSession: false },
-                    global: { 
-                        headers: { 
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
-                        } 
-                    }
-                });
-                
-                console.log('Supabase客户端初始化成功');
-                
-                // 尝试连接数据库
-                try {
-                    const { data, error } = await supabase
-                        .from('inspectors')
-                        .select('*')
-                        .limit(5);
-                    
-                    if (error) {
-                        console.warn('数据库连接警告:', error.message);
-                        // 使用默认巡查人
-                        createDefaultInspectors();
-                    } else {
-                        console.log('从数据库加载巡查人:', data);
-                        inspectors = data || createDefaultInspectors();
-                    }
-                } catch (dbError) {
-                    console.warn('使用默认巡查人:', dbError);
-                    createDefaultInspectors();
-                }
-                
-                // 检查登录状态
-                checkLoginStatus();
-                
-                // 渲染巡查人登录选项
-                renderInspectorOptions();
-                
-            } catch (error) {
-                console.error('初始化失败:', error);
-                createDefaultInspectors();
-                checkLoginStatus();
-            }
-        }
-        
-        // 动态加载Supabase库
-        function loadSupabaseLibrary() {
-            return new Promise((resolve, reject) => {
-                if (typeof window.supabase !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                
-                const script = document.createElement('script');
-                script.src = 'https://unpkg.com/@supabase/supabase-js@2';
-                script.onload = resolve;
-                script.onerror = () => {
-                    console.warn('Supabase库加载失败，使用本地模式');
-                    resolve();
-                };
-                document.head.appendChild(script);
-            });
-        }
-        
-        // 创建默认巡查人
-        function createDefaultInspectors() {
-            inspectors = [
-                { id: 1, inspector_name: '管理员' },
-                { id: 2, inspector_name: '王老师' },
-                { id: 3, inspector_name: '李老师' },
-                { id: 4, inspector_name: '张主任' },
-                { id: 5, inspector_name: '刘校长' },
-                { id: 6, inspector_name: '陈老师' },
-                { id: 7, inspector_name: '赵老师' },
-                { id: 8, inspector_name: '孙主任' }
-            ];
-            return inspectors;
-        }
-        
-        // 渲染巡查人登录选项
-        function renderInspectorOptions() {
-            const container = document.getElementById('inspectorOptions');
-            if (!container) return;
+            // 检查是否已有登录状态
+            checkLoginStatus();
             
-            container.innerHTML = '';
-            
-            inspectors.forEach((inspector, index) => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.style.cssText = `
-                    padding: 10px;
-                    border: 2px solid #ddd;
-                    border-radius: 5px;
-                    background: white;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                `;
-                button.innerHTML = `<i class="fas fa-user-tie"></i> ${inspector.inspector_name}`;
-                button.onclick = () => selectInspector(index);
-                
-                container.appendChild(button);
-            });
-        }
-        
-        // 选择巡查人
-        function selectInspector(index) {
-            // 移除所有选择状态
-            document.querySelectorAll('#inspectorOptions button').forEach(btn => {
-                btn.style.borderColor = '#ddd';
-                btn.style.background = 'white';
-            });
-            
-            // 设置当前选择
-            document.querySelectorAll('#inspectorOptions button')[index].style.borderColor = '#2ecc71';
-            document.querySelectorAll('#inspectorOptions button')[index].style.background = '#f0fff4';
-            
-            // 保存选择
-            window.selectedInspectorIndex = index;
+            // 更新用户状态显示
+            updateUserStatus();
         }
         
         // 检查登录状态
         function checkLoginStatus() {
             try {
                 // 尝试从localStorage获取
-                const savedUser = localStorage.getItem('currentInspector');
-                if (savedUser) {
-                    currentUser = JSON.parse(savedUser);
-                    updateUserInfo();
+                const saved = localStorage.getItem('currentInspector');
+                if (saved) {
+                    currentInspector = JSON.parse(saved);
+                    console.log('已登录巡查人:', currentInspector);
                     return true;
                 }
                 
                 // 尝试从sessionStorage获取
-                const sessionUser = sessionStorage.getItem('currentInspector');
-                if (sessionUser) {
-                    currentUser = JSON.parse(sessionUser);
-                    updateUserInfo();
+                const sessionSaved = sessionStorage.getItem('currentInspector');
+                if (sessionSaved) {
+                    currentInspector = JSON.parse(sessionSaved);
+                    console.log('已登录巡查人（session）:', currentInspector);
                     return true;
                 }
                 
-                // 未登录
-                updateUserInfo();
+                console.log('未登录');
                 return false;
                 
             } catch (error) {
                 console.warn('检查登录状态时出错，可能是隐私设置阻止存储:', error);
-                updateUserInfo();
                 return false;
             }
         }
         
-        // 更新用户信息显示
-        function updateUserInfo() {
-            const userInfoDiv = document.getElementById('userInfo');
-            const queryUserInfoDiv = document.getElementById('queryUserInfo');
+        // 更新用户状态显示
+        function updateUserStatus() {
+            const userStatusDiv = document.getElementById('userStatus');
             
-            if (currentUser) {
-                const html = `
+            if (currentInspector) {
+                userStatusDiv.innerHTML = `
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="user-avatar">${currentUser.name.charAt(0)}</div>
-                        <div>
-                            <div style="font-weight: bold;">${currentUser.name}</div>
-                            <div style="font-size: 12px; color: #7f8c8d;">巡查老师</div>
-                        </div>
+                        <i class="fas fa-user-check"></i>
+                        <span>${currentInspector.name}</span>
                         <button onclick="logout()" style="
                             background: #e74c3c; 
                             color: white; 
@@ -511,190 +408,183 @@
                         </button>
                     </div>
                 `;
-                
-                if (userInfoDiv) userInfoDiv.innerHTML = html;
-                if (queryUserInfoDiv) queryUserInfoDiv.innerHTML = html;
             } else {
-                const html = `
-                    <div style="color: #7f8c8d; font-size: 14px;">
-                        <i class="fas fa-user-clock"></i> 未登录
+                userStatusDiv.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 5px;">
+                        <i class="fas fa-user-clock"></i>
+                        <span>未登录</span>
                     </div>
                 `;
-                
-                if (userInfoDiv) userInfoDiv.innerHTML = html;
-                if (queryUserInfoDiv) queryUserInfoDiv.innerHTML = html;
             }
         }
         
-        // 查询巡课记录
+        // 查询巡课记录（不需要登录）
         function goToQuery() {
-            if (!currentUser) {
-                // 未登录，显示登录模态框
-                showLoginModal('query');
-                return;
-            }
+            console.log('进入查询页面（无需登录）');
             
-            // 已登录，进入查询页面
-            document.querySelector('.container').style.display = 'none';
+            // 隐藏主页面
+            document.getElementById('mainPage').style.display = 'none';
+            
+            // 显示班级选择页面
             document.getElementById('queryPage').style.display = 'block';
             
-            // 生成班级网格
-            generateClassGrid();
+            // 生成班级列表
+            generateClassList();
         }
         
-        // 填写巡课记录
+        // 填写巡课记录（需要登录）
         function goToRecord() {
-            alert('填写巡课记录功能开发中...');
-            // 这里可以跳转到填写记录的页面
+            console.log('尝试进入填写页面');
+            
+            if (!currentInspector) {
+                // 未登录，显示登录模态框
+                console.log('需要登录，显示登录模态框');
+                document.getElementById('loginModal').style.display = 'flex';
+            } else {
+                // 已登录，进入填写页面
+                console.log('已登录，巡查人:', currentInspector.name);
+                alert(`进入填写巡课记录页面\n巡查人：${currentInspector.name}\n\n（填写功能开发中...）`);
+                // 这里可以跳转到实际填写页面
+                // window.location.href = 'record.html';
+            }
         }
         
         // 显示登录模态框
-        function showLoginModal(fromPage) {
-            window.loginFromPage = fromPage;
+        function showLoginModal() {
+            console.log('显示登录模态框');
             document.getElementById('loginModal').style.display = 'flex';
-            
-            // 自动选择第一个巡查人
-            setTimeout(() => {
-                if (window.selectedInspectorIndex === undefined && inspectors.length > 0) {
-                    selectInspector(0);
-                }
-            }, 100);
         }
         
         // 关闭登录模态框
         function closeLoginModal() {
+            console.log('关闭登录模态框');
             document.getElementById('loginModal').style.display = 'none';
-            document.getElementById('loginError').style.display = 'none';
         }
         
         // 执行登录
         function performLogin() {
-            const password = document.getElementById('loginPassword').value;
-            const remember = document.getElementById('rememberLogin').checked;
+            const select = document.getElementById('inspectorSelect');
+            const inspectorId = select.value;
+            const inspectorName = select.options[select.selectedIndex].text;
             
-            if (window.selectedInspectorIndex === undefined) {
-                showLoginError('请选择巡查人');
+            if (!inspectorId) {
+                alert('请选择巡查人！');
                 return;
             }
             
-            if (password !== '123456') {
-                showLoginError('密码错误，测试密码为：123456');
-                return;
-            }
-            
-            const inspector = inspectors[window.selectedInspectorIndex];
-            
-            // 设置当前用户
-            currentUser = {
-                id: inspector.id,
-                name: inspector.inspector_name
+            // 设置当前巡查人
+            currentInspector = {
+                id: inspectorId,
+                name: inspectorName
             };
+            
+            console.log('登录成功，巡查人:', currentInspector);
             
             // 保存登录状态
             try {
-                if (remember) {
-                    localStorage.setItem('currentInspector', JSON.stringify(currentUser));
-                } else {
-                    sessionStorage.setItem('currentInspector', JSON.stringify(currentUser));
-                }
+                // 使用localStorage保存7天
+                localStorage.setItem('currentInspector', JSON.stringify(currentInspector));
             } catch (error) {
-                console.warn('保存登录状态失败，可能是隐私设置阻止存储:', error);
+                console.warn('无法保存到localStorage:', error);
+                // 尝试sessionStorage
+                try {
+                    sessionStorage.setItem('currentInspector', JSON.stringify(currentInspector));
+                } catch (e) {
+                    console.warn('无法保存到sessionStorage:', e);
+                }
             }
             
-            // 更新用户信息显示
-            updateUserInfo();
+            // 更新用户状态显示
+            updateUserStatus();
             
-            // 关闭模态框
+            // 关闭登录模态框
             closeLoginModal();
             
-            // 如果是从查询页面来的，继续跳转
-            if (window.loginFromPage === 'query') {
-                goToQuery();
-            }
+            // 进入填写页面
+            setTimeout(() => {
+                alert(`登录成功！\n巡查人：${currentInspector.name}\n\n即将进入填写页面...`);
+                goToRecord();
+            }, 500);
+        }
+        
+        // 生成班级列表
+        function generateClassList() {
+            const grades = [
+                { id: 7, name: '七年级' },
+                { id: 8, name: '八年级' },
+                { id: 9, name: '九年级' }
+            ];
             
-            // 清除来源记录
-            window.loginFromPage = null;
-        }
-        
-        // 显示登录错误
-        function showLoginError(message) {
-            const errorDiv = document.getElementById('loginError');
-            errorDiv.textContent = message;
-            errorDiv.style.display = 'block';
-        }
-        
-        // 生成班级网格
-        function generateClassGrid() {
-            const grades = ['七年级', '八年级', '九年级'];
             const classNames = ['1班', '2班', '3班', '4班', '5班', '6班'];
             
             const container = document.getElementById('classGrid');
             container.innerHTML = '';
             
-            grades.forEach((grade, gradeIndex) => {
-                classNames.forEach((className, classIndex) => {
-                    const classNumber = gradeIndex * 6 + classIndex + 1;
+            grades.forEach(grade => {
+                classNames.forEach(className => {
+                    const classId = `${grade.id}-${className.charAt(0)}`;
+                    const fullClassName = `${grade.name}${className}`;
                     
                     const classItem = document.createElement('div');
                     classItem.className = 'class-item';
-                    classItem.setAttribute('data-grade', gradeIndex + 7);
-                    classItem.onclick = () => openClassDetail(classNumber, `${grade}${className}`);
+                    classItem.setAttribute('data-grade', grade.id);
+                    classItem.onclick = () => openClassRecords(classId, fullClassName);
                     
                     classItem.innerHTML = `
                         <i class="fas fa-chalkboard-teacher"></i>
-                        <div class="class-name">${grade}${className}</div>
-                        <div class="grade">班级编号: ${classNumber}</div>
-                        <div style="font-size: 12px; color: #3498db; margin-top: 5px;">
-                            <i class="fas fa-search"></i> 查看记录
+                        <div class="class-name">${fullClassName}</div>
+                        <div style="font-size: 12px; color: #7f8c8d; margin-top: 5px;">
+                            点击查看巡查记录
                         </div>
                     `;
                     
                     container.appendChild(classItem);
                 });
             });
+        }
+        
+        // 筛选班级
+        function filterClasses(grade) {
+            const allItems = document.querySelectorAll('.class-item');
+            const filterBtns = document.querySelectorAll('.filter-btn');
             
-            // 添加年级筛选功能
-            document.querySelectorAll('.grade-filter').forEach(button => {
-                button.onclick = function() {
-                    // 移除所有active状态
-                    document.querySelectorAll('.grade-filter').forEach(btn => {
-                        btn.classList.remove('active');
-                    });
-                    
-                    // 添加当前active状态
-                    this.classList.add('active');
-                    
-                    const grade = this.getAttribute('data-grade');
-                    
-                    // 筛选显示
-                    document.querySelectorAll('.class-item').forEach(item => {
-                        if (grade === 'all' || item.getAttribute('data-grade') === grade) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                };
+            // 更新筛选按钮状态
+            filterBtns.forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // 筛选显示班级
+            allItems.forEach(item => {
+                if (grade === 'all' || item.getAttribute('data-grade') === grade) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
             });
         }
         
-        // 打开班级详情
-        function openClassDetail(classId, className) {
-            alert(`查看 ${className} 的巡查记录\n\n班级ID: ${classId}\n巡查人: ${currentUser.name}\n\n功能开发中...`);
+        // 打开班级巡查记录
+        function openClassRecords(classId, className) {
+            console.log('查看班级记录:', classId, className);
             
-            // 这里可以跳转到具体的查询表单页面
-            // window.location.href = `query.html?class=${classId}&name=${encodeURIComponent(className)}`;
+            alert(`正在查看 ${className} 的巡查记录\n\n班级ID: ${classId}\n\n功能开发中...\n\n这里可以：\n1. 查看历史巡查记录\n2. 按日期筛选\n3. 按巡查人筛选`);
+            
+            // 这里可以跳转到具体的班级记录页面
+            // window.location.href = `class-records.html?class=${classId}&name=${encodeURIComponent(className)}`;
         }
         
         // 返回首页
         function goBackToHome() {
             document.getElementById('queryPage').style.display = 'none';
-            document.querySelector('.container').style.display = 'block';
+            document.getElementById('mainPage').style.display = 'block';
         }
         
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
+                // 清除登录状态
+                currentInspector = null;
                 try {
                     localStorage.removeItem('currentInspector');
                     sessionStorage.removeItem('currentInspector');
@@ -702,19 +592,31 @@
                     console.warn('清除登录状态失败:', error);
                 }
                 
-                currentUser = null;
-                updateUserInfo();
+                // 更新用户状态显示
+                updateUserStatus();
                 
-                // 如果在查询页面，返回首页
-                if (document.getElementById('queryPage').style.display !== 'none') {
-                    goBackToHome();
-                }
+                alert('已退出登录');
             }
         }
         
         // 页面加载完成后初始化
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('页面加载完成');
             initApp();
+            
+            // 关闭按钮事件
+            document.getElementById('loginModal').addEventListener('click', function(event) {
+                if (event.target === this) {
+                    closeLoginModal();
+                }
+            });
+            
+            // 按ESC键关闭模态框
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    closeLoginModal();
+                }
+            });
         });
     </script>
 </body>
