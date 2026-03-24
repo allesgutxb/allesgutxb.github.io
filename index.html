@@ -61,7 +61,10 @@
             border-color: #667eea; outline: none;
         }
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .weekday-display { font-size: 14px; color: #666; margin-top: 5px; font-style: italic; }
+        .weekday-display { 
+            font-size: 16px; color: #666; margin-top: 8px; font-weight: 500;
+            padding: 5px 0; border-top: 1px solid #eee; 
+        }
         .btn-submit {
             background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white;
             border: none; padding: 15px; border-radius: 8px; font-size: 18px;
@@ -223,25 +226,15 @@
                     </div>
                 </div>
                 
+                <!-- 将学生课前状态和教室环境改为文本输入框 -->
                 <div class="form-row">
                     <div class="form-group">
                         <label for="studentStatus">学生课前状态</label>
-                        <select id="studentStatus">
-                            <option value="">请选择学生状态</option>
-                            <option value="准备就绪">准备就绪</option>
-                            <option value="部分迟到">部分迟到</option>
-                            <option value="喧哗吵闹">喧哗吵闹</option>
-                            <option value="精神不振">精神不振</option>
-                        </select>
+                        <input type="text" id="studentStatus" placeholder="请输入学生课前状态，如：准备就绪、喧哗吵闹等">
                     </div>
                     <div class="form-group">
                         <label for="environment">教室环境</label>
-                        <select id="environment">
-                            <option value="">请选择教室环境</option>
-                            <option value="整洁有序">整洁有序</option>
-                            <option value="基本整洁">基本整洁</option>
-                            <option value="脏乱差">脏乱差</option>
-                        </select>
+                        <input type="text" id="environment" placeholder="请输入教室环境，如：整洁有序、基本整洁、脏乱差等">
                     </div>
                 </div>
                 
@@ -255,7 +248,8 @@
                         <strong>提示：</strong>
                         <p style="margin-top: 5px; font-size: 13px; color: #666;">
                             1. 选择班级、日期、节次后，系统会自动从课表中获取科目和任课教师<br>
-                            2. 如遇调课等情况，可手动修改自动填充的科目和教师信息
+                            2. 如遇调课等情况，可手动修改自动填充的科目和教师信息<br>
+                            3. 学生课前状态和教室环境已改为文本框，可自由填写
                         </p>
                     </div>
                 </div>
@@ -351,7 +345,6 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
     <script>
-        // 立即执行函数，避免全局污染
         (function() {
             "use strict";
             
@@ -839,13 +832,18 @@
                     arrival_status: document.getElementById('arrivalStatus').value,
                     subject: document.getElementById('subjectInput').value,
                     teacher_name: document.getElementById('teacherInput').value,
-                    student_status: document.getElementById('studentStatus').value || null,
-                    environment: document.getElementById('environment').value || null,
-                    remarks: document.getElementById('remarksInput').value || null,
+                    student_status: document.getElementById('studentStatus').value.trim() || null, // 改为文本输入
+                    environment: document.getElementById('environment').value.trim() || null, // 改为文本输入
+                    remarks: document.getElementById('remarksInput').value.trim() || null,
                     updated_at: new Date().toISOString()
                 };
                 
                 // 验证必填字段
+                if (!formData.arrival_status) {
+                    showToast('教师到岗情况不能为空', 'error');
+                    return;
+                }
+                
                 if (!formData.subject || !formData.teacher_name) {
                     showToast('科目和任课教师不能为空', 'error');
                     return;
@@ -874,13 +872,17 @@
                             .from('inspections')
                             .insert([formData]);
                         
-                        if (result.error) throw result.error;
+                        if (result.error) {
+                            console.error('数据库插入错误详情:', result.error);
+                            throw result.error;
+                        }
                         showToast('记录提交成功', 'success');
                     }
                     
                     // 重置表单
                     document.getElementById('inspectionForm').reset();
                     setDefaultDate();
+                    updateInspectorSelect();
                     
                     // 如果是编辑后，跳转到查询页
                     if (editingRecordId === null) {
@@ -892,7 +894,11 @@
                     
                 } catch (error) {
                     console.error('提交记录失败:', error);
-                    showToast('提交失败: ' + error.message, 'error');
+                    if (error.message.includes('check constraint')) {
+                        showToast('提交失败: 数据格式不符合要求，请检查填写内容', 'error');
+                    } else {
+                        showToast('提交失败: ' + error.message, 'error');
+                    }
                 }
             }
             
@@ -1028,6 +1034,9 @@
                     
                     // 更新星期显示
                     updateWeekdayAndSchedule();
+                    
+                    // 更新巡查人选择
+                    updateInspectorSelect();
                     
                     // 设置编辑状态
                     editingRecordId = recordId;
