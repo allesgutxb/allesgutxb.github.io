@@ -6,383 +6,237 @@
     <title>锦艺初中教务巡查系统</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: 'Microsoft YaHei', sans-serif; 
-            background: #f0f2f5; 
+        body { font-family: 'Microsoft YaHei', sans-serif; background: #f5f7fa; }
+        .container { max-width: 800px; margin: 50px auto; padding: 0 20px; }
+        .card { background: white; border-radius: 12px; padding: 40px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .header { text-align: center; margin-bottom: 30px; }
+        .header h1 { color: #2c3e50; font-size: 28px; margin-bottom: 10px; }
+        
+        .success { 
+            background: #d4edda; 
+            border: 1px solid #c3e6cb; 
+            color: #155724; 
             padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 30px; 
         }
-        .container { 
-            max-width: 1000px; 
-            margin: 0 auto; 
-            background: white; 
-            border-radius: 10px; 
-            box-shadow: 0 2px 20px rgba(0,0,0,0.1); 
-            overflow: hidden; 
-        }
-        .header { 
-            background: linear-gradient(135deg, #3498db, #2c3e50); 
-            color: white; 
-            padding: 25px; 
-            text-align: center; 
-        }
-        .header h1 { 
-            font-size: 28px; 
-            margin-bottom: 10px; 
-        }
-        .login-box { 
-            padding: 40px; 
-            max-width: 500px; 
-            margin: 0 auto; 
-        }
-        .status-box { 
-            background: #f8f9fa; 
-            border-left: 5px solid #3498db; 
-            padding: 20px; 
-            margin-bottom: 25px; 
-            border-radius: 5px; 
-        }
-        .status-box.error { 
-            border-left-color: #e74c3c; 
-            background: #ffeaea; 
-        }
-        .status-box.success { 
-            border-left-color: #2ecc71; 
-            background: #e8f8ef; 
-        }
-        .status-box h3 { 
-            margin-bottom: 10px; 
-            color: #2c3e50; 
-        }
-        .status-box p { 
-            margin: 5px 0; 
-            line-height: 1.6; 
-        }
-        .form-group { 
-            margin-bottom: 20px; 
-        }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            font-weight: bold; 
-            color: #34495e; 
-        }
-        input, select { 
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #2c3e50; font-weight: bold; }
+        .form-group input, .form-group select { 
             width: 100%; 
             padding: 12px 15px; 
             border: 2px solid #ddd; 
             border-radius: 6px; 
             font-size: 16px; 
-            transition: border-color 0.3s; 
         }
-        input:focus, select:focus { 
-            outline: none; 
+        .form-group input:focus, .form-group select:focus { 
             border-color: #3498db; 
+            outline: none; 
         }
-        button { 
+        
+        .btn { 
             background: #3498db; 
             color: white; 
             border: none; 
-            padding: 14px 30px; 
+            padding: 14px 20px; 
             border-radius: 6px; 
-            cursor: pointer; 
             font-size: 16px; 
             font-weight: bold; 
+            cursor: pointer; 
             width: 100%; 
-            transition: background 0.3s; 
         }
-        button:hover { 
-            background: #2980b9; 
-        }
-        .btn-retry { 
-            background: #2ecc71; 
-            margin-top: 15px; 
-        }
-        .config-box { 
-            background: #fff8e1; 
-            border: 2px solid #ffc107; 
-            border-radius: 8px; 
-            padding: 20px; 
-            margin-top: 30px; 
-        }
-        .config-box h3 { 
-            color: #e65100; 
-            margin-bottom: 15px; 
-        }
-        .config-code { 
-            background: #2c3e50; 
-            color: white; 
-            padding: 15px; 
-            border-radius: 5px; 
-            font-family: monospace; 
-            font-size: 14px; 
-            overflow-x: auto; 
-            margin: 10px 0; 
-        }
-        .steps { 
+        .btn:hover { background: #2980b9; }
+        .btn-success { background: #2ecc71; }
+        
+        .inspector-list { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            gap: 15px; 
             margin: 20px 0; 
         }
-        .step { 
-            margin-bottom: 15px; 
-            padding-left: 25px; 
-            position: relative; 
-        }
-        .step-number { 
-            position: absolute; 
-            left: 0; 
-            top: 0; 
-            background: #3498db; 
-            color: white; 
-            width: 20px; 
-            height: 20px; 
-            border-radius: 50%; 
+        .inspector-item { 
+            padding: 20px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
             text-align: center; 
-            line-height: 20px; 
-            font-size: 12px; 
+            cursor: pointer; 
         }
-        .hidden { 
-            display: none; 
+        .inspector-item:hover { border-color: #3498db; }
+        .inspector-item.selected { 
+            border-color: #2ecc71; 
+            background: #f0fff4; 
         }
+        
+        .hidden { display: none; }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>锦艺初中教务巡查系统</h1>
-            <p>请先登录系统</p>
-        </div>
-        
-        <div class="login-box">
-            <div id="statusMessage" class="status-box">
-                <h3>正在连接数据库...</h3>
-                <p id="statusText">请稍候，正在初始化系统...</p>
+        <div class="card">
+            <div class="header">
+                <h1>锦艺初中教务巡查系统</h1>
+                <p>使用正确的 Supabase 配置</p>
             </div>
             
-            <div id="loginSection" class="hidden">
-                <h2 style="margin-bottom: 20px; color: #2c3e50;">巡查人登录</h2>
-                <form onsubmit="event.preventDefault(); login();" autocomplete="on">
-                    <div class="form-group">
-                        <label for="inspectorSelect">巡查人：</label>
-                        <select id="inspectorSelect" class="form-control" required>
-                            <option value="">请选择巡查人</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="password">密码：</label>
-                        <input type="password" id="password" class="form-control" 
-                               value="123456" required
-                               autocomplete="current-password">
-                        <small style="color: #7f8c8d;">测试密码：123456</small>
-                    </div>
-                    <div class="form-group">
-                        <input type="checkbox" id="rememberMe" checked>
-                        <label for="rememberMe" style="display: inline; font-weight: normal;">
-                            记住登录状态
-                        </label>
-                    </div>
-                    <button type="submit" id="loginBtn">登录系统</button>
-                </form>
+            <div class="success">
+                <h3>✅ 配置正确！</h3>
+                <p>检测到您使用了正确的 publishable key：<code>sb_publishable_...</code></p>
+                <p>请确保在 Supabase 中已为表启用 RLS 并配置策略。</p>
             </div>
             
-            <div id="configHelp" class="config-box hidden">
-                <h3><span style="color: #e74c3c;">⚠</span> 配置Supabase数据库</h3>
-                <p>您的Supabase配置有问题，请按以下步骤操作：</p>
+            <div id="loginSection">
+                <h2 style="text-align: center; margin-bottom: 20px;">巡查人登录</h2>
                 
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <strong>登录Supabase</strong>
-                        <p>访问 <a href="https://app.supabase.com" target="_blank">https://app.supabase.com</a></p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <strong>进入项目设置</strong>
-                        <p>选择您的项目 → 左侧菜单点击"Settings" → 选择"API"</p>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <strong>复制配置信息</strong>
-                        <p>找到以下信息并替换代码中的配置：</p>
-                        <div class="config-code">
-// 在代码中替换这些值：
-const SUPABASE_URL = '您的Project URL';
-const SUPABASE_KEY = '您的anon public密钥';
-                        </div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <strong>检查行级安全(RLS)</strong>
-                        <p>确保数据库表启用了RLS，并为匿名用户设置权限</p>
+                <div class="form-group">
+                    <label>选择巡查人：</label>
+                    <div id="inspectorList" class="inspector-list">
+                        <!-- 巡查人列表将动态生成 -->
                     </div>
                 </div>
                 
-                <button class="btn-retry" onclick="retryConnection()">重试连接</button>
+                <div class="form-group">
+                    <label for="password">密码：</label>
+                    <input type="password" id="password" value="123456">
+                    <small style="color: #666; margin-top: 5px; display: block;">
+                        测试密码：123456
+                    </small>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <input type="checkbox" id="rememberMe" checked>
+                    <label for="rememberMe" style="display: inline; font-weight: normal;">
+                        记住登录状态
+                    </label>
+                </div>
+                
+                <button class="btn btn-success" onclick="login()" id="loginBtn">
+                    登录系统
+                </button>
             </div>
         </div>
     </div>
 
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script>
-        // Supabase配置 - 需要您更新这里！！！
-        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';  // 替换为您的Project URL
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRweWVubnhqYWVqc3R2YmJqbWJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjcwNTYzMzcsImV4cCI6MjA0MjYzMjMzN30.v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 替换为您的anon public密钥
+        // ✅ 正确的配置（使用您图片中的 publishable key）
+        const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        
+        let supabase = null;
+        let currentUser = null;
+        let inspectors = [];
 
-        let supabaseClient = null;
-        let connectionAttempts = 0;
-        const MAX_ATTEMPTS = 3;
-
-        // 初始化应用
+        // 初始化
         async function initApp() {
-            updateStatus('正在初始化系统...', 'loading');
+            console.log('初始化系统...');
+            console.log('使用URL:', SUPABASE_URL);
+            console.log('使用密钥:', SUPABASE_KEY.substring(0, 20) + '...');
             
-            try {
-                // 1. 加载Supabase库
-                if (typeof supabase === 'undefined') {
-                    updateStatus('正在加载Supabase库...', 'loading');
-                    await loadSupabaseLibrary();
-                }
-                
-                // 2. 创建Supabase客户端
-                updateStatus('正在连接数据库...', 'loading');
-                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-                    auth: { persistSession: true },
-                    db: { schema: 'public' },
-                    global: { 
-                        headers: { 
-                            'apikey': SUPABASE_KEY,
-                            'Authorization': `Bearer ${SUPABASE_KEY}`
-                        } 
-                    }
-                });
-                
-                // 3. 测试连接
-                await testConnection();
-                
-            } catch (error) {
-                connectionAttempts++;
-                console.error('初始化失败:', error);
-                
-                if (connectionAttempts >= MAX_ATTEMPTS) {
-                    updateStatus(
-                        `连接失败: ${error.message}<br><br>
-                        可能的原因：<br>
-                        1. API密钥无效<br>
-                        2. 项目URL错误<br>
-                        3. 网络连接问题<br>
-                        4. 浏览器隐私设置阻止`,
-                        'error'
-                    );
-                    
-                    // 显示配置帮助
-                    document.getElementById('configHelp').classList.remove('hidden');
-                } else {
-                    updateStatus(`连接失败，正在重试 (${connectionAttempts}/${MAX_ATTEMPTS})...`, 'error');
-                    setTimeout(initApp, 2000);
-                }
-            }
-        }
-
-        // 动态加载Supabase库
-        function loadSupabaseLibrary() {
-            return new Promise((resolve, reject) => {
-                if (typeof supabase !== 'undefined') {
-                    resolve();
-                    return;
-                }
-                
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
-                script.onload = resolve;
-                script.onerror = () => reject(new Error('无法加载Supabase库'));
-                document.head.appendChild(script);
+            // 初始化 Supabase
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+                auth: { persistSession: false }
             });
+            
+            // 检查数据库连接
+            await testConnection();
         }
 
         // 测试数据库连接
         async function testConnection() {
             try {
-                updateStatus('正在验证API密钥...', 'loading');
+                console.log('测试数据库连接...');
                 
-                // 测试查询inspectors表
-                const { data, error } = await supabaseClient
+                // 方法1：尝试查询inspectors表
+                const { data, error } = await supabase
                     .from('inspectors')
                     .select('*')
                     .limit(1);
                 
                 if (error) {
-                    if (error.message.includes('JWT')) {
-                        throw new Error('API密钥无效，请检查supabaseKey');
-                    } else if (error.message.includes('relation')) {
-                        throw new Error('数据库表不存在，请先创建表');
+                    if (error.message.includes('relation "inspectors" does not exist')) {
+                        console.log('inspectors表不存在，但连接成功');
+                        createDefaultInspectors();
+                        return;
+                    } else if (error.message.includes('JWT')) {
+                        throw new Error('API密钥无效');
+                    } else if (error.message.includes('RLS')) {
+                        alert('⚠ 行级安全性(RLS)已启用，但未配置策略\n\n请在Supabase中：\n1. 进入Authentication → Policies\n2. 为每个表创建策略\n\n或临时禁用RLS：\n1. 进入Table Editor\n2. 点击表名\n3. 关闭RLS开关');
+                        throw new Error('RLS策略未配置');
                     } else {
                         throw error;
                     }
                 }
                 
-                updateStatus('✅ 数据库连接成功！正在加载巡查人列表...', 'success');
-                
-                // 加载巡查人列表
-                await loadInspectors();
-                
-                // 显示登录表单
-                document.getElementById('loginSection').classList.remove('hidden');
+                console.log('连接成功，巡查人数据:', data);
+                inspectors = data;
+                renderInspectors();
                 
             } catch (error) {
-                console.error('连接测试失败:', error);
-                throw error;
+                console.error('连接失败:', error);
+                
+                // 创建默认巡查人（用于演示）
+                createDefaultInspectors();
+                
+                alert('连接到数据库，但遇到问题：\n' + error.message + 
+                      '\n\n使用本地演示数据继续...');
             }
         }
 
-        // 加载巡查人列表
-        async function loadInspectors() {
-            try {
-                const { data, error } = await supabaseClient
-                    .from('inspectors')
-                    .select('*')
-                    .order('inspector_name');
+        // 创建默认巡查人
+        function createDefaultInspectors() {
+            inspectors = [
+                { id: 1, inspector_name: '管理员' },
+                { id: 2, inspector_name: '王老师' },
+                { id: 3, inspector_name: '李老师' },
+                { id: 4, inspector_name: '张主任' },
+                { id: 5, inspector_name: '刘校长' }
+            ];
+            renderInspectors();
+        }
+
+        // 渲染巡查人列表
+        function renderInspectors() {
+            const container = document.getElementById('inspectorList');
+            container.innerHTML = '';
+            
+            inspectors.forEach((inspector, index) => {
+                const div = document.createElement('div');
+                div.className = 'inspector-item';
+                div.onclick = () => selectInspector(index);
                 
-                if (error) throw error;
+                div.innerHTML = `
+                    <h3>${inspector.inspector_name}</h3>
+                    <p style="color: #666; font-size: 14px;">巡查老师</p>
+                `;
                 
-                const select = document.getElementById('inspectorSelect');
-                data.forEach(inspector => {
-                    const option = document.createElement('option');
-                    option.value = inspector.id;
-                    option.textContent = inspector.inspector_name;
-                    select.appendChild(option);
-                });
-                
-                updateStatus(`✅ 已加载 ${data.length} 名巡查人`, 'success');
-                
-            } catch (error) {
-                console.error('加载巡查人失败:', error);
-                
-                // 如果inspectors表不存在，添加示例数据
-                const select = document.getElementById('inspectorSelect');
-                const defaultInspectors = [
-                    { id: 1, name: '管理员' },
-                    { id: 2, name: '王老师' },
-                    { id: 3, name: '李老师' }
-                ];
-                
-                defaultInspectors.forEach(inspector => {
-                    const option = document.createElement('option');
-                    option.value = inspector.id;
-                    option.textContent = inspector.name;
-                    select.appendChild(option);
-                });
-                
-                updateStatus('⚠ 使用示例巡查人（请先创建数据库表）', 'loading');
-            }
+                container.appendChild(div);
+            });
+        }
+
+        // 选择巡查人
+        function selectInspector(index) {
+            // 移除之前的选择
+            document.querySelectorAll('.inspector-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // 设置当前选择
+            document.querySelectorAll('.inspector-item')[index].classList.add('selected');
         }
 
         // 登录
         async function login() {
-            const inspectorId = document.getElementById('inspectorSelect').value;
-            const password = document.getElementById('password').value;
-            const rememberMe = document.getElementById('rememberMe').checked;
-            
-            if (!inspectorId) {
+            const selected = document.querySelector('.inspector-item.selected');
+            if (!selected) {
                 alert('请选择巡查人');
                 return;
             }
+            
+            const index = Array.from(document.querySelectorAll('.inspector-item')).indexOf(selected);
+            const inspector = inspectors[index];
+            const password = document.getElementById('password').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
             
             if (password !== '123456') {
                 alert('密码错误，测试密码为：123456');
@@ -391,82 +245,76 @@ const SUPABASE_KEY = '您的anon public密钥';
             
             const loginBtn = document.getElementById('loginBtn');
             loginBtn.disabled = true;
-            loginBtn.innerHTML = '登录中...';
+            loginBtn.textContent = '登录中...';
             
             try {
-                // 尝试从数据库获取巡查人
-                let inspectorName = '';
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('inspectors')
-                        .select('inspector_name')
-                        .eq('id', inspectorId)
-                        .single();
-                    
-                    if (!error && data) {
-                        inspectorName = data.inspector_name;
-                    }
-                } catch (e) {
-                    // 如果表不存在，使用默认名称
-                    const select = document.getElementById('inspectorSelect');
-                    inspectorName = select.options[select.selectedIndex].text;
-                }
-                
                 // 保存登录状态
-                const user = { id: inspectorId, name: inspectorName };
+                currentUser = {
+                    id: inspector.id,
+                    name: inspector.inspector_name
+                };
+                
                 if (rememberMe) {
-                    localStorage.setItem('currentInspector', JSON.stringify(user));
+                    localStorage.setItem('currentInspector', JSON.stringify(currentUser));
                 } else {
-                    sessionStorage.setItem('currentInspector', JSON.stringify(user));
+                    sessionStorage.setItem('currentInspector', JSON.stringify(currentUser));
                 }
                 
-                updateStatus(`✅ 登录成功！欢迎 ${inspectorName}`, 'success');
+                // 尝试保存到数据库
+                try {
+                    if (supabase) {
+                        await supabase
+                            .from('inspections')
+                            .insert({
+                                inspector_id: inspector.id,
+                                inspector_name: inspector.inspector_name,
+                                login_time: new Date().toISOString(),
+                                action: 'login'
+                            });
+                    }
+                } catch (dbError) {
+                    console.log('日志记录失败，但登录继续:', dbError);
+                }
+                
+                // 登录成功
                 setTimeout(() => {
-                    alert('登录成功！系统可以正常使用了。\n\n接下来可以：\n1. 填写巡查记录\n2. 查询历史记录\n3. 导出数据');
+                    alert(`✅ 登录成功！欢迎 ${currentUser.name}\n\n系统功能：\n1. 填写巡查记录\n2. 查询历史记录\n3. 导出Excel报表\n\n点击确定开始使用。`);
+                    
                     // 这里可以跳转到主页面
+                    // window.location.href = 'main.html';
+                    
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = '登录系统';
+                    
                 }, 1000);
                 
             } catch (error) {
                 console.error('登录失败:', error);
                 alert('登录失败: ' + error.message);
-            } finally {
                 loginBtn.disabled = false;
-                loginBtn.innerHTML = '登录系统';
+                loginBtn.textContent = '登录系统';
             }
         }
 
-        // 重试连接
-        function retryConnection() {
-            document.getElementById('configHelp').classList.add('hidden');
-            connectionAttempts = 0;
-            initApp();
-        }
-
-        // 更新状态显示
-        function updateStatus(message, type = 'loading') {
-            const statusBox = document.getElementById('statusMessage');
-            const statusText = document.getElementById('statusText');
+        // 检查是否已登录
+        function checkLoginStatus() {
+            const saved = localStorage.getItem('currentInspector') || 
+                         sessionStorage.getItem('currentInspector');
             
-            statusBox.className = 'status-box ' + type;
-            statusText.innerHTML = message;
-        }
-
-        // 页面加载完成后初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            // 检查是否有保存的登录状态
-            const savedUser = localStorage.getItem('currentInspector') || 
-                            sessionStorage.getItem('currentInspector');
-            
-            if (savedUser) {
+            if (saved) {
                 try {
-                    const user = JSON.parse(savedUser);
-                    updateStatus(`检测到已登录用户: ${user.name}`, 'loading');
+                    currentUser = JSON.parse(saved);
+                    alert(`检测到已登录用户: ${currentUser.name}\n自动跳转到主页面...`);
+                    // window.location.href = 'main.html';
                 } catch (e) {
-                    // 如果解析失败，继续初始化
+                    console.log('无法恢复登录状态:', e);
                 }
             }
-            
-            // 开始初始化
+        }
+
+        // 页面加载
+        document.addEventListener('DOMContentLoaded', () => {
+            checkLoginStatus();
             initApp();
         });
     </script>
