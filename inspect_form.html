@@ -91,6 +91,11 @@
             margin-top: 10px;
             cursor: pointer;
         }
+        .loading {
+            color: #666;
+            text-align: center;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
@@ -166,7 +171,8 @@
             
             <div class="form-group">
                 <label>检查人</label>
-                <select id="inspector" required>
+                <div id="inspectorLoading" class="loading">正在加载检查人列表...</div>
+                <select id="inspector" required style="display: none;">
                     <option value="">请选择检查人</option>
                 </select>
             </div>
@@ -189,7 +195,7 @@
     <script>
         // 初始化Supabase
         const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 替换为您的完整密钥
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
         
         // 获取班级信息
@@ -214,23 +220,38 @@
         
         // 加载检查人名单
         async function loadInspectors() {
-            const { data, error } = await supabase
-                .from('inspectors')
-                .select('inspector_name')
-                .order('inspector_name');
+            try {
+                const { data, error } = await supabase
+                    .from('inspectors')
+                    .select('inspector_name')
+                    .order('inspector_name');
+                    
+                if (error) {
+                    console.error("加载检查人失败:", error);
+                    document.getElementById('inspectorLoading').innerHTML = "加载检查人失败，请刷新重试";
+                    return;
+                }
                 
-            if (error) {
-                console.error("加载检查人失败:", error);
-                return;
+                if (data && data.length > 0) {
+                    const select = document.getElementById('inspector');
+                    data.forEach(row => {
+                        const option = document.createElement('option');
+                        option.value = row.inspector_name;
+                        option.textContent = row.inspector_name;
+                        select.appendChild(option);
+                    });
+                    
+                    // 隐藏加载提示，显示下拉框
+                    document.getElementById('inspectorLoading').style.display = 'none';
+                    document.getElementById('inspector').style.display = 'block';
+                } else {
+                    document.getElementById('inspectorLoading').innerHTML = "没有检查人数据，请先添加检查人";
+                }
+                
+            } catch (error) {
+                console.error("加载检查人异常:", error);
+                document.getElementById('inspectorLoading').innerHTML = "加载异常，请检查网络连接";
             }
-            
-            const select = document.getElementById('inspector');
-            data.forEach(row => {
-                const option = document.createElement('option');
-                option.value = row.inspector_name;
-                option.textContent = row.inspector_name;
-                select.appendChild(option);
-            });
         }
         
         // 自动填充课表信息
@@ -246,26 +267,30 @@
             const weekDay = weekDays[dateObj.getDay()];
             document.getElementById('week_day').value = weekDay;
             
-            // 查询课表
-            const { data, error } = await supabase
-                .from('schedule')
-                .select('subject, teacher_name')
-                .eq('class_name', selectedClass)
-                .eq('week_day', weekDay)
-                .eq('period', period)
-                .maybeSingle();
+            try {
+                // 查询课表
+                const { data, error } = await supabase
+                    .from('schedule')
+                    .select('subject, teacher_name')
+                    .eq('class_name', selectedClass)
+                    .eq('week_day', weekDay)
+                    .eq('period', period)
+                    .maybeSingle();
+                    
+                if (error) {
+                    console.error("查询课表失败:", error);
+                    return;
+                }
                 
-            if (error) {
-                console.error("查询课表失败:", error);
-                return;
-            }
-            
-            if (data) {
-                document.getElementById('subject').value = data.subject || '';
-                document.getElementById('teacher_name').value = data.teacher_name || '';
-            } else {
-                document.getElementById('subject').value = '';
-                document.getElementById('teacher_name').value = '';
+                if (data) {
+                    document.getElementById('subject').value = data.subject || '';
+                    document.getElementById('teacher_name').value = data.teacher_name || '';
+                } else {
+                    document.getElementById('subject').value = '';
+                    document.getElementById('teacher_name').value = '';
+                }
+            } catch (error) {
+                console.error("自动填充异常:", error);
             }
         }
         
@@ -302,22 +327,27 @@
                 return;
             }
             
-            // 提交到数据库
-            const { data, error } = await supabase
-                .from('inspections')
-                .insert([formData]);
-                
-            if (error) {
-                alert(`提交失败: ${error.message}`);
+            try {
+                // 提交到数据库
+                const { data, error } = await supabase
+                    .from('inspections')
+                    .insert([formData]);
+                    
+                if (error) {
+                    alert(`提交失败: ${error.message}`);
+                    console.error(error);
+                } else {
+                    alert('✅ 巡查记录提交成功！');
+                    // 清空表单
+                    document.getElementById('inspectionForm').reset();
+                    // 重置日期和星期
+                    const today = new Date().toISOString().split('T')[0];
+                    document.getElementById('inspection_date').value = today;
+                    autoFillSchedule();
+                }
+            } catch (error) {
+                alert('提交异常，请检查网络连接');
                 console.error(error);
-            } else {
-                alert('✅ 巡查记录提交成功！');
-                // 清空表单
-                document.getElementById('inspectionForm').reset();
-                // 重置日期和星期
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('inspection_date').value = today;
-                autoFillSchedule();
             }
         }
     </script>

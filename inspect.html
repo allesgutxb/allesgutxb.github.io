@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>选择班级</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -61,6 +62,12 @@
             text-decoration: none;
             border-radius: 8px;
         }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
@@ -69,27 +76,8 @@
         <p class="instruction">点击下方班级图标开始巡查</p>
     </div>
     
-    <div class="class-grid">
-        <div class="class-btn grade-7" onclick="selectClass('七1班')">七1班</div>
-        <div class="class-btn grade-7" onclick="selectClass('七2班')">七2班</div>
-        <div class="class-btn grade-7" onclick="selectClass('七3班')">七3班</div>
-        <div class="class-btn grade-7" onclick="selectClass('七4班')">七4班</div>
-        <div class="class-btn grade-7" onclick="selectClass('七5班')">七5班</div>
-        <div class="class-btn grade-7" onclick="selectClass('七6班')">七6班</div>
-        
-        <div class="class-btn grade-8" onclick="selectClass('八1班')">八1班</div>
-        <div class="class-btn grade-8" onclick="selectClass('八2班')">八2班">八2班</div>
-        <div class="class-btn grade-8" onclick="selectClass('八3班')">八3班</div>
-        <div class="class-btn grade-8" onclick="selectClass('八4班')">八4班</div>
-        <div class="class-btn grade-8" onclick="selectClass('八5班')">八5班</div>
-        <div class="class-btn grade-8" onclick="selectClass('八6班')">八6班</div>
-        
-        <div class="class-btn grade-9" onclick="selectClass('九1班')">九1班</div>
-        <div class="class-btn grade-9" onclick="selectClass('九2班')">九2班</div>
-        <div class="class-btn grade-9" onclick="selectClass('九3班')">九3班</div>
-        <div class="class-btn grade-9" onclick="selectClass('九4班')">九4班</div>
-        <div class="class-btn grade-9" onclick="selectClass('九5班')">九5班</div>
-        <div class="class-btn grade-9" onclick="selectClass('九6班')">九6班</div>
+    <div class="class-grid" id="classGrid">
+        <div class="loading">正在加载班级列表...</div>
     </div>
     
     <div style="text-align: center; margin-top: 30px;">
@@ -97,10 +85,67 @@
     </div>
 
     <script>
+        // 初始化Supabase
+        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // 从数据库加载班级
+        async function loadClasses() {
+            try {
+                const { data, error } = await supabase
+                    .from('classes')
+                    .select('class_name')
+                    .order('class_name');
+                    
+                if (error) {
+                    console.error("加载班级失败:", error);
+                    document.getElementById('classGrid').innerHTML = 
+                        '<div class="loading">加载班级失败，请刷新重试</div>';
+                    return;
+                }
+                
+                if (data && data.length > 0) {
+                    renderClasses(data);
+                } else {
+                    // 如果没有数据，使用默认的18个班级
+                    const defaultClasses = [
+                        "七1班","七2班","七3班","七4班","七5班","七6班",
+                        "八1班","八2班","八3班","八4班","八5班","八6班",
+                        "九1班","九2班","九3班","九4班","九5班","九6班"
+                    ];
+                    const mockData = defaultClasses.map(cls => ({ class_name: cls }));
+                    renderClasses(mockData);
+                }
+            } catch (error) {
+                console.error("加载班级异常:", error);
+            }
+        }
+        
+        function renderClasses(classes) {
+            const classGrid = document.getElementById('classGrid');
+            classGrid.innerHTML = '';
+            
+            classes.forEach(cls => {
+                const className = cls.class_name;
+                const grade = className.charAt(0); // 获取年级：七、八、九
+                
+                const btn = document.createElement('div');
+                btn.className = `class-btn grade-${grade}`;
+                btn.textContent = className;
+                btn.onclick = () => selectClass(className);
+                
+                classGrid.appendChild(btn);
+            });
+        }
+        
         function selectClass(className) {
             localStorage.setItem('currentInspectClass', className);
             window.location.href = `inspect_form.html?class=${encodeURIComponent(className)}`;
         }
+        
+        // 页面加载时加载班级
+        window.onload = loadClasses;
     </script>
 </body>
 </html>
