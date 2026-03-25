@@ -136,13 +136,6 @@
             padding: 20px;
             color: #666;
         }
-        .date-inputs {
-            display: flex;
-            gap: 10px;
-        }
-        .date-inputs input {
-            flex: 1;
-        }
         .error-message {
             color: #f44336;
             text-align: center;
@@ -215,17 +208,17 @@
             </div>
             
             <div class="filter-group">
-                <label>任课老师</label>
-                <select id="filter_teacher">
-                    <option value="">全部老师</option>
+                <label>科目</label>
+                <select id="filter_subject">
+                    <option value="">全部科目</option>
                     <!-- 动态加载 -->
                 </select>
             </div>
             
             <div class="filter-group">
-                <label>科目</label>
-                <select id="filter_subject">
-                    <option value="">全部科目</option>
+                <label>任课老师</label>
+                <select id="filter_teacher">
+                    <option value="">全部老师</option>
                     <!-- 动态加载 -->
                 </select>
             </div>
@@ -308,8 +301,8 @@
             // 加载所有下拉列表数据
             await Promise.all([
                 loadClasses(),
-                loadTeachers(),
                 loadSubjects(),
+                loadTeachers(),
                 loadInspectors()
             ]);
             
@@ -336,54 +329,9 @@
                         option.textContent = row.class_name;
                         select.appendChild(option);
                     });
-                } else {
-                    // 如果数据库没有数据，使用本地数据
-                    const defaultClasses = [
-                        "七1班", "七2班", "七3班", "七4班", "七5班", "七6班",
-                        "八1班", "八2班", "八3班", "八4班", "八5班", "八6班",
-                        "九1班", "九2班", "九3班", "九4班", "九5班", "九6班"
-                    ];
-                    
-                    defaultClasses.forEach(className => {
-                        const option = document.createElement('option');
-                        option.value = className;
-                        option.textContent = className;
-                        select.appendChild(option);
-                    });
                 }
             } catch (error) {
                 console.error("加载班级列表失败:", error);
-            }
-        }
-        
-        // 加载老师列表
-        async function loadTeachers() {
-            try {
-                const { data, error } = await supabase
-                    .from('inspections')
-                    .select('teacher_name')
-                    .not('teacher_name', 'is', null)
-                    .order('teacher_name');
-                    
-                if (error) throw error;
-                
-                const select = document.getElementById('filter_teacher');
-                
-                if (data && data.length > 0) {
-                    // 去重
-                    const uniqueTeachers = [...new Set(data.map(item => item.teacher_name))];
-                    
-                    uniqueTeachers.forEach(teacher => {
-                        if (teacher) {
-                            const option = document.createElement('option');
-                            option.value = teacher;
-                            option.textContent = teacher;
-                            select.appendChild(option);
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error("加载老师列表失败:", error);
             }
         }
         
@@ -418,31 +366,86 @@
             }
         }
         
-        // 加载检查人列表
-        async function loadInspectors() {
+        // 加载老师列表
+        async function loadTeachers() {
             try {
                 const { data, error } = await supabase
                     .from('inspections')
-                    .select('inspector')
-                    .not('inspector', 'is', null)
-                    .order('inspector');
+                    .select('teacher_name')
+                    .not('teacher_name', 'is', null)
+                    .order('teacher_name');
                     
                 if (error) throw error;
                 
-                const select = document.getElementById('filter_inspector');
+                const select = document.getElementById('filter_teacher');
                 
                 if (data && data.length > 0) {
                     // 去重
-                    const uniqueInspectors = [...new Set(data.map(item => item.inspector))];
+                    const uniqueTeachers = [...new Set(data.map(item => item.teacher_name))];
                     
-                    uniqueInspectors.forEach(inspector => {
-                        if (inspector) {
+                    uniqueTeachers.forEach(teacher => {
+                        if (teacher) {
                             const option = document.createElement('option');
-                            option.value = inspector;
-                            option.textContent = inspector;
+                            option.value = teacher;
+                            option.textContent = teacher;
                             select.appendChild(option);
                         }
                     });
+                }
+            } catch (error) {
+                console.error("加载老师列表失败:", error);
+            }
+        }
+        
+        // 加载检查人列表
+        async function loadInspectors() {
+            try {
+                // 首先尝试从inspectors表加载
+                const { data: inspectorsData, error: inspectorsError } = await supabase
+                    .from('inspectors')
+                    .select('inspector_name')
+                    .order('inspector_name');
+                    
+                const select = document.getElementById('filter_inspector');
+                
+                if (inspectorsError) {
+                    console.error("从inspectors表加载检查人失败:", inspectorsError);
+                    // 从inspections表获取检查人
+                    const { data: inspectionsData, error: inspectionsError } = await supabase
+                        .from('inspections')
+                        .select('inspector')
+                        .not('inspector', 'is', null)
+                        .order('inspector');
+                        
+                    if (inspectionsError) {
+                        console.error("从inspections表加载检查人失败:", inspectionsError);
+                        return;
+                    }
+                    
+                    if (inspectionsData && inspectionsData.length > 0) {
+                        // 去重并排序
+                        const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector))].sort();
+                        
+                        uniqueInspectors.forEach(inspector => {
+                            if (inspector) {
+                                const option = document.createElement('option');
+                                option.value = inspector;
+                                option.textContent = inspector;
+                                select.appendChild(option);
+                            }
+                        });
+                    }
+                } else {
+                    if (inspectorsData && inspectorsData.length > 0) {
+                        inspectorsData.forEach(row => {
+                            if (row.inspector_name) {
+                                const option = document.createElement('option');
+                                option.value = row.inspector_name;
+                                option.textContent = row.inspector_name;
+                                select.appendChild(option);
+                            }
+                        });
+                    }
                 }
             } catch (error) {
                 console.error("加载检查人列表失败:", error);
@@ -458,8 +461,8 @@
                 week_day: document.getElementById('filter_weekday').value || null,
                 class_name: document.getElementById('filter_class').value || null,
                 period: document.getElementById('filter_period').value || null,
-                teacher_name: document.getElementById('filter_teacher').value || null,
                 subject: document.getElementById('filter_subject').value || null,
+                teacher_name: document.getElementById('filter_teacher').value || null,
                 inspector: document.getElementById('filter_inspector').value || null,
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
@@ -518,8 +521,8 @@
             document.getElementById('filter_weekday').value = '';
             document.getElementById('filter_class').value = '';
             document.getElementById('filter_period').value = '';
-            document.getElementById('filter_teacher').value = '';
             document.getElementById('filter_subject').value = '';
+            document.getElementById('filter_teacher').value = '';
             document.getElementById('filter_inspector').value = '';
             document.getElementById('filter_arrival').value = '';
             
