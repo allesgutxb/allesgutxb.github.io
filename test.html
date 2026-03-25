@@ -6,9 +6,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: sans-serif; padding: 20px; }
-        .success { color: green; }
+        .success { color: green; font-weight: bold; }
         .error { color: red; font-weight: bold; }
-        .warning { color: orange; }
     </style>
 </head>
 <body>
@@ -16,96 +15,75 @@
     <div id="result">正在初始化测试...</div>
 
     <script>
-        // 删除之前的重复声明，只保留这一个
+        // 1. 定义 Supabase 连接参数（只定义一次！）
         const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
         const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
         
-        // 注意：这里使用 window.supabase.createClient，而不是 supabase.createClient
+        // 2. 创建 Supabase 客户端实例（只创建一次！）
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         const resultDiv = document.getElementById('result');
         
+        // 3. 执行测试的主函数
         async function runAllTests() {
-            let log = '';
+            let log = '<h3>测试结果：</h3>';
             
             try {
-                // 测试1: 基础连接
-                log += '<p><b>1. 测试Supabase连接...</b></p>';
-                log += '<p>✅ 客户端初始化成功</p>';
-                
-                // 测试2: 查询检查人表
-                log += '<p><b>2. 查询检查人表 (inspectors)...</b></p>';
+                // 测试1: 查询检查人表 (inspectors) - 这是您下拉列表的数据源
+                log += '<p><b>测试1: 查询检查人表 (inspectors)</b></p>';
                 const { data: inspectorData, error: inspectorError } = await supabase
                     .from('inspectors')
-                    .select('inspector_name, id')
-                    .order('inspector_name')
-                    .limit(10);
+                    .select('*')
+                    .limit(5);
                     
                 if (inspectorError) {
-                    log += `<p class="error">❌ 查询失败: ${inspectorError.message}</p>`;
-                    log += `<p class="error">可能原因：RLS策略未设置，或表名/字段名不正确。</p>`;
+                    log += `<p class="error">❌ 失败: ${inspectorError.message}</p>`;
+                    log += `<p class="error">诊断：此错误表明数据库连接、RLS策略或表名可能有问题。这直接导致您填写页面的“检查人”下拉列表为空。</p>`;
                 } else {
-                    log += `<p class="success">✅ 查询成功！共找到 ${inspectorData.length} 条记录。</p>`;
+                    log += `<p class="success">✅ 成功！找到 ${inspectorData.length} 条记录。</p>`;
                     if (inspectorData.length > 0) {
-                        log += '<p>前几条数据：<ul>';
+                        log += '<p>数据：';
                         inspectorData.forEach(item => {
-                            log += `<li>${item.id}: ${item.inspector_name}</li>`;
+                            log += `${item.inspector_name || '无名'}, `;
                         });
-                        log += '</ul></p>';
-                    } else {
-                        log += '<p class="warning">⚠️ 表内无数据，这是导致下拉列表为空的直接原因。</p>';
+                        log += '</p>';
                     }
                 }
                 
-                // 测试3: 查询班级表
-                log += '<p><b>3. 查询班级表 (classes)...</b></p>';
+                // 测试2: 查询班级表 (classes)
+                log += '<p><b>测试2: 查询班级表 (classes)</b></p>';
                 const { data: classData, error: classError } = await supabase
                     .from('classes')
-                    .select('class_name, id')
-                    .order('class_name')
+                    .select('*')
                     .limit(5);
                     
                 if (classError) {
-                    log += `<p class="error">❌ 查询失败: ${classError.message}</p>`;
+                    log += `<p class="error">❌ 失败: ${classError.message}</p>`;
                 } else {
-                    log += `<p class="success">✅ 查询成功！共找到 ${classData.length} 条记录。</p>`;
+                    log += `<p class="success">✅ 成功！找到 ${classData.length} 条记录。</p>`;
                 }
                 
-                // 测试4: 查询课表
-                log += '<p><b>4. 查询课表 (schedule)...</b></p>';
+                // 测试3: 查询课表 (schedule) - 用于自动填充
+                log += '<p><b>测试3: 查询课表 (schedule)</b></p>';
                 const { data: scheduleData, error: scheduleError } = await supabase
                     .from('schedule')
-                    .select('class_name, week_day, period, subject, teacher_name')
-                    .limit(5);
+                    .select('class_name, week_day, period, subject')
+                    .limit(3);
                     
                 if (scheduleError) {
-                    log += `<p class="error">❌ 查询失败: ${scheduleError.message}</p>`;
+                    log += `<p class="error">❌ 失败: ${scheduleError.message}</p>`;
+                    log += `<p class="error">诊断：这会导致您填写页面选择班级、节次后，科目和老师无法自动填充。</p>`;
                 } else {
-                    log += `<p class="success">✅ 查询成功！共找到 ${scheduleData.length} 条记录。</p>`;
-                }
-                
-                // 测试5: 查询巡查记录
-                log += '<p><b>5. 查询巡查记录 (inspections)...</b></p>';
-                const { data: inspectionData, error: inspectionError } = await supabase
-                    .from('inspections')
-                    .select('id, date, class_name, inspector')
-                    .order('date', { ascending: false })
-                    .limit(5);
-                    
-                if (inspectionError) {
-                    log += `<p class="error">❌ 查询失败: ${inspectionError.message}</p>`;
-                } else {
-                    log += `<p class="success">✅ 查询成功！共找到 ${inspectionData.length} 条记录。</p>`;
+                    log += `<p class="success">✅ 成功！找到 ${scheduleData.length} 条记录。</p>`;
                 }
                 
             } catch (err) {
-                log += `<p class="error">❌ 测试过程发生异常: ${err.message}</p>`;
-                log += `<p class="error">堆栈: ${err.stack}</p>`;
+                log += `<p class="error">❌ 测试过程发生未预料的异常: ${err.message}</p>`;
             }
             
             resultDiv.innerHTML = log;
         }
         
-        // 页面加载后运行测试
+        // 页面加载完成后，自动开始测试
         window.onload = runAllTests;
     </script>
 </body>
