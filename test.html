@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <h2>Supabase 连接测试</h2>
+    <div id="result"></div>
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        async function test() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '测试中...';
+            
+            try {
+                // 测试1: 连接
+                resultDiv.innerHTML += '<br>1. 测试Supabase连接...';
+                
+                // 测试2: 查询inspectors表
+                resultDiv.innerHTML += '<br>2. 查询检查人表...';
+                const { data: inspectors, error: e1 } = await supabase
+                    .from('inspectors')
+                    .select('*')
+                    .limit(5);
+                
+                if (e1) {
+                    resultDiv.innerHTML += `<br>❌ 检查人表查询失败: ${e1.message}`;
+                } else {
+                    resultDiv.innerHTML += `<br>✅ 检查人表查询成功，找到 ${inspectors.length} 条记录`;
+                    inspectors.forEach(i => {
+                        resultDiv.innerHTML += `<br>   - ${i.inspector_name}`;
+                    });
+                }
+                
+                // 测试3: 查询classes表
+                resultDiv.innerHTML += '<br>3. 查询班级表...';
+                const { data: classes, error: e2 } = await supabase
+                    .from('classes')
+                    .select('*')
+                    .limit(5);
+                
+                if (e2) {
+                    resultDiv.innerHTML += `<br>❌ 班级表查询失败: ${e2.message}`;
+                } else {
+                    resultDiv.innerHTML += `<br>✅ 班级表查询成功，找到 ${classes.length} 条记录`;
+                }
+                
+                // 测试4: 查询schedule表
+                resultDiv.innerHTML += '<br>4. 查询课表...';
+                const { data: schedule, error: e3 } = await supabase
+                    .from('schedule')
+                    .select('*')
+                    .eq('class_name', '七1班')
+                    .eq('week_day', '星期一')
+                    .limit(3);
+                
+                if (e3) {
+                    resultDiv.innerHTML += `<br>❌ 课表查询失败: ${e3.message}`;
+                } else {
+                    resultDiv.innerHTML += `<br>✅ 课表查询成功，找到 ${schedule.length} 条记录`;
+                }
+                
+            } catch (err) {
+                resultDiv.innerHTML += `<br>❌ 测试异常: ${err.message}`;
+            }
+        }
+        
+        test();
+    </script>
+</body>
+</html>
