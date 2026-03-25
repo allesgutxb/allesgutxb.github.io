@@ -110,72 +110,100 @@
                 <textarea id="suggestion" rows="3" placeholder="针对问题的建议"></textarea>
             </div>
             
-            <button type="button" class="btn-submit" onclick="submitForm()">📤 提交记录</button>
+            <button type="button" class="btn-submit" id="submitBtn">📤 提交记录</button>
             <button type="button" class="btn-back" onclick="window.location.href='inspect.html'">← 返回班级选择</button>
         </form>
     </div>
 
     <script>
-        // 初始化Supabase
-        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // 全局变量
+        let selectedClass = '';
+        let supabaseClient = null;
         
-        const urlParams = new URLSearchParams(window.location.search);
-        const selectedClass = urlParams.get('class') || localStorage.getItem('currentInspectClass');
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPage();
+        });
         
-        // 页面加载初始化
-        document.addEventListener('DOMContentLoaded', async function() {
-            if (!selectedClass) {
+        async function initPage() {
+            // 1. 获取班级参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const classParam = urlParams.get('class') || urlParams.get('cl') || localStorage.getItem('currentInspectClass');
+            
+            if (!classParam) {
                 alert('请先选择班级');
                 window.location.href = 'inspect.html';
                 return;
             }
             
+            // 解码班级参数（处理URL编码）
+            selectedClass = decodeURIComponent(classParam.replace(/\+/g, ' '));
             document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
             
-            // 设置默认日期为今天，并立即计算星期
+            // 2. 初始化Supabase（只初始化一次！）
+            const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+            const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+            
+            // 3. 设置今天日期并计算星期
             const today = new Date();
             const formattedDate = today.toISOString().split('T')[0];
-            const dateInput = document.getElementById('inspection_date');
-            dateInput.value = formattedDate;
+            document.getElementById('inspection_date').value = formattedDate;
             calculateWeekDay(formattedDate);
             
-            // 绑定日期和节次变化事件
-            dateInput.addEventListener('change', function() {
+            // 4. 绑定事件监听器
+            document.getElementById('inspection_date').addEventListener('change', function() {
                 calculateWeekDay(this.value);
                 autoFillSchedule();
             });
             
             document.getElementById('period').addEventListener('change', autoFillSchedule);
             
-            // 加载检查人下拉列表
+            // 5. 加载检查人列表
             await loadInspectors();
             
-            // 尝试自动填充一次课表
+            // 6. 绑定提交按钮
+            document.getElementById('submitBtn').addEventListener('click', submitForm);
+            
+            // 7. 尝试自动填充课表
             autoFillSchedule();
-        });
-        
-        // 根据日期计算并显示星期
-        function calculateWeekDay(dateString) {
-            const dateObj = new Date(dateString);
-            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-            const weekDay = weekDays[dateObj.getDay()];
-            document.getElementById('week_day').value = weekDay;
-            return weekDay;
         }
         
-        // 从数据库加载检查人
+        // 计算星期
+        function calculateWeekDay(dateString) {
+            try {
+                const dateObj = new Date(dateString);
+                const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                const weekDay = weekDays[dateObj.getDay()];
+                document.getElementById('week_day').value = weekDay;
+                return weekDay;
+            } catch (error) {
+                console.error("计算星期失败:", error);
+                return '';
+            }
+        }
+        
+        // 加载检查人
         async function loadInspectors() {
             try {
-                const { data, error } = await supabase
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
                     .from('inspectors')
                     .select('inspector_name')
                     .order('inspector_name');
                     
-                if (error) throw error;
+                if (error) {
+                    console.error("加载检查人失败:", error);
+                    return;
+                }
                 
                 const select = document.getElementById('inspector');
+                select.innerHTML = '<option value="">请选择检查人</option>';
+                
                 if (data && data.length > 0) {
                     data.forEach(row => {
                         const option = document.createElement('option');
@@ -185,22 +213,23 @@
                     });
                 }
             } catch (error) {
-                console.error("加载检查人失败:", error);
-                alert("检查人加载失败，请按F12查看控制台。");
+                console.error("加载检查人异常:", error);
             }
         }
         
-        // 自动填充课表信息
+        // 自动填充课表
         async function autoFillSchedule() {
             const date = document.getElementById('inspection_date').value;
             const period = document.getElementById('period').value;
             
-            if (!date || !period || !selectedClass) return;
+            if (!date || !period || !selectedClass || !supabaseClient) {
+                return;
+            }
             
             const weekDay = calculateWeekDay(date);
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('schedule')
                     .select('subject, teacher_name')
                     .eq('class_name', selectedClass)
@@ -208,7 +237,10 @@
                     .eq('period', period)
                     .maybeSingle();
                     
-                if (error) throw error;
+                if (error) {
+                    console.error("查询课表失败:", error);
+                    return;
+                }
                 
                 if (data) {
                     document.getElementById('subject').value = data.subject || '';
@@ -218,12 +250,17 @@
                     document.getElementById('teacher_name').value = '';
                 }
             } catch (error) {
-                console.error("自动填充失败:", error);
+                console.error("自动填充异常:", error);
             }
         }
         
         // 提交表单
         async function submitForm() {
+            if (!supabaseClient) {
+                alert('系统未初始化完成，请刷新页面重试');
+                return;
+            }
+            
             const formData = {
                 date: document.getElementById('inspection_date').value,
                 week_day: document.getElementById('week_day').value,
@@ -240,18 +277,27 @@
                 suggestion: document.getElementById('suggestion').value
             };
             
-            // 验证
-            if (!formData.period) { alert('请选择节次'); return; }
-            if (!formData.inspector) { alert('请选择检查人'); return; }
-            if (!formData.arrival_status) { alert('请选择教师到岗情况'); return; }
+            // 验证必填项
+            if (!formData.period) {
+                alert('请选择节次');
+                return;
+            }
+            if (!formData.inspector) {
+                alert('请选择检查人');
+                return;
+            }
+            if (!formData.arrival_status) {
+                alert('请选择教师到岗情况');
+                return;
+            }
             
-            const submitBtn = document.querySelector('.btn-submit');
+            const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = '提交中...';
             submitBtn.disabled = true;
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('inspections')
                     .insert([formData])
                     .select();
@@ -259,7 +305,8 @@
                 if (error) throw error;
                 
                 alert('✅ 巡查记录提交成功！');
-                // 重置表单，但保留班级、日期、星期
+                
+                // 重置部分表单
                 document.getElementById('subject').value = '';
                 document.getElementById('teacher_name').value = '';
                 document.getElementById('arrival_status').value = '';
