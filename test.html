@@ -1,73 +1,119 @@
 <!DOCTYPE html>
 <html>
+<head>
+    <meta charset="UTF-8">
+    <title>Supabase 连接测试</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        .success { color: green; }
+        .error { color: red; font-weight: bold; }
+    </style>
+</head>
 <body>
     <h2>Supabase 连接测试</h2>
-    <div id="result"></div>
-    
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <div id="result">正在初始化测试...</div>
+
     <script>
+        // 使用您确认的密钥
         const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
         const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
         
-        async function test() {
-            const resultDiv = document.getElementById('result');
-            resultDiv.innerHTML = '测试中...';
+        // 创建客户端
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const resultDiv = document.getElementById('result');
+        
+        async function runAllTests() {
+            let log = '';
             
             try {
-                // 测试1: 连接
-                resultDiv.innerHTML += '<br>1. 测试Supabase连接...';
+                // 测试1: 基础连接与认证
+                log += '<p><b>1. 测试基础连接...</b></p>';
+                const { data: authData, error: authError } = await supabase.auth.getSession();
+                if (authError) {
+                    log += `<p class="error">❌ 连接失败: ${authError.message}</p>`;
+                } else {
+                    log += `<p class="success">✅ 连接成功，会话状态: ${authData.session ? '已认证' : '匿名'}</p>`;
+                }
                 
-                // 测试2: 查询inspectors表
-                resultDiv.innerHTML += '<br>2. 查询检查人表...';
-                const { data: inspectors, error: e1 } = await supabase
+                // 测试2: 查询检查人表 (inspectors) - 这是下拉列表的数据源
+                log += '<p><b>2. 查询检查人表 (inspectors)...</b></p>';
+                const { data: inspectorData, error: inspectorError } = await supabase
                     .from('inspectors')
-                    .select('*')
-                    .limit(5);
-                
-                if (e1) {
-                    resultDiv.innerHTML += `<br>❌ 检查人表查询失败: ${e1.message}`;
+                    .select('inspector_name, id')
+                    .order('inspector_name')
+                    .limit(10);
+                    
+                if (inspectorError) {
+                    log += `<p class="error">❌ 查询失败: ${inspectorError.message}</p>`;
+                    log += `<p class="error">可能原因：RLS策略未设置，或表名/字段名不正确。</p>`;
                 } else {
-                    resultDiv.innerHTML += `<br>✅ 检查人表查询成功，找到 ${inspectors.length} 条记录`;
-                    inspectors.forEach(i => {
-                        resultDiv.innerHTML += `<br>   - ${i.inspector_name}`;
-                    });
+                    log += `<p class="success">✅ 查询成功！共找到 ${inspectorData.length} 条记录。</p>`;
+                    if (inspectorData.length > 0) {
+                        log += '<p>前几条数据：<ul>';
+                        inspectorData.forEach(item => {
+                            log += `<li>${item.id}: ${item.inspector_name}</li>`;
+                        });
+                        log += '</ul></p>';
+                    } else {
+                        log += '<p class="error">⚠️ 表内无数据，这是导致下拉列表为空的直接原因。</p>';
+                    }
                 }
                 
-                // 测试3: 查询classes表
-                resultDiv.innerHTML += '<br>3. 查询班级表...';
-                const { data: classes, error: e2 } = await supabase
+                // 测试3: 查询班级表 (classes)
+                log += '<p><b>3. 查询班级表 (classes)...</b></p>';
+                const { data: classData, error: classError } = await supabase
                     .from('classes')
-                    .select('*')
+                    .select('class_name, id')
+                    .order('class_name')
                     .limit(5);
-                
-                if (e2) {
-                    resultDiv.innerHTML += `<br>❌ 班级表查询失败: ${e2.message}`;
+                    
+                if (classError) {
+                    log += `<p class="error">❌ 查询失败: ${classError.message}</p>`;
                 } else {
-                    resultDiv.innerHTML += `<br>✅ 班级表查询成功，找到 ${classes.length} 条记录`;
+                    log += `<p class="success">✅ 查询成功！共找到 ${classData.length} 条记录。</p>`;
                 }
                 
-                // 测试4: 查询schedule表
-                resultDiv.innerHTML += '<br>4. 查询课表...';
-                const { data: schedule, error: e3 } = await supabase
-                    .from('schedule')
-                    .select('*')
-                    .eq('class_name', '七1班')
-                    .eq('week_day', '星期一')
-                    .limit(3);
+                // 测试4: 尝试插入一条测试数据 (检查RLS写入策略)
+                log += '<p><b>4. 测试写入权限 (模拟提交)...</b></p>';
+                const testData = {
+                    date: new Date().toISOString().split('T')[0],
+                    week_day: '星期一',
+                    class_name: '七1班',
+                    period: '1',
+                    subject: '测试科目',
+                    teacher_name: '测试老师',
+                    inspector: '测试员',
+                    arrival_status: '按时到达',
+                    student_status: '测试',
+                    environment: '测试',
+                    problem: '',
+                    suggestion: ''
+                };
                 
-                if (e3) {
-                    resultDiv.innerHTML += `<br>❌ 课表查询失败: ${e3.message}`;
+                const { data: insertData, error: insertError } = await supabase
+                    .from('inspections')
+                    .insert([testData])
+                    .select();
+                    
+                if (insertError) {
+                    log += `<p class="error">❌ 插入失败: ${insertError.message}</p>`;
+                    log += `<p class="error">可能原因：RLS写入策略未设置，或表结构不匹配。</p>`;
                 } else {
-                    resultDiv.innerHTML += `<br>✅ 课表查询成功，找到 ${schedule.length} 条记录`;
+                    log += `<p class="success">✅ 插入成功！ID: ${insertData[0].id}</p>`;
+                    // 可选：删除这条测试数据
+                    // await supabase.from('inspections').delete().eq('id', insertData[0].id);
                 }
                 
             } catch (err) {
-                resultDiv.innerHTML += `<br>❌ 测试异常: ${err.message}`;
+                log += `<p class="error">❌ 测试过程发生异常: ${err.message}</p>`;
             }
+            
+            resultDiv.innerHTML = log;
         }
         
-        test();
+        // 页面加载后运行测试
+        window.onload = runAllTests;
     </script>
 </body>
 </html>
