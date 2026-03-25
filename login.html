@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>登录 - 巡课系统</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -27,21 +26,17 @@
         h2 {
             text-align: center;
             color: #333;
-            margin-bottom: 10px;
-        }
-        .subtitle {
-            text-align: center;
-            color: #666;
             margin-bottom: 30px;
         }
         .input-group {
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
         label {
             display: block;
             margin-bottom: 8px;
             color: #555;
             font-weight: 500;
+            font-size: 14px;
         }
         input {
             width: 100%;
@@ -66,6 +61,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: transform 0.2s;
+            margin-top: 10px;
         }
         .login-btn:hover {
             transform: translateY(-2px);
@@ -76,21 +72,30 @@
             margin-top: 20px;
             color: #667eea;
             text-decoration: none;
+            font-size: 14px;
+        }
+        .password-hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #999;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>🔐 登录系统</h2>
-        <p class="subtitle">密码统一设置为：<strong>123</strong></p>
+        <h2>🔐 系统登录</h2>
         
         <div class="input-group">
-            <label>登录密码</label>
-            <!-- 修改这里：移除value="123"，只保留placeholder -->
-            <input type="password" id="password" placeholder="请输入密码">
+            <label>请输入密码</label>
+            <input type="password" id="password" placeholder="请输入登录密码" autocomplete="off">
         </div>
         
-        <button class="login-btn" onclick="handleLogin()">登录系统</button>
+        <button class="login-btn" onclick="handleLogin()">登录</button>
+        
+        <div class="password-hint">
+            提示：请联系管理员获取登录密码
+        </div>
         
         <a href="index.html" class="back-btn">← 返回首页</a>
     </div>
@@ -107,13 +112,12 @@
             }
         }
 
-        async function handleLogin() {
+        function handleLogin() {
             const password = document.getElementById('password').value;
             
-            // 固定密码验证
+            // 固定密码验证（密码为123）
             if(password === '123') {
                 localStorage.setItem('isLoggedIn', 'true');
-                alert('登录成功！');
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 const redirect = urlParams.get('redirect');
@@ -123,9 +127,23 @@
                     window.location.href = 'index.html';
                 }
             } else {
-                alert('密码错误！请使用密码：123');
+                alert('密码错误，请重试！');
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
             }
         }
+        
+        // 按Enter键登录
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleLogin();
+            }
+        });
+        
+        // 页面加载后自动聚焦到密码框
+        window.onload = function() {
+            document.getElementById('password').focus();
+        };
     </script>
 </body>
 </html>

@@ -72,6 +72,10 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
+        .btn-reset {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+            color: white;
+        }
         .btn-download {
             background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             color: white;
@@ -110,7 +114,7 @@
         .status-on-time { color: #4CAF50; font-weight: bold; }
         .status-late { color: #FF9800; font-weight: bold; }
         .status-absent { color: #f44336; font-weight: bold; }
-        .btn-edit {
+        .btn-detail {
             padding: 6px 12px;
             background: #2196F3;
             color: white;
@@ -133,6 +137,13 @@
             padding: 20px;
             color: #666;
         }
+        .date-inputs {
+            display: flex;
+            gap: 10px;
+        }
+        .date-inputs input {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -144,24 +155,22 @@
     <div class="filter-container">
         <div class="filter-grid">
             <div class="filter-group">
-                <label>开始日期</label>
-                <input type="date" id="filter_date_start" placeholder="开始日期">
-            </div>
-            
-            <div class="filter-group">
-                <label>结束日期</label>
-                <input type="date" id="filter_date_end" placeholder="结束日期">
+                <label>日期范围</label>
+                <div class="date-inputs">
+                    <input type="date" id="filter_date_start" placeholder="开始日期">
+                    <input type="date" id="filter_date_end" placeholder="结束日期">
+                </div>
             </div>
             
             <div class="filter-group">
                 <label>星期</label>
                 <select id="filter_weekday">
                     <option value="">全部</option>
-                    <option>星期一</option>
-                    <option>星期二</option>
-                    <option>星期三</option>
-                    <option>星期四</option>
-                    <option>星期五</option>
+                    <option value="星期一">星期一</option>
+                    <option value="星期二">星期二</option>
+                    <option value="星期三">星期三</option>
+                    <option value="星期四">星期四</option>
+                    <option value="星期五">星期五</option>
                 </select>
             </div>
             
@@ -169,7 +178,7 @@
                 <label>班级</label>
                 <select id="filter_class">
                     <option value="">全部班级</option>
-                    <!-- 从数据库动态加载 -->
+                    <!-- 从本地数据加载 -->
                 </select>
             </div>
             
@@ -189,16 +198,13 @@
             </div>
             
             <div class="filter-group">
-                <label>科目</label>
-                <input type="text" id="filter_subject" placeholder="输入科目">
+                <label>任课老师</label>
+                <input type="text" id="filter_teacher" placeholder="输入任课老师姓名">
             </div>
             
             <div class="filter-group">
-                <label>任课老师</label>
-                <select id="filter_teacher">
-                    <option value="">全部老师</option>
-                    <!-- 从数据库动态加载 -->
-                </select>
+                <label>科目</label>
+                <input type="text" id="filter_subject" placeholder="输入科目">
             </div>
             
             <div class="filter-group">
@@ -222,13 +228,15 @@
         
         <div class="btn-group">
             <button class="btn btn-query" onclick="fetchData()">🔍 查询记录</button>
-            <button class="btn btn-download" onclick="downloadData()">📥 下载数据 (CSV)</button>
+            <button class="btn btn-reset" onclick="resetFilters()">🔄 重置条件</button>
+            <button class="btn btn-download" onclick="downloadData()">📥 下载数据</button>
         </div>
     </div>
     
     <div class="table-container">
         <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
             <strong>查询结果：</strong> <span id="resultCount">0</span> 条记录
+            <span style="float: right; color: #666; font-size: 14px;" id="lastUpdated"></span>
         </div>
         <div style="max-height: 500px; overflow-y: auto;">
             <table>
@@ -264,6 +272,13 @@
         
         let allData = [];
         
+        // 定义所有班级
+        const allClasses = [
+            "七1班", "七2班", "七3班", "七4班", "七5班", "七6班",
+            "八1班", "八2班", "八3班", "八4班", "八5班", "八6班",
+            "九1班", "九2班", "九3班", "九4班", "九5班", "九6班"
+        ];
+        
         // 页面加载时初始化
         window.onload = async function() {
             // 设置默认日期为最近7天
@@ -274,115 +289,94 @@
             document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
             document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
             
-            // 并行加载所有下拉框数据
-            await Promise.all([
-                loadClasses(),
-                loadTeachers(),
-                loadInspectors()
-            ]);
+            // 加载班级列表（本地数据）
+            loadClasses();
+            
+            // 加载检查人列表（从数据库）
+            await loadInspectors();
+            
+            // 默认加载一次数据
+            await fetchData();
         };
         
-        // 加载班级列表
-        async function loadClasses() {
-            try {
-                const { data, error } = await supabase
-                    .from('classes')
-                    .select('class_name')
-                    .order('class_name');
-                    
-                if (error) throw error;
-                
-                const select = document.getElementById('filter_class');
-                data.forEach(row => {
-                    const option = document.createElement('option');
-                    option.value = row.class_name;
-                    option.textContent = row.class_name;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error("加载班级失败:", error);
-                alert("加载班级列表失败，请检查数据库连接");
-            }
-        }
-        
-        // 加载老师列表
-        async function loadTeachers() {
-            try {
-                const { data, error } = await supabase
-                    .from('schedule')
-                    .select('teacher_name')
-                    .not('teacher_name', 'is', null)
-                    .not('teacher_name', 'eq', '')
-                    .order('teacher_name');
-                    
-                if (error) throw error;
-                
-                // 去重
-                const uniqueTeachers = [...new Set(data.map(item => item.teacher_name))];
-                const select = document.getElementById('filter_teacher');
-                
-                uniqueTeachers.forEach(teacher => {
-                    if (teacher && teacher !== '未安排') {
-                        const option = document.createElement('option');
-                        option.value = teacher;
-                        option.textContent = teacher;
-                        select.appendChild(option);
-                    }
-                });
-            } catch (error) {
-                console.error("加载老师列表失败:", error);
-                // 也可以从inspections表中加载老师
-                await loadTeachersFromInspections();
-            }
-        }
-        
-        // 从inspections表加载老师列表
-        async function loadTeachersFromInspections() {
-            try {
-                const { data, error } = await supabase
-                    .from('inspections')
-                    .select('teacher_name')
-                    .not('teacher_name', 'is', null)
-                    .not('teacher_name', 'eq', '')
-                    .order('teacher_name');
-                    
-                if (error) throw error;
-                
-                const uniqueTeachers = [...new Set(data.map(item => item.teacher_name))];
-                const select = document.getElementById('filter_teacher');
-                
-                uniqueTeachers.forEach(teacher => {
-                    if (teacher) {
-                        const option = document.createElement('option');
-                        option.value = teacher;
-                        option.textContent = teacher;
-                        select.appendChild(option);
-                    }
-                });
-            } catch (error) {
-                console.error("从inspections表加载老师失败:", error);
-            }
+        // 加载班级列表（本地）
+        function loadClasses() {
+            const select = document.getElementById('filter_class');
+            allClasses.forEach(className => {
+                const option = document.createElement('option');
+                option.value = className;
+                option.textContent = className;
+                select.appendChild(option);
+            });
         }
         
         // 加载检查人列表
         async function loadInspectors() {
             try {
-                const { data, error } = await supabase
+                // 首先尝试从 inspectors 表加载
+                const { data: inspectorsData, error: inspectorsError } = await supabase
                     .from('inspectors')
                     .select('inspector_name')
                     .order('inspector_name');
                     
-                if (error) throw error;
+                if (inspectorsError) {
+                    console.error("从inspectors表加载检查人失败:", inspectorsError);
+                    // 如果inspectors表为空或出错，从inspections表获取
+                    await loadInspectorsFromInspections();
+                    return;
+                }
                 
-                const select = document.getElementById('filter_inspector');
-                data.forEach(row => {
-                    const option = document.createElement('option');
-                    option.value = row.inspector_name;
-                    option.textContent = row.inspector_name;
-                    select.appendChild(option);
-                });
+                if (inspectorsData && inspectorsData.length > 0) {
+                    const select = document.getElementById('filter_inspector');
+                    inspectorsData.forEach(row => {
+                        if (row.inspector_name) {
+                            const option = document.createElement('option');
+                            option.value = row.inspector_name;
+                            option.textContent = row.inspector_name;
+                            select.appendChild(option);
+                        }
+                    });
+                } else {
+                    // inspectors表为空，从inspections表获取
+                    await loadInspectorsFromInspections();
+                }
+                
             } catch (error) {
-                console.error("加载检查人失败:", error);
+                console.error("加载检查人异常:", error);
+                // 异常时，也尝试从inspections表获取
+                await loadInspectorsFromInspections();
+            }
+        }
+        
+        // 从inspections表加载检查人
+        async function loadInspectorsFromInspections() {
+            try {
+                const { data: inspectionsData, error: inspectionsError } = await supabase
+                    .from('inspections')
+                    .select('inspector')
+                    .not('inspector', 'is', null)
+                    .order('inspector');
+                    
+                if (inspectionsError) {
+                    console.error("从inspections表加载检查人失败:", inspectionsError);
+                    return;
+                }
+                
+                // 去重并排序
+                const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector))].sort();
+                const select = document.getElementById('filter_inspector');
+                
+                uniqueInspectors.forEach(inspector => {
+                    if (inspector) {
+                        const option = document.createElement('option');
+                        option.value = inspector;
+                        option.textContent = inspector;
+                        select.appendChild(option);
+                    }
+                });
+                
+            } catch (error) {
+                console.error("从inspections表加载检查人异常:", error);
             }
         }
         
@@ -395,8 +389,8 @@
                 week_day: document.getElementById('filter_weekday').value || null,
                 class_name: document.getElementById('filter_class').value || null,
                 period: document.getElementById('filter_period').value || null,
-                subject: document.getElementById('filter_subject').value || null,
                 teacher_name: document.getElementById('filter_teacher').value || null,
+                subject: document.getElementById('filter_subject').value || null,
                 inspector: document.getElementById('filter_inspector').value || null,
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
@@ -424,8 +418,8 @@
                 // 其他筛选条件
                 Object.keys(filters).forEach(key => {
                     if (filters[key]) {
-                        if (key === 'subject') {
-                            // 科目使用模糊搜索
+                        if (key === 'teacher_name' || key === 'subject') {
+                            // 老师姓名和科目使用模糊搜索
                             query = query.ilike(key, `%${filters[key]}%`);
                         } else {
                             query = query.eq(key, filters[key]);
@@ -440,10 +434,42 @@
                 allData = data || [];
                 renderTable(allData);
                 
+                // 更新最后查询时间
+                const now = new Date();
+                document.getElementById('lastUpdated').textContent = `最后更新: ${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                
             } catch (error) {
                 console.error("查询失败:", error);
                 tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
             }
+        }
+        
+        // 重置筛选条件
+        function resetFilters() {
+            // 重置所有筛选条件
+            document.getElementById('filter_date_start').value = '';
+            document.getElementById('filter_date_end').value = '';
+            document.getElementById('filter_weekday').value = '';
+            document.getElementById('filter_class').value = '';
+            document.getElementById('filter_period').value = '';
+            document.getElementById('filter_teacher').value = '';
+            document.getElementById('filter_subject').value = '';
+            document.getElementById('filter_inspector').value = '';
+            document.getElementById('filter_arrival').value = '';
+            
+            // 重置日期为最近7天
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 7);
+            
+            document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
+            document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+            
+            // 清空结果
+            allData = [];
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
+            document.getElementById('resultCount').textContent = '0';
+            document.getElementById('lastUpdated').textContent = '';
         }
         
         // 渲染表格
@@ -475,7 +501,7 @@
                         <td>${record.inspector || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
                         <td>
-                            <button class="btn-edit" onclick="viewDetail(${record.id})">查看详情</button>
+                            <button class="btn-detail" onclick="viewDetail(${record.id})">查看详情</button>
                         </td>
                     </tr>
                 `;

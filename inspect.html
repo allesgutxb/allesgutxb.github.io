@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>选择班级</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -85,49 +84,24 @@
     </div>
 
     <script>
-        // 初始化Supabase
-        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        // 定义所有班级
+        const allClasses = [
+            "七1班", "七2班", "七3班", "七4班", "七5班", "七6班",
+            "八1班", "八2班", "八3班", "八4班", "八5班", "八6班",
+            "九1班", "九2班", "九3班", "九4班", "九5班", "九6班"
+        ];
         
-        // 从数据库加载班级
-        async function loadClasses() {
-            try {
-                const { data, error } = await supabase
-                    .from('classes')
-                    .select('class_name')
-                    .order('class_name');
-                    
-                if (error) {
-                    console.error("加载班级失败:", error);
-                    document.getElementById('classGrid').innerHTML = 
-                        '<div class="loading">加载班级失败，请刷新重试</div>';
-                    return;
-                }
-                
-                if (data && data.length > 0) {
-                    renderClasses(data);
-                } else {
-                    // 如果没有数据，使用默认的18个班级
-                    const defaultClasses = [
-                        "七1班","七2班","七3班","七4班","七5班","七6班",
-                        "八1班","八2班","八3班","八4班","八5班","八6班",
-                        "九1班","九2班","九3班","九4班","九5班","九6班"
-                    ];
-                    const mockData = defaultClasses.map(cls => ({ class_name: cls }));
-                    renderClasses(mockData);
-                }
-            } catch (error) {
-                console.error("加载班级异常:", error);
-            }
+        function selectClass(className) {
+            localStorage.setItem('currentInspectClass', className);
+            window.location.href = `inspect_form.html?class=${encodeURIComponent(className)}`;
         }
         
-        function renderClasses(classes) {
+        // 渲染班级按钮
+        function renderClasses() {
             const classGrid = document.getElementById('classGrid');
             classGrid.innerHTML = '';
             
-            classes.forEach(cls => {
-                const className = cls.class_name;
+            allClasses.forEach(className => {
                 const grade = className.charAt(0); // 获取年级：七、八、九
                 
                 const btn = document.createElement('div');
@@ -139,13 +113,12 @@
             });
         }
         
-        function selectClass(className) {
-            localStorage.setItem('currentInspectClass', className);
-            window.location.href = `inspect_form.html?class=${encodeURIComponent(className)}`;
-        }
-        
-        // 页面加载时加载班级
-        window.onload = loadClasses;
+        // 页面加载时渲染班级
+        window.onload = function() {
+            setTimeout(() => {
+                renderClasses();
+            }, 500);
+        };
     </script>
 </body>
 </html>
