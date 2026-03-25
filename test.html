@@ -15,43 +15,35 @@
     <div id="result">正在初始化测试...</div>
 
     <script>
-        // 1. 定义 Supabase 连接参数（只定义一次！）
-        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        // 注意：这里使用了 var 而不是 const，避免重复声明问题
+        var supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        var supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
         
-        // 2. 创建 Supabase 客户端实例（只创建一次！）
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        const resultDiv = document.getElementById('result');
+        // 只创建一次 Supabase 客户端
+        var supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        var resultDiv = document.getElementById('result');
         
-        // 3. 执行测试的主函数
-        async function runAllTests() {
-            let log = '<h3>测试结果：</h3>';
+        // 测试函数
+        var runAllTests = async function() {
+            var log = '<h3>测试结果：</h3>';
             
             try {
-                // 测试1: 查询检查人表 (inspectors) - 这是您下拉列表的数据源
+                // 测试1: 查询检查人表
                 log += '<p><b>测试1: 查询检查人表 (inspectors)</b></p>';
-                const { data: inspectorData, error: inspectorError } = await supabase
+                var { data: inspectorData, error: inspectorError } = await supabase
                     .from('inspectors')
                     .select('*')
                     .limit(5);
                     
                 if (inspectorError) {
                     log += `<p class="error">❌ 失败: ${inspectorError.message}</p>`;
-                    log += `<p class="error">诊断：此错误表明数据库连接、RLS策略或表名可能有问题。这直接导致您填写页面的“检查人”下拉列表为空。</p>`;
                 } else {
                     log += `<p class="success">✅ 成功！找到 ${inspectorData.length} 条记录。</p>`;
-                    if (inspectorData.length > 0) {
-                        log += '<p>数据：';
-                        inspectorData.forEach(item => {
-                            log += `${item.inspector_name || '无名'}, `;
-                        });
-                        log += '</p>';
-                    }
                 }
                 
-                // 测试2: 查询班级表 (classes)
+                // 测试2: 查询班级表
                 log += '<p><b>测试2: 查询班级表 (classes)</b></p>';
-                const { data: classData, error: classError } = await supabase
+                var { data: classData, error: classError } = await supabase
                     .from('classes')
                     .select('*')
                     .limit(5);
@@ -62,29 +54,28 @@
                     log += `<p class="success">✅ 成功！找到 ${classData.length} 条记录。</p>`;
                 }
                 
-                // 测试3: 查询课表 (schedule) - 用于自动填充
-                log += '<p><b>测试3: 查询课表 (schedule)</b></p>';
-                const { data: scheduleData, error: scheduleError } = await supabase
-                    .from('schedule')
-                    .select('class_name, week_day, period, subject')
-                    .limit(3);
+                // 测试3: 查询巡查记录
+                log += '<p><b>测试3: 查询巡查记录 (inspections)</b></p>';
+                var { data: inspectionData, error: inspectionError } = await supabase
+                    .from('inspections')
+                    .select('*')
+                    .limit(5);
                     
-                if (scheduleError) {
-                    log += `<p class="error">❌ 失败: ${scheduleError.message}</p>`;
-                    log += `<p class="error">诊断：这会导致您填写页面选择班级、节次后，科目和老师无法自动填充。</p>`;
+                if (inspectionError) {
+                    log += `<p class="error">❌ 失败: ${inspectionError.message}</p>`;
                 } else {
-                    log += `<p class="success">✅ 成功！找到 ${scheduleData.length} 条记录。</p>`;
+                    log += `<p class="success">✅ 成功！找到 ${inspectionData.length} 条记录。</p>`;
                 }
                 
             } catch (err) {
-                log += `<p class="error">❌ 测试过程发生未预料的异常: ${err.message}</p>`;
+                log += `<p class="error">❌ 测试过程发生异常: ${err.message}</p>`;
             }
             
             resultDiv.innerHTML = log;
-        }
+        };
         
-        // 页面加载完成后，自动开始测试
-        window.onload = runAllTests;
+        // 页面加载完成后运行测试
+        window.addEventListener('load', runAllTests);
     </script>
 </body>
 </html>
