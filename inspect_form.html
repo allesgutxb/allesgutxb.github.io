@@ -7,91 +7,20 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fa;
-            padding: 20px;
-        }
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .current-class {
-            background: #667eea;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 20px;
-            display: inline-block;
-            font-weight: bold;
-            margin-bottom: 15px;
-        }
-        .form-container {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 16px;
-            transition: border-color 0.3s;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        .form-row {
-            display: flex;
-            gap: 15px;
-        }
-        .form-row .form-group {
-            flex: 1;
-        }
-        .btn-submit {
-            width: 100%;
-            padding: 18px;
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .btn-submit:hover {
-            transform: translateY(-2px);
-        }
-        .btn-back {
-            width: 100%;
-            padding: 15px;
-            background: #666;
-            color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            margin-top: 10px;
-            cursor: pointer;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #333; margin-bottom: 10px; }
+        .current-class { background: #667eea; color: white; padding: 8px 15px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 15px; }
+        .form-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        input, select, textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; transition: border-color 0.3s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .btn-submit:hover { transform: translateY(-2px); }
+        .btn-back { width: 100%; padding: 15px; background: #666; color: white; border: none; border-radius: 12px; font-size: 16px; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -187,44 +116,47 @@
     </div>
 
     <script>
-        // 1. 初始化Supabase（使用正确的Publishable Key）
+        // 初始化Supabase
         const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R'; // 使用您的Publishable Key
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
-        // 2. 获取从班级选择页面传递过来的班级
         const urlParams = new URLSearchParams(window.location.search);
         const selectedClass = urlParams.get('class') || localStorage.getItem('currentInspectClass');
         
-        // 3. 页面加载时运行
-        window.onload = async function() {
-            // 3.1 显示已选择的班级
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            if (!selectedClass) {
+                alert('请先选择班级');
+                window.location.href = 'inspect.html';
+                return;
+            }
+            
             document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
             
-            // 3.2 设置默认日期为今天，并自动计算星期
+            // 设置默认日期为今天，并立即计算星期
             const today = new Date();
             const formattedDate = today.toISOString().split('T')[0];
             const dateInput = document.getElementById('inspection_date');
             dateInput.value = formattedDate;
-            calculateWeekDay(formattedDate); // 立即计算并显示星期
+            calculateWeekDay(formattedDate);
             
-            // 3.3 为日期选择框添加事件：日期变化时，自动重新计算星期
+            // 绑定日期和节次变化事件
             dateInput.addEventListener('change', function() {
                 calculateWeekDay(this.value);
-                autoFillSchedule(); // 日期变化也触发自动填充课表
+                autoFillSchedule();
             });
             
-            // 3.4 为节次选择框添加事件：节次变化时，自动填充课表
             document.getElementById('period').addEventListener('change', autoFillSchedule);
             
-            // 3.5 加载“检查人”下拉列表（从数据库inspectors表获取）
+            // 加载检查人下拉列表
             await loadInspectors();
             
-            // 3.6 页面加载后尝试自动填充一次课表（基于默认的今天和已选班级）
+            // 尝试自动填充一次课表
             autoFillSchedule();
-        };
+        });
         
-        // 4. 根据日期计算星期的函数
+        // 根据日期计算并显示星期
         function calculateWeekDay(dateString) {
             const dateObj = new Date(dateString);
             const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
@@ -233,7 +165,7 @@
             return weekDay;
         }
         
-        // 5. 加载检查人名单（从数据库inspectors表）
+        // 从数据库加载检查人
         async function loadInspectors() {
             try {
                 const { data, error } = await supabase
@@ -241,16 +173,9 @@
                     .select('inspector_name')
                     .order('inspector_name');
                     
-                if (error) {
-                    console.error("加载检查人失败:", error);
-                    alert("检查人列表加载失败，请确保数据库'inspectors'表有数据且RLS策略已设置。");
-                    return;
-                }
+                if (error) throw error;
                 
                 const select = document.getElementById('inspector');
-                // 先清空，只保留提示选项
-                select.innerHTML = '<option value="">请选择检查人</option>';
-                
                 if (data && data.length > 0) {
                     data.forEach(row => {
                         const option = document.createElement('option');
@@ -258,58 +183,47 @@
                         option.textContent = row.inspector_name;
                         select.appendChild(option);
                     });
-                } else {
-                    console.warn("检查人表（inspectors）为空。");
                 }
             } catch (error) {
-                console.error("加载检查人异常:", error);
+                console.error("加载检查人失败:", error);
+                alert("检查人加载失败，请按F12查看控制台。");
             }
         }
         
-        // 6. 自动填充课表（从数据库schedule表查询）
+        // 自动填充课表信息
         async function autoFillSchedule() {
             const date = document.getElementById('inspection_date').value;
             const period = document.getElementById('period').value;
             
-            if (!date || !period || !selectedClass) {
-                return; // 缺少必要信息时不查询
-            }
+            if (!date || !period || !selectedClass) return;
             
-            // 6.1 获取星期（依赖日期）
             const weekDay = calculateWeekDay(date);
             
             try {
-                // 6.2 查询课表
                 const { data, error } = await supabase
                     .from('schedule')
                     .select('subject, teacher_name')
                     .eq('class_name', selectedClass)
                     .eq('week_day', weekDay)
                     .eq('period', period)
-                    .maybeSingle(); // 只期望一条记录或没有
+                    .maybeSingle();
                     
-                if (error) {
-                    console.error("查询课表失败:", error);
-                    return;
-                }
+                if (error) throw error;
                 
-                // 6.3 自动填充科目和任课老师（允许用户手动修改）
                 if (data) {
                     document.getElementById('subject').value = data.subject || '';
                     document.getElementById('teacher_name').value = data.teacher_name || '';
                 } else {
-                    // 没查到记录（例如自习课），清空输入框
                     document.getElementById('subject').value = '';
                     document.getElementById('teacher_name').value = '';
                 }
             } catch (error) {
-                console.error("自动填充异常:", error);
+                console.error("自动填充失败:", error);
             }
         }
         
-        // 7. 提交表单到数据库
+        // 提交表单
         async function submitForm() {
-            // 7.1 收集所有表单数据
             const formData = {
                 date: document.getElementById('inspection_date').value,
                 week_day: document.getElementById('week_day').value,
@@ -326,21 +240,11 @@
                 suggestion: document.getElementById('suggestion').value
             };
             
-            // 7.2 验证必填项
-            if (!formData.period) {
-                alert('请选择节次');
-                return;
-            }
-            if (!formData.inspector) {
-                alert('请选择检查人');
-                return;
-            }
-            if (!formData.arrival_status) {
-                alert('请选择教师到岗情况');
-                return;
-            }
+            // 验证
+            if (!formData.period) { alert('请选择节次'); return; }
+            if (!formData.inspector) { alert('请选择检查人'); return; }
+            if (!formData.arrival_status) { alert('请选择教师到岗情况'); return; }
             
-            // 7.3 提交到数据库
             const submitBtn = document.querySelector('.btn-submit');
             const originalText = submitBtn.textContent;
             submitBtn.textContent = '提交中...';
@@ -349,20 +253,26 @@
             try {
                 const { data, error } = await supabase
                     .from('inspections')
-                    .insert([formData]);
+                    .insert([formData])
+                    .select();
                     
                 if (error) throw error;
                 
                 alert('✅ 巡查记录提交成功！');
-                // 提交成功后，重置表单（保留班级、日期、星期）
-                document.getElementById('inspectionForm').reset();
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('inspection_date').value = today;
-                calculateWeekDay(today);
+                // 重置表单，但保留班级、日期、星期
+                document.getElementById('subject').value = '';
+                document.getElementById('teacher_name').value = '';
+                document.getElementById('arrival_status').value = '';
+                document.getElementById('arrival_time_detail').value = '';
+                document.getElementById('student_status').value = '';
+                document.getElementById('environment').value = '';
+                document.getElementById('inspector').value = '';
+                document.getElementById('problem').value = '';
+                document.getElementById('suggestion').value = '';
                 
             } catch (error) {
                 console.error("提交失败:", error);
-                alert(`提交失败: ${error.message}\n请检查控制台(F12)或联系管理员。`);
+                alert(`提交失败: ${error.message}`);
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;

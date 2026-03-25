@@ -91,7 +91,6 @@
     </div>
 
     <script>
-        // 检查是否已登录
         if(localStorage.getItem('isLoggedIn') === 'true') {
             const urlParams = new URLSearchParams(window.location.search);
             const redirect = urlParams.get('redirect');
@@ -105,7 +104,6 @@
         function handleLogin() {
             const password = document.getElementById('password').value;
             
-            // 固定密码验证（密码为123）
             if(password === '123') {
                 localStorage.setItem('isLoggedIn', 'true');
                 
@@ -123,14 +121,12 @@
             }
         }
         
-        // 按Enter键登录
         document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 handleLogin();
             }
         });
         
-        // 页面加载后自动聚焦到密码框
         window.onload = function() {
             document.getElementById('password').focus();
         };

@@ -7,130 +7,30 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: #f5f7fa;
-            padding: 20px;
-        }
-        .header {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-        }
-        .filter-container {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        .filter-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        .filter-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: #555;
-            font-weight: 500;
-            font-size: 14px;
-        }
-        input, select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .btn-query {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        .btn-reset {
-            background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
-            color: white;
-        }
-        .btn-download {
-            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
-            color: white;
-        }
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-        }
-        .table-container {
-            background: white;
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            background: #f8f9fa;
-            padding: 15px;
-            text-align: left;
-            font-weight: 600;
-            color: #333;
-            border-bottom: 2px solid #e0e0e0;
-            position: sticky;
-            top: 0;
-        }
-        td {
-            padding: 12px 15px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        tr:hover {
-            background: #f9f9f9;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #333; margin-bottom: 10px; }
+        .filter-container { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
+        .filter-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px; }
+        input, select { width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        .btn-query { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        .btn-reset { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; }
+        .btn-download { background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .table-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #333; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; }
+        td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
+        tr:hover { background: #f9f9f9; }
         .status-on-time { color: #4CAF50; font-weight: bold; }
         .status-late { color: #FF9800; font-weight: bold; }
         .status-absent { color: #f44336; font-weight: bold; }
-        .btn-detail {
-            padding: 6px 12px;
-            background: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .back-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: #666;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-        }
+        .btn-detail { padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .back-btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 8px; }
     </style>
 </head>
 <body>
@@ -255,23 +155,21 @@
     </div>
 
     <script>
-        // 1. 初始化Supabase
         const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
         const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         
-        let allData = []; // 存储当前查询结果，用于详情查看和下载
+        let allData = [];
         
-        // 2. 页面加载初始化
-        window.onload = async function() {
-            // 2.1 设置默认查询日期为最近7天
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', async function() {
             const endDate = new Date();
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - 7);
             document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
             document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
             
-            // 2.2 加载所有筛选项的下拉列表数据（从数据库）
+            // 加载所有下拉框数据
             await Promise.all([
                 loadFilterClasses(),
                 loadFilterSubjects(),
@@ -279,11 +177,10 @@
                 loadFilterInspectors()
             ]);
             
-            // 2.3 默认执行一次查询
+            // 默认执行一次查询
             await fetchData();
-        };
+        });
         
-        // 3. 加载筛选条件：班级（从classes表）
         async function loadFilterClasses() {
             try {
                 const { data, error } = await supabase
@@ -299,11 +196,10 @@
                     });
                 }
             } catch (error) {
-                console.error("加载班级筛选列表失败:", error);
+                console.error("加载班级筛选失败:", error);
             }
         }
         
-        // 4. 加载筛选条件：科目（从inspections表去重）
         async function loadFilterSubjects() {
             try {
                 const { data, error } = await supabase
@@ -320,11 +216,10 @@
                     });
                 }
             } catch (error) {
-                console.error("加载科目筛选列表失败:", error);
+                console.error("加载科目筛选失败:", error);
             }
         }
         
-        // 5. 加载筛选条件：任课老师（从inspections表去重）
         async function loadFilterTeachers() {
             try {
                 const { data, error } = await supabase
@@ -341,11 +236,10 @@
                     });
                 }
             } catch (error) {
-                console.error("加载老师筛选列表失败:", error);
+                console.error("加载老师筛选失败:", error);
             }
         }
         
-        // 6. 加载筛选条件：检查人（从inspectors表）
         async function loadFilterInspectors() {
             try {
                 const { data, error } = await supabase
@@ -361,16 +255,14 @@
                     });
                 }
             } catch (error) {
-                console.error("加载检查人筛选列表失败:", error);
+                console.error("加载检查人筛选失败:", error);
             }
         }
         
-        // 7. 执行查询
         async function fetchData() {
             const startDate = document.getElementById('filter_date_start').value;
             const endDate = document.getElementById('filter_date_end').value;
             
-            // 收集所有筛选条件
             const filters = {
                 week_day: document.getElementById('filter_weekday').value || null,
                 class_name: document.getElementById('filter_class').value || null,
@@ -381,23 +273,19 @@
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
             
-            // 显示加载状态
             const tbody = document.getElementById('resultBody');
             tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
-                // 构建查询
                 let query = supabase
                     .from('inspections')
                     .select('*')
                     .order('date', { ascending: false })
                     .order('period', { ascending: true });
                 
-                // 应用日期范围筛选
                 if (startDate) query = query.gte('date', startDate);
                 if (endDate) query = query.lte('date', endDate);
                 
-                // 应用其他条件筛选
                 Object.keys(filters).forEach(key => {
                     if (filters[key]) {
                         query = query.eq(key, filters[key]);
@@ -418,7 +306,6 @@
             }
         }
         
-        // 8. 渲染查询结果表格
         function renderTable(data) {
             const tbody = document.getElementById('resultBody');
             
@@ -451,7 +338,6 @@
             tbody.innerHTML = html;
         }
         
-        // 9. 查看单条记录详情
         function viewDetail(recordId) {
             const record = allData.find(r => r.id === recordId);
             if (!record) return;
@@ -473,7 +359,6 @@
             alert(detailText);
         }
         
-        // 10. 重置所有筛选条件
         function resetFilters() {
             document.getElementById('filter_date_start').value = '';
             document.getElementById('filter_date_end').value = '';
@@ -485,13 +370,11 @@
             document.getElementById('filter_inspector').value = '';
             document.getElementById('filter_arrival').value = '';
             
-            // 重置后也清空结果表格
             allData = [];
             document.getElementById('resultBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
-        // 11. 下载数据为CSV
         function downloadData() {
             if (allData.length === 0) {
                 alert('没有数据可下载');
