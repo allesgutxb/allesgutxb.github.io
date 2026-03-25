@@ -61,12 +61,6 @@
             text-decoration: none;
             border-radius: 8px;
         }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #666;
-            grid-column: 1 / -1;
-        }
     </style>
 </head>
 <body>
@@ -75,8 +69,27 @@
         <p class="instruction">点击下方班级图标开始巡查</p>
     </div>
     
-    <div class="class-grid" id="classGrid">
-        <div class="loading">正在加载班级列表...</div>
+    <div class="class-grid">
+        <div class="class-btn grade-7" onclick="selectClass('七1班')">七1班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七2班')">七2班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七3班')">七3班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七4班')">七4班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七5班')">七5班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七6班')">七6班</div>
+        
+        <div class="class-btn grade-8" onclick="selectClass('八1班')">八1班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八2班')">八2班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八3班')">八3班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八4班')">八4班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八5班')">八5班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八6班')">八6班</div>
+        
+        <div class="class-btn grade-9" onclick="selectClass('九1班')">九1班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九2班')">九2班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九3班')">九3班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九4班')">九4班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九5班')">九5班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九6班')">九6班</div>
     </div>
     
     <div style="text-align: center; margin-top: 30px;">
@@ -84,41 +97,10 @@
     </div>
 
     <script>
-        // 定义所有班级
-        const allClasses = [
-            "七1班", "七2班", "七3班", "七4班", "七5班", "七6班",
-            "八1班", "八2班", "八3班", "八4班", "八5班", "八6班",
-            "九1班", "九2班", "九3班", "九4班", "九5班", "九6班"
-        ];
-        
         function selectClass(className) {
             localStorage.setItem('currentInspectClass', className);
             window.location.href = `inspect_form.html?class=${encodeURIComponent(className)}`;
         }
-        
-        // 渲染班级按钮
-        function renderClasses() {
-            const classGrid = document.getElementById('classGrid');
-            classGrid.innerHTML = '';
-            
-            allClasses.forEach(className => {
-                const grade = className.charAt(0); // 获取年级：七、八、九
-                
-                const btn = document.createElement('div');
-                btn.className = `class-btn grade-${grade}`;
-                btn.textContent = className;
-                btn.onclick = () => selectClass(className);
-                
-                classGrid.appendChild(btn);
-            });
-        }
-        
-        // 页面加载时渲染班级
-        window.onload = function() {
-            setTimeout(() => {
-                renderClasses();
-            }, 100);
-        };
     </script>
 </body>
 </html>
