@@ -96,6 +96,22 @@
             text-align: center;
             padding: 10px;
         }
+        .error-message {
+            color: #f44336;
+            text-align: center;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .success-message {
+            color: #4CAF50;
+            text-align: center;
+            padding: 10px;
+            background: #e8f5e9;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -121,14 +137,7 @@
                 <label>节次</label>
                 <select id="period" required onchange="autoFillSchedule()">
                     <option value="">请选择节次</option>
-                    <option value="1">第1节 (08:00-08:45)</option>
-                    <option value="2">第2节 (08:55-09:40)</option>
-                    <option value="3">第3节 (10:00-10:45)</option>
-                    <option value="4">第4节 (10:55-11:40)</option>
-                    <option value="5">第5节 (14:00-14:45)</option>
-                    <option value="6">第6节 (14:55-15:40)</option>
-                    <option value="7">第7节 (16:00-16:45)</option>
-                    <option value="8">第8节 (16:55-17:40)</option>
+                    <!-- 从数据库动态加载 -->
                 </select>
             </div>
             
@@ -174,6 +183,7 @@
                 <div id="inspectorLoading" class="loading">正在加载检查人列表...</div>
                 <select id="inspector" required style="display: none;">
                     <option value="">请选择检查人</option>
+                    <!-- 从数据库动态加载 -->
                 </select>
             </div>
             
@@ -205,52 +215,99 @@
         // 页面加载时初始化
         window.onload = async function() {
             // 显示班级
-            document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
+            if (selectedClass) {
+                document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
+            } else {
+                document.getElementById('classDisplay').textContent = '班级：未选择';
+            }
             
             // 设置默认日期为今天
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('inspection_date').value = today;
             
-            // 加载检查人名单
-            await loadInspectors();
+            // 并行加载所有下拉列表数据
+            await Promise.all([
+                loadPeriods(),
+                loadInspectors()
+            ]);
             
             // 自动填充课表信息
             autoFillSchedule();
         };
         
+        // 加载节次列表
+        async function loadPeriods() {
+            try {
+                // 从inspections表获取所有节次并去重
+                const { data, error } = await supabase
+                    .from('inspections')
+                    .select('period')
+                    .order('period');
+                    
+                if (error) throw error;
+                
+                const select = document.getElementById('period');
+                
+                if (data && data.length > 0) {
+                    // 去重并排序
+                    const uniquePeriods = [...new Set(data.map(item => item.period))].sort((a, b) => a - b);
+                    
+                    uniquePeriods.forEach(period => {
+                        const option = document.createElement('option');
+                        option.value = period;
+                        option.textContent = '第' + period + '节';
+                        select.appendChild(option);
+                    });
+                } else {
+                    // 如果inspections表没有数据，使用默认的8个节次
+                    for (let i = 1; i <= 8; i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = '第' + i + '节';
+                        select.appendChild(option);
+                    }
+                }
+            } catch (error) {
+                console.error("加载节次列表失败:", error);
+            }
+        }
+        
         // 加载检查人名单
         async function loadInspectors() {
             try {
+                // 从inspections表获取所有检查人并去重
                 const { data, error } = await supabase
-                    .from('inspectors')
-                    .select('inspector_name')
-                    .order('inspector_name');
+                    .from('inspections')
+                    .select('inspector')
+                    .order('inspector');
                     
-                if (error) {
-                    console.error("加载检查人失败:", error);
-                    document.getElementById('inspectorLoading').innerHTML = "加载检查人失败，请刷新重试";
-                    return;
-                }
+                if (error) throw error;
+                
+                const select = document.getElementById('inspector');
+                const loading = document.getElementById('inspectorLoading');
                 
                 if (data && data.length > 0) {
-                    const select = document.getElementById('inspector');
-                    data.forEach(row => {
-                        const option = document.createElement('option');
-                        option.value = row.inspector_name;
-                        option.textContent = row.inspector_name;
-                        select.appendChild(option);
+                    // 去重并排序
+                    const uniqueInspectors = [...new Set(data.map(item => item.inspector))].sort();
+                    
+                    uniqueInspectors.forEach(inspector => {
+                        if (inspector) {
+                            const option = document.createElement('option');
+                            option.value = inspector;
+                            option.textContent = inspector;
+                            select.appendChild(option);
+                        }
                     });
                     
                     // 隐藏加载提示，显示下拉框
-                    document.getElementById('inspectorLoading').style.display = 'none';
-                    document.getElementById('inspector').style.display = 'block';
+                    if (loading) loading.style.display = 'none';
+                    select.style.display = 'block';
                 } else {
-                    document.getElementById('inspectorLoading').innerHTML = "没有检查人数据，请先添加检查人";
+                    loading.innerHTML = "暂无检查人数据";
                 }
-                
             } catch (error) {
-                console.error("加载检查人异常:", error);
-                document.getElementById('inspectorLoading').innerHTML = "加载异常，请检查网络连接";
+                console.error("加载检查人列表失败:", error);
+                document.getElementById('inspectorLoading').innerHTML = "加载检查人失败，请稍后重试";
             }
         }
         
@@ -314,16 +371,24 @@
             };
             
             // 验证必填项
+            if (!formData.date) {
+                alert('请选择巡查日期');
+                return;
+            }
+            if (!formData.class_name) {
+                alert('请选择班级');
+                return;
+            }
+            if (!formData.period) {
+                alert('请选择节次');
+                return;
+            }
             if (!formData.inspector) {
                 alert('请选择检查人');
                 return;
             }
             if (!formData.arrival_status) {
                 alert('请选择教师到岗情况');
-                return;
-            }
-            if (!formData.period) {
-                alert('请选择节次');
                 return;
             }
             
