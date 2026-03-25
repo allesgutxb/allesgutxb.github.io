@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>选择班级</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .instruction {
+            color: #666;
+            font-size: 14px;
+        }
+        .class-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .class-btn {
+            background: white;
+            padding: 30px 10px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        .class-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            border-color: #667eea;
+        }
+        .grade-7 { background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%); }
+        .grade-8 { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
+        .grade-9 { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #666;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📚 请选择巡查班级</h2>
+        <p class="instruction">点击下方班级图标开始巡查</p>
+    </div>
+    
+    <div class="class-grid">
+        <div class="class-btn grade-7" onclick="selectClass('七1班')">七1班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七2班')">七2班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七3班')">七3班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七4班')">七4班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七5班')">七5班</div>
+        <div class="class-btn grade-7" onclick="selectClass('七6班')">七6班</div>
+        
+        <div class="class-btn grade-8" onclick="selectClass('八1班')">八1班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八2班')">八2班">八2班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八3班')">八3班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八4班')">八4班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八5班')">八5班</div>
+        <div class="class-btn grade-8" onclick="selectClass('八6班')">八6班</div>
+        
+        <div class="class-btn grade-9" onclick="selectClass('九1班')">九1班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九2班')">九2班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九3班')">九3班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九4班')">九4班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九5班')">九5班</div>
+        <div class="class-btn grade-9" onclick="selectClass('九6班')">九6班</div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px;">
+        <a href="index.html" class="back-btn">← 返回首页</a>
+    </div>
+
+    <script>
+        function selectClass(className) {
+            localStorage.setItem('currentInspectClass', className);
+            window.location.href = `inspect_form.html?class=${encodeURIComponent(className)}`;
+        }
+    </script>
+</body>
+</html>

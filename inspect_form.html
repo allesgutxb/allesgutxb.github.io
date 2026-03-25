@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>填写巡查记录</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .current-class {
+            background: #667eea;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            font-weight: bold;
+        }
+        .form-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-2px);
+        }
+        .btn-back {
+            width: 100%;
+            padding: 15px;
+            background: #666;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>📋 填写巡查记录</h2>
+        <div class="current-class" id="classDisplay">班级：</div>
+    </div>
+    
+    <div class="form-container">
+        <form id="inspectionForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>巡查日期</label>
+                    <input type="date" id="inspection_date" required onchange="autoFillSchedule()">
+                </div>
+                <div class="form-group">
+                    <label>星期</label>
+                    <input type="text" id="week_day" readonly style="background: #f5f5f5;">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>节次</label>
+                <select id="period" required onchange="autoFillSchedule()">
+                    <option value="">请选择节次</option>
+                    <option value="1">第1节 (08:00-08:45)</option>
+                    <option value="2">第2节 (08:55-09:40)</option>
+                    <option value="3">第3节 (10:00-10:45)</option>
+                    <option value="4">第4节 (10:55-11:40)</option>
+                    <option value="5">第5节 (14:00-14:45)</option>
+                    <option value="6">第6节 (14:55-15:40)</option>
+                    <option value="7">第7节 (16:00-16:45)</option>
+                    <option value="8">第8节 (16:55-17:40)</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>科目</label>
+                    <input type="text" id="subject" placeholder="自动获取，可修改">
+                </div>
+                <div class="form-group">
+                    <label>任课老师</label>
+                    <input type="text" id="teacher_name" placeholder="自动获取，可修改">
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>教师到岗情况</label>
+                <select id="arrival_status" required>
+                    <option value="">请选择</option>
+                    <option value="按时到达">✅ 按时到达</option>
+                    <option value="迟到">⏰ 迟到</option>
+                    <option value="旷课">❌ 旷课</option>
+                    <option value="其他">🔍 其他（需填写具体时间）</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>到岗时间补充</label>
+                <input type="text" id="arrival_time_detail" placeholder="若选'其他'，请填写具体时间">
+            </div>
+            
+            <div class="form-group">
+                <label>学生课前状态</label>
+                <textarea id="student_status" rows="2" placeholder="如：课前准备充分，秩序良好"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>教室环境</label>
+                <textarea id="environment" rows="2" placeholder="如：卫生整洁，设备正常"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>检查人</label>
+                <select id="inspector" required>
+                    <option value="">请选择检查人</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>发现问题</label>
+                <textarea id="problem" rows="3" placeholder="填写巡查中发现的问题"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>整改建议</label>
+                <textarea id="suggestion" rows="3" placeholder="针对问题的建议"></textarea>
+            </div>
+            
+            <button type="button" class="btn-submit" onclick="submitForm()">📤 提交记录</button>
+            <button type="button" class="btn-back" onclick="window.location.href='inspect.html'">← 返回班级选择</button>
+        </form>
+    </div>
+
+    <script>
+        // 初始化Supabase
+        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 替换为您的完整密钥
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // 获取班级信息
+        const urlParams = new URLSearchParams(window.location.search);
+        const selectedClass = urlParams.get('class') || localStorage.getItem('currentInspectClass');
+        
+        // 页面加载时初始化
+        window.onload = async function() {
+            // 显示班级
+            document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
+            
+            // 设置默认日期为今天
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inspection_date').value = today;
+            
+            // 加载检查人名单
+            await loadInspectors();
+            
+            // 自动填充课表信息
+            autoFillSchedule();
+        };
+        
+        // 加载检查人名单
+        async function loadInspectors() {
+            const { data, error } = await supabase
+                .from('inspectors')
+                .select('inspector_name')
+                .order('inspector_name');
+                
+            if (error) {
+                console.error("加载检查人失败:", error);
+                return;
+            }
+            
+            const select = document.getElementById('inspector');
+            data.forEach(row => {
+                const option = document.createElement('option');
+                option.value = row.inspector_name;
+                option.textContent = row.inspector_name;
+                select.appendChild(option);
+            });
+        }
+        
+        // 自动填充课表信息
+        async function autoFillSchedule() {
+            const date = document.getElementById('inspection_date').value;
+            const period = document.getElementById('period').value;
+            
+            if (!date || !period || !selectedClass) return;
+            
+            // 自动计算星期
+            const dateObj = new Date(date);
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            const weekDay = weekDays[dateObj.getDay()];
+            document.getElementById('week_day').value = weekDay;
+            
+            // 查询课表
+            const { data, error } = await supabase
+                .from('schedule')
+                .select('subject, teacher_name')
+                .eq('class_name', selectedClass)
+                .eq('week_day', weekDay)
+                .eq('period', period)
+                .maybeSingle();
+                
+            if (error) {
+                console.error("查询课表失败:", error);
+                return;
+            }
+            
+            if (data) {
+                document.getElementById('subject').value = data.subject || '';
+                document.getElementById('teacher_name').value = data.teacher_name || '';
+            } else {
+                document.getElementById('subject').value = '';
+                document.getElementById('teacher_name').value = '';
+            }
+        }
+        
+        // 提交表单
+        async function submitForm() {
+            // 获取表单数据
+            const formData = {
+                date: document.getElementById('inspection_date').value,
+                week_day: document.getElementById('week_day').value,
+                class_name: selectedClass,
+                period: document.getElementById('period').value,
+                subject: document.getElementById('subject').value,
+                teacher_name: document.getElementById('teacher_name').value,
+                inspector: document.getElementById('inspector').value,
+                arrival_status: document.getElementById('arrival_status').value,
+                arrival_time: document.getElementById('arrival_time_detail').value,
+                student_status: document.getElementById('student_status').value,
+                environment: document.getElementById('environment').value,
+                problem: document.getElementById('problem').value,
+                suggestion: document.getElementById('suggestion').value
+            };
+            
+            // 验证必填项
+            if (!formData.inspector) {
+                alert('请选择检查人');
+                return;
+            }
+            if (!formData.arrival_status) {
+                alert('请选择教师到岗情况');
+                return;
+            }
+            if (!formData.period) {
+                alert('请选择节次');
+                return;
+            }
+            
+            // 提交到数据库
+            const { data, error } = await supabase
+                .from('inspections')
+                .insert([formData]);
+                
+            if (error) {
+                alert(`提交失败: ${error.message}`);
+                console.error(error);
+            } else {
+                alert('✅ 巡查记录提交成功！');
+                // 清空表单
+                document.getElementById('inspectionForm').reset();
+                // 重置日期和星期
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('inspection_date').value = today;
+                autoFillSchedule();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>查询巡课记录</title>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f7fa;
+            padding: 20px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .filter-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-query {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-download {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e0e0e0;
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        tr:hover {
+            background: #f9f9f9;
+        }
+        .status-on-time { color: #4CAF50; font-weight: bold; }
+        .status-late { color: #FF9800; font-weight: bold; }
+        .status-absent { color: #f44336; font-weight: bold; }
+        .btn-edit {
+            padding: 6px 12px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #666;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>🔍 查询巡课记录</h2>
+        <p style="color: #666;">支持多条件筛选查询</p>
+    </div>
+    
+    <div class="filter-container">
+        <div class="filter-grid">
+            <div class="filter-group">
+                <label>日期范围</label>
+                <input type="date" id="filter_date_start" placeholder="开始日期">
+                <input type="date" id="filter_date_end" placeholder="结束日期" style="margin-top: 5px;">
+            </div>
+            
+            <div class="filter-group">
+                <label>星期</label>
+                <select id="filter_weekday">
+                    <option value="">全部</option>
+                    <option>星期一</option>
+                    <option>星期二</option>
+                    <option>星期三</option>
+                    <option>星期四</option>
+                    <option>星期五</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>班级</label>
+                <select id="filter_class">
+                    <option value="">全部班级</option>
+                    <option>七1班</option><option>七2班</option><option>七3班</option>
+                    <option>七4班</option><option>七5班</option><option>七6班</option>
+                    <option>八1班</option><option>八2班</option><option>八3班</option>
+                    <option>八4班</option><option>八5班</option><option>八6班</option>
+                    <option>九1班</option><option>九2班</option><option>九3班</option>
+                    <option>九4班</option><option>九5班</option><option>九6班</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>节次</label>
+                <select id="filter_period">
+                    <option value="">全部节次</option>
+                    <option value="1">第1节</option>
+                    <option value="2">第2节</option>
+                    <option value="3">第3节</option>
+                    <option value="4">第4节</option>
+                    <option value="5">第5节</option>
+                    <option value="6">第6节</option>
+                    <option value="7">第7节</option>
+                    <option value="8">第8节</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>检查人</label>
+                <select id="filter_inspector">
+                    <option value="">全部检查人</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>到岗情况</label>
+                <select id="filter_arrival">
+                    <option value="">全部</option>
+                    <option value="按时到达">按时到达</option>
+                    <option value="迟到">迟到</option>
+                    <option value="旷课">旷课</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn btn-query" onclick="fetchData()">🔍 查询记录</button>
+            <button class="btn btn-download" onclick="downloadData()">📥 下载数据 (Excel)</button>
+        </div>
+    </div>
+    
+    <div class="table-container">
+        <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
+            <strong>查询结果：</strong> <span id="resultCount">0</span> 条记录
+        </div>
+        <div style="max-height: 500px; overflow-y: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>星期</th>
+                        <th>班级</th>
+                        <th>节次</th>
+                        <th>科目</th>
+                        <th>任课老师</th>
+                        <th>检查人</th>
+                        <th>到岗情况</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody">
+                    <tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <a href="index.html" class="back-btn">← 返回首页</a>
+    </div>
+
+    <script>
+        // 初始化Supabase
+        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';  // 替换为您的完整密钥
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        let allData = [];
+        
+        // 页面加载时初始化
+        window.onload = async function() {
+            await loadInspectors();
+            // 默认查询最近7天的数据
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 7);
+            
+            document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
+            document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+        };
+        
+        // 加载检查人列表
+        async function loadInspectors() {
+            const { data, error } = await supabase
+                .from('inspectors')
+                .select('inspector_name')
+                .order('inspector_name');
+                
+            if (error) {
+                console.error("加载检查人失败:", error);
+                return;
+            }
+            
+            const select = document.getElementById('filter_inspector');
+            data.forEach(row => {
+                const option = document.createElement('option');
+                option.value = row.inspector_name;
+                option.textContent = row.inspector_name;
+                select.appendChild(option);
+            });
+        }
+        
+        // 查询数据
+        async function fetchData() {
+            const startDate = document.getElementById('filter_date_start').value;
+            const endDate = document.getElementById('filter_date_end').value;
+            const filters = {
+                week_day: document.getElementById('filter_weekday').value || null,
+                class_name: document.getElementById('filter_class').value || null,
+                period: document.getElementById('filter_period').value || null,
+                inspector: document.getElementById('filter_inspector').value || null,
+                arrival_status: document.getElementById('filter_arrival').value || null
+            };
+            
+            // 构建查询
+            let query = supabase
+                .from('inspections')
+                .select('*')
+                .order('date', { ascending: false })
+                .order('period', { ascending: true });
+            
+            // 日期筛选
+            if (startDate) {
+                query = query.gte('date', startDate);
+            }
+            if (endDate) {
+                query = query.lte('date', endDate);
+            }
+            
+            // 其他筛选条件
+            Object.keys(filters).forEach(key => {
+                if (filters[key]) {
+                    query = query.eq(key, filters[key]);
+                }
+            });
+            
+            const { data, error } = await query;
+            
+            if (error) {
+                alert("查询失败: " + error.message);
+                console.error(error);
+                return;
+            }
+            
+            allData = data || [];
+            renderTable(allData);
+        }
+        
+        // 渲染表格
+        function renderTable(data) {
+            const tbody = document.getElementById('resultBody');
+            const countElement = document.getElementById('resultCount');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
+                countElement.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            data.forEach(record => {
+                let statusClass = '';
+                if (record.arrival_status === '按时到达') statusClass = 'status-on-time';
+                if (record.arrival_status === '迟到') statusClass = 'status-late';
+                if (record.arrival_status === '旷课') statusClass = 'status-absent';
+                
+                html += `
+                    <tr>
+                        <td>${record.date || ''}</td>
+                        <td>${record.week_day || ''}</td>
+                        <td>${record.class_name || ''}</td>
+                        <td>${record.period ? '第' + record.period + '节' : ''}</td>
+                        <td>${record.subject || ''}</td>
+                        <td>${record.teacher_name || ''}</td>
+                        <td>${record.inspector || ''}</td>
+                        <td class="${statusClass}">${record.arrival_status || ''}</td>
+                        <td>
+                            <button class="btn-edit" onclick="viewDetail(${record.id})">查看详情</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
+            countElement.textContent = data.length;
+        }
+        
+        // 查看详情
+        function viewDetail(recordId) {
+            const record = allData.find(r => r.id === recordId);
+            if (!record) return;
+            
+            let detailText = `📅 日期：${record.date}\n`;
+            detailText += `📅 星期：${record.week_day}\n`;
+            detailText += `🏫 班级：${record.class_name}\n`;
+            detailText += `⏰ 节次：第${record.period}节\n`;
+            detailText += `📚 科目：${record.subject}\n`;
+            detailText += `👨‍🏫 任课老师：${record.teacher_name}\n`;
+            detailText += `👤 检查人：${record.inspector}\n`;
+            detailText += `✅ 到岗情况：${record.arrival_status}\n`;
+            if (record.arrival_time) detailText += `⏱️ 到岗时间：${record.arrival_time}\n`;
+            if (record.student_status) detailText += `📖 学生状态：${record.student_status}\n`;
+            if (record.environment) detailText += `🏫 教室环境：${record.environment}\n`;
+            if (record.problem) detailText += `⚠️ 发现问题：${record.problem}\n`;
+            if (record.suggestion) detailText += `💡 整改建议：${record.suggestion}\n`;
+            
+            alert(detailText);
+        }
+        
+        // 下载数据
+        function downloadData() {
+            if (allData.length === 0) {
+                alert('没有数据可下载');
+                return;
+            }
+            
+            // 创建CSV内容
+            const headers = ['日期','星期','班级','节次','科目','任课老师','检查人','到岗情况','到岗时间','学生状态','教室环境','发现问题','整改建议'];
+            const csvRows = [
+                headers.join(','),
+                ...allData.map(record => [
+                    record.date,
+                    record.week_day,
+                    record.class_name,
+                    record.period,
+                    record.subject,
+                    record.teacher_name,
+                    record.inspector,
+                    record.arrival_status,
+                    record.arrival_time,
+                    `"${(record.student_status || '').replace(/"/g, '""')}"`,
+                    `"${(record.environment || '').replace(/"/g, '""')}"`,
+                    `"${(record.problem || '').replace(/"/g, '""')}"`,
+                    `"${(record.suggestion || '').replace(/"/g, '""')}"`
+                ].join(','))
+            ];
+            
+            const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + csvRows.join('\n');
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement('a');
+            link.setAttribute('href', encodedUri);
+            link.setAttribute('download', `巡课记录_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

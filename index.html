@@ -2,787 +2,84 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>锦艺初中教务巡查系统</title>
-    <!-- Supabase JS SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- 日期处理轻量库 (可选) -->
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/locale/zh-cn.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background: #f5f7fb;
-            padding: 16px;
-            color: #1e293b;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
         .container {
-            max-width: 600px;
-            margin: 0 auto;
             background: white;
-            border-radius: 28px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-            overflow: hidden;
-            padding: 20px 16px 32px;
+            border-radius: 20px;
+            padding: 40px 30px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
         }
-        /* 首页按钮 */
-        .btn-home {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin: 40px 0;
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
         }
-        .btn-large {
-            background: #3b82f6;
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 16px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 20px;
+            margin: 15px 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 14px 24px;
-            border-radius: 48px;
+            border-radius: 12px;
             font-size: 18px;
             font-weight: 600;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
             cursor: pointer;
-            transition: 0.2s;
-            flex: 1;
-            text-align: center;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .btn-large:active { transform: scale(0.97); background: #2563eb; }
-        .btn-outline {
-            background: white;
-            border: 1px solid #cbd5e1;
-            color: #1e293b;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
         }
-        .card {
-            background: #ffffff;
-            border-radius: 24px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            border: 1px solid #eef2f6;
+        .btn-secondary {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
         }
-        .form-group {
-            margin-bottom: 18px;
-        }
-        label {
-            font-weight: 500;
-            display: block;
-            margin-bottom: 6px;
-            font-size: 14px;
-            color: #334155;
-        }
-        input, select, textarea {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #cbd5e1;
-            border-radius: 16px;
-            font-size: 15px;
-            background: #fff;
-            transition: 0.2s;
-            font-family: inherit;
-        }
-        input:focus, select:focus, textarea:focus {
-            outline: none;
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
-        }
-        button {
-            background: #3b82f6;
-            color: white;
-            border: none;
-            padding: 12px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            font-size: 16px;
-            cursor: pointer;
-            width: 100%;
-        }
-        button.secondary {
-            background: #f1f5f9;
-            color: #1e293b;
-            border: 1px solid #e2e8f0;
-        }
-        .grid-classes {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 14px;
-            margin-top: 16px;
-        }
-        .class-icon {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 16px 6px;
-            text-align: center;
-            font-weight: 600;
-            border: 1px solid #e2e8f0;
-            transition: all 0.2s;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .class-icon:active { background: #eef2ff; transform: scale(0.96); }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        .badge {
-            background: #eef2ff;
-            padding: 6px 12px;
-            border-radius: 40px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-            overflow-x: auto;
-            display: block;
-        }
-        th, td {
-            border-bottom: 1px solid #e2e8f0;
-            padding: 10px 6px;
-            text-align: left;
-        }
-        .filter-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        .filter-item {
-            flex: 1;
-            min-width: 120px;
-        }
-        .edit-btn {
-            background: #f97316;
-            padding: 4px 10px;
-            font-size: 12px;
-            border-radius: 30px;
-            display: inline-block;
-            cursor: pointer;
-        }
-        .download-btn {
-            background: #10b981;
-            margin-bottom: 12px;
-        }
-        .logout-link {
-            color: #ef4444;
-            font-size: 14px;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #64748b;
-        }
-        .modal-mask {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background: white;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 32px;
-            padding: 24px;
-        }
-        .inline-group {
-            display: flex;
-            gap: 12px;
-            align-items: center;
-        }
-        h2 { font-size: 22px; margin-bottom: 12px; }
-        h3 { font-size: 18px; margin: 8px 0; }
-        hr { margin: 16px 0; }
-        .back-link {
-            color: #3b82f6;
-            margin-bottom: 16px;
-            display: inline-block;
-            cursor: pointer;
+        .btn-secondary:hover {
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
         }
     </style>
 </head>
 <body>
-<div id="app" class="container"></div>
-
-<script>
-    // Supabase 初始化
-    const SUPABASE_URL = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // 定义管理员名单 (根据inspectors表已有的名称设定，可调整)
-    const ADMIN_LIST = ['杨丽平', '段延普', '吴子璇', '白文娟', '赵峥峥', '郑胜楠', '古冬苹', '赵桃玲', '秦庆员'];
-    // 为了让部分人员拥有管理员权限，实际全设为管理员简化，或者按需: 这里设定全部检查人均可下载？但需求仅管理员可下载数据，严格一点：
-    // 设定检查人中特定几个为管理员: 选取赵峥峥,郑胜楠,秦庆员,杨丽平作为管理员示例，也可以动态。
-    // 便于演示: 设定秦庆员,杨丽平,段延普,赵峥峥 为管理员，可下载所有数据并修改任何记录，普通检查人只能修改自己记录。
-    const ADMIN_NAMES = ['杨丽平', '段延普', '秦庆员', '赵峥峥', '郑胜楠'];
-    
-    // 全局状态
-    let currentUser = null;      // 存储 { id, inspector_name }
-    let currentView = 'home';    // home, query, fillClassList, fillForm, editForm
-    let selectedClass = '';
-    let editRecordId = null;
-    let tempFormData = {};        // 用于填写暂存
-    
-    // 辅助函数: 获取星期中文
-    function getWeekdayFromDate(dateStr) {
-        const date = new Date(dateStr);
-        const weekdays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-        return weekdays[date.getDay()];
-    }
-    
-    // 获取当前日期 YYYY-MM-DD
-    function todayStr() {
-        return new Date().toISOString().slice(0,10);
-    }
-    
-    // 检查是否为管理员
-    function isAdmin(userName) {
-        if (!userName) return false;
-        return ADMIN_NAMES.includes(userName);
-    }
-    
-    // 检查是否有权限修改记录 (recordInspector, recordId可选)
-    function canModify(recordInspector) {
-        if (!currentUser) return false;
-        if (isAdmin(currentUser.inspector_name)) return true;
-        return recordInspector === currentUser.inspector_name;
-    }
-    
-    // 渲染入口
-    function render() {
-        const app = document.getElementById('app');
-        if (!app) return;
-        if (currentView === 'home') {
-            app.innerHTML = renderHome();
-            attachHomeEvents();
-        } else if (currentView === 'query') {
-            renderQueryView(app);
-        } else if (currentView === 'fillClassList') {
-            renderClassListView(app);
-        } else if (currentView === 'fillForm') {
-            renderFillForm(app);
-        } else if (currentView === 'editForm') {
-            renderEditForm(app);
-        } else if (currentView === 'login') {
-            renderLogin(app);
-        } else {
-            renderHome();
-        }
-    }
-    
-    function renderHome() {
-        return `
-            <div style="text-align:center;">
-                <h2>📋 锦艺初中教务巡查</h2>
-                <div class="btn-home">
-                    <button class="btn-large" id="queryBtn">📑 查询巡课记录</button>
-                    <button class="btn-large" id="fillBtn">✏️ 填写巡课记录</button>
-                </div>
-                ${currentUser ? `<div class="badge">当前查课人：${currentUser.inspector_name} <span class="logout-link" id="logoutBtn" style="margin-left:12px;">退出登录</span></div>` : '<div class="badge">未登录，点击填写将进入登录</div>'}
-            </div>
-        `;
-    }
-    
-    function attachHomeEvents() {
-        document.getElementById('queryBtn')?.addEventListener('click', () => {
-            if (!currentUser) {
-                alert('请先登录后再查询');
-                currentView = 'login';
-                render();
-                return;
-            }
-            currentView = 'query';
-            render();
-        });
-        document.getElementById('fillBtn')?.addEventListener('click', () => {
-            if (!currentUser) {
-                currentView = 'login';
-                render();
-                return;
-            }
-            // 已登录，直接进入班级选择
-            currentView = 'fillClassList';
-            render();
-        });
-        document.getElementById('logoutBtn')?.addEventListener('click', () => {
-            currentUser = null;
-            localStorage.removeItem('inspector_user');
-            currentView = 'home';
-            render();
-        });
-    }
-    
-    // 登录界面
-    async function renderLogin(container) {
-        const { data: inspectors, error } = await supabase.from('inspectors').select('id, inspector_name');
-        if (error) {
-            container.innerHTML = '<div class="loading">加载检查人失败，请重试</div>';
-            return;
-        }
-        const html = `
-            <h2>🔐 登录巡查系统</h2>
-            <div class="card">
-                <div class="form-group">
-                    <label>选择您的姓名</label>
-                    <select id="inspectorSelect">
-                        <option value="">-- 请选择 --</option>
-                        ${inspectors.map(ins => `<option value="${ins.inspector_name}" data-id="${ins.id}">${ins.inspector_name}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label><input type="checkbox" id="rememberMe"> 记住我，下次自动登录</label>
-                </div>
-                <button id="doLoginBtn">登录</button>
-                <button class="secondary" id="backHomeBtn" style="margin-top:12px;">返回首页</button>
-            </div>
-        `;
-        container.innerHTML = html;
-        document.getElementById('doLoginBtn')?.addEventListener('click', async () => {
-            const select = document.getElementById('inspectorSelect');
-            const name = select.value;
-            if (!name) return alert('请选择检查人');
-            const selectedIns = inspectors.find(i => i.inspector_name === name);
-            if (selectedIns) {
-                currentUser = { id: selectedIns.id, inspector_name: selectedIns.inspector_name };
-                if (document.getElementById('rememberMe').checked) {
-                    localStorage.setItem('inspector_user', JSON.stringify(currentUser));
-                }
-                currentView = 'home';
-                render();
-            }
-        });
-        document.getElementById('backHomeBtn')?.addEventListener('click', () => {
-            currentView = 'home';
-            render();
-        });
-    }
-    
-    // 班级展示页面 (18个班级图标)
-    async function renderClassListView(container) {
-        const { data: classes, error } = await supabase.from('classes').select('class_name').order('id');
-        if (error) {
-            container.innerHTML = '<div class="loading">加载班级失败</div>';
-            return;
-        }
-        const html = `
-            <div class="header">
-                <span class="back-link" id="backHomeFromClass">← 返回首页</span>
-                <span class="badge">查课人: ${currentUser?.inspector_name}</span>
-            </div>
-            <h3>🏫 请选择班级</h3>
-            <div class="grid-classes" id="classGrid">
-                ${classes.map(c => `<div class="class-icon" data-class="${c.class_name}">${c.class_name}</div>`).join('')}
-            </div>
-        `;
-        container.innerHTML = html;
-        document.querySelectorAll('.class-icon').forEach(el => {
-            el.addEventListener('click', () => {
-                selectedClass = el.dataset.class;
-                currentView = 'fillForm';
-                render();
-            });
-        });
-        document.getElementById('backHomeFromClass')?.addEventListener('click', () => {
-            currentView = 'home';
-            render();
-        });
-    }
-    
-    // 填写巡课表单
-    async function renderFillForm(container) {
-        // 预置今日日期
-        const defaultDate = todayStr();
-        const defaultWeekday = getWeekdayFromDate(defaultDate);
-        // 获取节次选项 1-8
-        const periods = [1,2,3,4,5,6,7,8];
-        // 获取检查人下拉列表 (以备前端展示，实际锁定当前用户)
-        const { data: inspectorsList } = await supabase.from('inspectors').select('inspector_name');
+    <div class="container">
+        <h1>锦艺初中教务巡查系统</h1>
+        <p class="subtitle">教学督导管理系统</p>
         
-        let currentSubject = '', currentTeacher = '';
-        // 监听班级和节次变化后动态获取科目教师
-        const formHtml = `
-            <div class="header">
-                <span class="back-link" id="backToClassList">← 返回班级</span>
-                <span>填写巡课记录</span>
-            </div>
-            <div class="card">
-                <div class="form-group">
-                    <label>班级</label>
-                    <input type="text" id="formClass" value="${selectedClass}" readonly style="background:#f1f5f9;">
-                </div>
-                <div class="form-group">
-                    <label>日期</label>
-                    <input type="date" id="formDate" value="${defaultDate}">
-                </div>
-                <div class="form-group">
-                    <label>星期</label>
-                    <input type="text" id="formWeekday" value="${defaultWeekday}" readonly>
-                </div>
-                <div class="form-group">
-                    <label>节次</label>
-                    <select id="formPeriod">
-                        ${periods.map(p => `<option value="${p}">第 ${p} 节</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>科目</label>
-                    <input type="text" id="formSubject" placeholder="自动获取或手动填写">
-                </div>
-                <div class="form-group">
-                    <label>任课老师</label>
-                    <input type="text" id="formTeacher" placeholder="自动获取或手动填写">
-                </div>
-                <div class="form-group">
-                    <label>教师到岗时间</label>
-                    <select id="arrivalStatus">
-                        <option value="按时到达">按时到达</option>
-                        <option value="迟到">迟到</option>
-                        <option value="旷课">旷课</option>
-                        <option value="其他">其他</option>
-                    </select>
-                    <input type="text" id="arrivalOther" placeholder="若选择其他，请填写具体" style="margin-top:8px;">
-                </div>
-                <div class="form-group">
-                    <label>学生课前状态</label>
-                    <textarea id="studentStatus" rows="2" placeholder="例如：学生状态良好，准备充分"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>教室环境</label>
-                    <textarea id="environment" rows="2" placeholder="卫生、设备等"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>检查人</label>
-                    <input type="text" id="inspectorName" value="${currentUser.inspector_name}" readonly style="background:#f1f5f9;">
-                </div>
-                <div class="form-group">
-                    <label>其他补充</label>
-                    <textarea id="situation" rows="2" placeholder="其他情况说明"></textarea>
-                </div>
-                <button id="submitRecordBtn">✅ 提交巡课记录</button>
-            </div>
-        `;
-        container.innerHTML = formHtml;
+        <a href="query.html" class="btn">
+            <div style="font-size: 20px;">🔍</div>
+            查询巡课记录
+        </a>
         
-        // 自动获取科目老师函数
-        async function fetchSubjectTeacher() {
-            const classVal = selectedClass;
-            const dateVal = document.getElementById('formDate').value;
-            if (!dateVal) return;
-            const weekday = getWeekdayFromDate(dateVal);
-            const periodVal = parseInt(document.getElementById('formPeriod').value);
-            document.getElementById('formWeekday').value = weekday;
-            // 查询schedule表
-            const { data, error } = await supabase
-                .from('schedule')
-                .select('subject, teacher_name')
-                .eq('class_name', classVal)
-                .eq('week_day', weekday)
-                .eq('period', periodVal)
-                .maybeSingle();
-            if (data && !error) {
-                document.getElementById('formSubject').value = data.subject || '';
-                document.getElementById('formTeacher').value = data.teacher_name || '';
-            } else {
-                document.getElementById('formSubject').value = '';
-                document.getElementById('formTeacher').value = '';
-            }
-        }
+        <a href="login.html?redirect=inspect" class="btn btn-secondary">
+            <div style="font-size: 20px;">📝</div>
+            填写巡课记录
+        </a>
         
-        document.getElementById('formDate').addEventListener('change', () => {
-            const newDate = document.getElementById('formDate').value;
-            const newWeek = getWeekdayFromDate(newDate);
-            document.getElementById('formWeekday').value = newWeek;
-            fetchSubjectTeacher();
-        });
-        document.getElementById('formPeriod').addEventListener('change', fetchSubjectTeacher);
-        await fetchSubjectTeacher();
-        
-        document.getElementById('backToClassList')?.addEventListener('click', () => {
-            currentView = 'fillClassList';
-            render();
-        });
-        
-        document.getElementById('submitRecordBtn').addEventListener('click', async () => {
-            const class_name = selectedClass;
-            const date = document.getElementById('formDate').value;
-            const week_day = document.getElementById('formWeekday').value;
-            const period = parseInt(document.getElementById('formPeriod').value);
-            let subject = document.getElementById('formSubject').value;
-            let teacher_name = document.getElementById('formTeacher').value;
-            const arrivalStatus = document.getElementById('arrivalStatus').value;
-            let arrival_time = null;
-            if (arrivalStatus === '其他') {
-                arrival_time = document.getElementById('arrivalOther').value || '未说明';
-            } else {
-                arrival_time = arrivalStatus;
-            }
-            const student_status = document.getElementById('studentStatus').value;
-            const environment = document.getElementById('environment').value;
-            const inspector = currentUser.inspector_name;
-            const situation = document.getElementById('situation').value;
-            if (!date || !period) return alert('请填写完整日期和节次');
-            if (!student_status.trim()) alert('建议填写学生课前状态'); 
-            const insertObj = {
-                date, class_name, period, week_day, subject, teacher_name,
-                inspector, arrival_status: arrivalStatus, arrival_time,
-                student_status, environment, situation,
-                created_at: new Date(), updated_at: new Date()
-            };
-            const { error } = await supabase.from('inspections').insert([insertObj]);
-            if (error) {
-                console.error(error);
-                alert('提交失败: ' + error.message);
-            } else {
-                alert('巡课记录提交成功！');
-                currentView = 'fillClassList';
-                render();
-            }
-        });
-    }
-    
-    // 查询巡课记录 + 筛选 + 修改
-    async function renderQueryView(container) {
-        // 获取筛选下拉所需数据
-        const [classesRes, inspectorsRes] = await Promise.all([
-            supabase.from('classes').select('class_name'),
-            supabase.from('inspectors').select('inspector_name')
-        ]);
-        const classOptions = classesRes.data || [];
-        const inspectorOptions = inspectorsRes.data || [];
-        // 获取科目和任课老师从已有inspection去重简单
-        const { data: allInspectionsRaw } = await supabase.from('inspections').select('subject, teacher_name');
-        let subjectsSet = new Set(), teachersSet = new Set();
-        (allInspectionsRaw || []).forEach(item => {
-            if(item.subject) subjectsSet.add(item.subject);
-            if(item.teacher_name) teachersSet.add(item.teacher_name);
-        });
-        
-        // 构建筛选区域
-        const filterHtml = `
-            <div class="header">
-                <span class="back-link" id="backHomeFromQuery">← 返回首页</span>
-                ${isAdmin(currentUser?.inspector_name) ? '<button id="downloadCsvBtn" class="download-btn" style="width:auto;padding:6px 12px;">📎 下载CSV</button>' : ''}
-            </div>
-            <h3>🔍 巡课记录查询</h3>
-            <div class="card">
-                <div class="filter-row">
-                    <div class="filter-item"><input type="date" id="filterDate" placeholder="日期"></div>
-                    <div class="filter-item"><select id="filterWeekday"><option value="">星期</option><option>星期一</option><option>星期二</option><option>星期三</option><option>星期四</option><option>星期五</option></select></div>
-                    <div class="filter-item"><select id="filterClass"><option value="">班级</option>${classOptions.map(c=>`<option>${c.class_name}</option>`).join('')}</select></div>
-                    <div class="filter-item"><select id="filterPeriod"><option value="">节次</option>${[1,2,3,4,5,6,7,8].map(p=>`<option>${p}</option>`).join('')}</select></div>
-                    <div class="filter-item"><select id="filterSubject"><option value="">科目</option>${Array.from(subjectsSet).map(s=>`<option>${s}</option>`).join('')}</select></div>
-                    <div class="filter-item"><select id="filterTeacher"><option value="">任课老师</option>${Array.from(teachersSet).map(t=>`<option>${t}</option>`).join('')}</select></div>
-                    <div class="filter-item"><select id="filterInspector"><option value="">查课人</option>${inspectorOptions.map(i=>`<option>${i.inspector_name}</option>`).join('')}</select></div>
-                </div>
-                <button id="searchBtn">🔎 查询</button>
-                <button id="resetBtn" class="secondary" style="margin-top:8px;">重置</button>
-            </div>
-            <div id="queryResultTable" class="card" style="overflow-x:auto;">加载中...</div>
-        `;
-        container.innerHTML = filterHtml;
-        document.getElementById('backHomeFromQuery')?.addEventListener('click', () => {
-            currentView = 'home';
-            render();
-        });
-        
-        let currentRecords = [];
-        async function loadRecords(filters = {}) {
-            let query = supabase.from('inspections').select('*').order('date', { ascending: false });
-            if (filters.date) query = query.eq('date', filters.date);
-            if (filters.week_day) query = query.eq('week_day', filters.week_day);
-            if (filters.class_name) query = query.eq('class_name', filters.class_name);
-            if (filters.period) query = query.eq('period', parseInt(filters.period));
-            if (filters.subject) query = query.eq('subject', filters.subject);
-            if (filters.teacher_name) query = query.eq('teacher_name', filters.teacher_name);
-            if (filters.inspector) query = query.eq('inspector', filters.inspector);
-            const { data, error } = await query;
-            if (error) {
-                document.getElementById('queryResultTable').innerHTML = '<div>加载失败</div>';
-                return [];
-            }
-            return data || [];
-        }
-        
-        async function displayRecords(records) {
-            if (!records.length) {
-                document.getElementById('queryResultTable').innerHTML = '<div>暂无巡课记录</div>';
-                return;
-            }
-            const canDownloadAdmin = isAdmin(currentUser?.inspector_name);
-            let html = `<table><thead><tr><th>日期</th><th>星期</th><th>班级</th><th>节次</th><th>科目</th><th>老师</th><th>到岗</th><th>查课人</th><th>操作</th></tr></thead><tbody>`;
-            for (const rec of records) {
-                const allowEdit = canModify(rec.inspector);
-                html += `<tr>
-                    <td>${rec.date}</td><td>${rec.week_day}</td><td>${rec.class_name}</td><td>${rec.period}</td>
-                    <td>${rec.subject || ''}</td><td>${rec.teacher_name || ''}</td>
-                    <td>${rec.arrival_status}${rec.arrival_time && rec.arrival_status==='其他'?(':'+rec.arrival_time):''}</td>
-                    <td>${rec.inspector}</td>
-                    <td>${allowEdit ? `<span class="edit-btn" data-id="${rec.id}">修改</span>` : '--'}</td>
-                </tr>`;
-            }
-            html += `</tbody></table>`;
-            document.getElementById('queryResultTable').innerHTML = html;
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = btn.dataset.id;
-                    const record = records.find(r => r.id == id);
-                    if (record && canModify(record.inspector)) {
-                        editRecordId = id;
-                        tempFormData = record;
-                        currentView = 'editForm';
-                        render();
-                    } else {
-                        alert('无权限修改');
-                    }
-                });
-            });
-        }
-        
-        const searchBtn = document.getElementById('searchBtn');
-        const resetBtn = document.getElementById('resetBtn');
-        const downloadBtn = document.getElementById('downloadCsvBtn');
-        
-        async function refresh() {
-            const filters = {
-                date: document.getElementById('filterDate').value,
-                week_day: document.getElementById('filterWeekday').value,
-                class_name: document.getElementById('filterClass').value,
-                period: document.getElementById('filterPeriod').value,
-                subject: document.getElementById('filterSubject').value,
-                teacher_name: document.getElementById('filterTeacher').value,
-                inspector: document.getElementById('filterInspector').value,
-            };
-            currentRecords = await loadRecords(filters);
-            await displayRecords(currentRecords);
-        }
-        searchBtn?.addEventListener('click', refresh);
-        resetBtn?.addEventListener('click', () => {
-            document.getElementById('filterDate').value = '';
-            document.getElementById('filterWeekday').value = '';
-            document.getElementById('filterClass').value = '';
-            document.getElementById('filterPeriod').value = '';
-            document.getElementById('filterSubject').value = '';
-            document.getElementById('filterTeacher').value = '';
-            document.getElementById('filterInspector').value = '';
-            refresh();
-        });
-        if (downloadBtn) {
-            downloadBtn.addEventListener('click', () => {
-                if (!isAdmin(currentUser?.inspector_name)) return alert('仅管理员可下载');
-                const csvRows = [];
-                const headers = ['日期','星期','班级','节次','科目','任课老师','到岗状态','到岗详情','学生状态','教室环境','检查人','其他补充'];
-                csvRows.push(headers.join(','));
-                currentRecords.forEach(rec => {
-                    const row = [
-                        rec.date, rec.week_day, rec.class_name, rec.period, rec.subject, rec.teacher_name,
-                        rec.arrival_status, rec.arrival_time || '', rec.student_status || '', rec.environment || '', rec.inspector, rec.situation || ''
-                    ];
-                    csvRows.push(row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','));
-                });
-                const blob = new Blob(["\uFEFF" + csvRows.join('\n')], {type: 'text/csv;charset=utf-8;'});
-                const link = document.createElement('a');
-                const url = URL.createObjectURL(blob);
-                link.href = url;
-                link.setAttribute('download', '巡课记录.csv');
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                URL.revokeObjectURL(url);
-            });
-        }
-        await refresh();
-    }
-    
-    // 编辑表单
-    async function renderEditForm(container) {
-        if (!tempFormData) {
-            currentView = 'query';
-            render();
-            return;
-        }
-        const rec = tempFormData;
-        const periods = [1,2,3,4,5,6,7,8];
-        const html = `
-            <div class="header">
-                <span class="back-link" id="backToQuery">← 返回查询</span>
-                <span>修改巡课记录</span>
-            </div>
-            <div class="card">
-                <div class="form-group"><label>日期</label><input type="date" id="editDate" value="${rec.date}"></div>
-                <div class="form-group"><label>星期</label><input id="editWeekday" value="${rec.week_day}" readonly></div>
-                <div class="form-group"><label>班级</label><input value="${rec.class_name}" readonly></div>
-                <div class="form-group"><label>节次</label><select id="editPeriod">${periods.map(p=>`<option ${rec.period==p?'selected':''} value="${p}">第${p}节</option>`).join('')}</select></div>
-                <div class="form-group"><label>科目</label><input id="editSubject" value="${rec.subject || ''}"></div>
-                <div class="form-group"><label>任课老师</label><input id="editTeacher" value="${rec.teacher_name || ''}"></div>
-                <div class="form-group"><label>到岗状态</label><select id="editArrivalStatus"><option ${rec.arrival_status=='按时到达'?'selected':''}>按时到达</option><option ${rec.arrival_status=='迟到'?'selected':''}>迟到</option><option ${rec.arrival_status=='旷课'?'selected':''}>旷课</option><option ${rec.arrival_status=='其他'?'selected':''}>其他</option></select><input id="editArrivalOther" placeholder="其他具体说明" value="${rec.arrival_time || ''}"></div>
-                <div class="form-group"><label>学生状态</label><textarea id="editStudentStatus">${rec.student_status || ''}</textarea></div>
-                <div class="form-group"><label>教室环境</label><textarea id="editEnvironment">${rec.environment || ''}</textarea></div>
-                <div class="form-group"><label>其他补充</label><textarea id="editSituation">${rec.situation || ''}</textarea></div>
-                <button id="updateRecordBtn">保存修改</button>
-            </div>
-        `;
-        container.innerHTML = html;
-        document.getElementById('editDate')?.addEventListener('change', (e) => {
-            document.getElementById('editWeekday').value = getWeekdayFromDate(e.target.value);
-        });
-        document.getElementById('backToQuery')?.addEventListener('click', () => {
-            currentView = 'query';
-            render();
-        });
-        document.getElementById('updateRecordBtn')?.addEventListener('click', async () => {
-            const updates = {
-                date: document.getElementById('editDate').value,
-                week_day: document.getElementById('editWeekday').value,
-                period: parseInt(document.getElementById('editPeriod').value),
-                subject: document.getElementById('editSubject').value,
-                teacher_name: document.getElementById('editTeacher').value,
-                arrival_status: document.getElementById('editArrivalStatus').value,
-                arrival_time: document.getElementById('editArrivalOther').value,
-                student_status: document.getElementById('editStudentStatus').value,
-                environment: document.getElementById('editEnvironment').value,
-                situation: document.getElementById('editSituation').value,
-                updated_at: new Date()
-            };
-            const { error } = await supabase.from('inspections').update(updates).eq('id', editRecordId);
-            if (error) alert('更新失败:'+error.message);
-            else {
-                alert('修改成功');
-                currentView = 'query';
-                render();
-            }
-        });
-    }
-    
-    // 启动时恢复登录
-    (function init() {
-        const stored = localStorage.getItem('inspector_user');
-        if (stored) {
-            try {
-                currentUser = JSON.parse(stored);
-            } catch(e) {}
-        }
-        if (!currentUser) currentView = 'home';
-        else currentView = 'home';
-        render();
-    })();
-</script>
+        <div style="margin-top: 40px; color: #888; font-size: 14px;">
+            <p>技术支持：腾讯云 | 本系统可在微信中直接使用</p>
+        </div>
+    </div>
 </body>
 </html>
