@@ -156,19 +156,27 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
+        // 全局变量
+        let supabaseClient = null;
         let allData = [];
         
-        // 页面加载初始化
-        document.addEventListener('DOMContentLoaded', async function() {
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initPage();
+        });
+        
+        async function initPage() {
+            // 设置默认日期为最近7天
             const endDate = new Date();
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - 7);
             document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
             document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+            
+            // 初始化Supabase
+            const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+            const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             
             // 加载所有下拉框数据
             await Promise.all([
@@ -180,83 +188,146 @@
             
             // 默认执行一次查询
             await fetchData();
-        });
+        }
         
+        // 加载班级筛选列表
         async function loadFilterClasses() {
             try {
-                const { data, error } = await supabase
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
                     .from('classes')
                     .select('class_name')
                     .order('class_name');
                     
-                if (!error && data) {
-                    const select = document.getElementById('filter_class');
+                if (error) {
+                    console.error("加载班级筛选失败:", error);
+                    return;
+                }
+                
+                const select = document.getElementById('filter_class');
+                
+                if (data && data.length > 0) {
                     data.forEach(cls => {
                         const option = new Option(cls.class_name, cls.class_name);
                         select.add(option);
                     });
+                } else {
+                    // 如果classes表没有数据，从inspections表获取
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                        .from('inspections')
+                        .select('class_name')
+                        .not('class_name', 'is', null)
+                        .order('class_name');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        const uniqueClasses = [...new Set(inspectionsData.map(item => item.class_name).filter(c => c))];
+                        uniqueClasses.sort().forEach(className => {
+                            const option = new Option(className, className);
+                            select.add(option);
+                        });
+                    }
                 }
             } catch (error) {
-                console.error("加载班级筛选失败:", error);
+                console.error("加载班级筛选异常:", error);
             }
         }
         
+        // 加载科目筛选列表
         async function loadFilterSubjects() {
             try {
-                const { data, error } = await supabase
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
                     .from('inspections')
                     .select('subject')
                     .not('subject', 'is', null);
                     
-                if (!error && data) {
+                if (error) {
+                    console.error("加载科目筛选失败:", error);
+                    return;
+                }
+                
+                const select = document.getElementById('filter_subject');
+                
+                if (data && data.length > 0) {
                     const uniqueSubjects = [...new Set(data.map(item => item.subject).filter(s => s))];
-                    const select = document.getElementById('filter_subject');
                     uniqueSubjects.sort().forEach(subject => {
                         const option = new Option(subject, subject);
                         select.add(option);
                     });
                 }
             } catch (error) {
-                console.error("加载科目筛选失败:", error);
+                console.error("加载科目筛选异常:", error);
             }
         }
         
+        // 加载老师筛选列表
         async function loadFilterTeachers() {
             try {
-                const { data, error } = await supabase
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
                     .from('inspections')
                     .select('teacher_name')
                     .not('teacher_name', 'is', null);
                     
-                if (!error && data) {
+                if (error) {
+                    console.error("加载老师筛选失败:", error);
+                    return;
+                }
+                
+                const select = document.getElementById('filter_teacher');
+                
+                if (data && data.length > 0) {
                     const uniqueTeachers = [...new Set(data.map(item => item.teacher_name).filter(t => t))];
-                    const select = document.getElementById('filter_teacher');
                     uniqueTeachers.sort().forEach(teacher => {
                         const option = new Option(teacher, teacher);
                         select.add(option);
                     });
                 }
             } catch (error) {
-                console.error("加载老师筛选失败:", error);
+                console.error("加载老师筛选异常:", error);
             }
         }
         
+        // 加载检查人筛选列表
         async function loadFilterInspectors() {
             try {
-                const { data, error } = await supabase
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
                     .from('inspectors')
                     .select('inspector_name')
                     .order('inspector_name');
                     
-                if (!error && data) {
-                    const select = document.getElementById('filter_inspector');
+                if (error) {
+                    console.error("从inspectors表加载检查人筛选失败:", error);
+                    return;
+                }
+                
+                const select = document.getElementById('filter_inspector');
+                
+                if (data && data.length > 0) {
                     data.forEach(insp => {
                         const option = new Option(insp.inspector_name, insp.inspector_name);
                         select.add(option);
                     });
                 } else {
                     // 如果inspectors表没有数据，从inspections表获取
-                    const { data: inspectionsData, error: inspectionsError } = await supabase
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
                         .from('inspections')
                         .select('inspector')
                         .not('inspector', 'is', null)
@@ -264,7 +335,6 @@
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
                         const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
-                        const select = document.getElementById('filter_inspector');
                         uniqueInspectors.sort().forEach(inspector => {
                             const option = new Option(inspector, inspector);
                             select.add(option);
@@ -272,11 +342,17 @@
                     }
                 }
             } catch (error) {
-                console.error("加载检查人筛选失败:", error);
+                console.error("加载检查人筛选异常:", error);
             }
         }
         
+        // 查询数据
         async function fetchData() {
+            if (!supabaseClient) {
+                alert('系统未初始化，请刷新页面重试');
+                return;
+            }
+            
             const startDate = document.getElementById('filter_date_start').value;
             const endDate = document.getElementById('filter_date_end').value;
             
@@ -294,7 +370,7 @@
             tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
-                let query = supabase
+                let query = supabaseClient
                     .from('inspections')
                     .select('*')
                     .order('date', { ascending: false })
@@ -323,6 +399,7 @@
             }
         }
         
+        // 渲染表格
         function renderTable(data) {
             const tbody = document.getElementById('resultBody');
             
@@ -356,6 +433,7 @@
             tbody.innerHTML = html;
         }
         
+        // 查看详情
         function viewDetail(recordId) {
             const record = allData.find(r => r.id === recordId);
             if (!record) return;
@@ -377,6 +455,7 @@
             alert(detailText);
         }
         
+        // 重置筛选条件
         function resetFilters() {
             document.getElementById('filter_date_start').value = '';
             document.getElementById('filter_date_end').value = '';
@@ -393,6 +472,7 @@
             document.getElementById('resultCount').textContent = '0';
         }
         
+        // 下载数据
         function downloadData() {
             if (allData.length === 0) {
                 alert('没有数据可下载');
