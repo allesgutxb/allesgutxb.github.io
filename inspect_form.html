@@ -21,6 +21,23 @@
         .btn-submit { width: 100%; padding: 18px; background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
         .btn-submit:hover { transform: translateY(-2px); }
         .btn-back { width: 100%; padding: 15px; background: #666; color: white; border: none; border-radius: 12px; font-size: 16px; margin-top: 10px; cursor: pointer; }
+        
+        /* 搜索下拉框样式 */
+        .searchable-input {
+            position: relative;
+        }
+        .searchable-input input {
+            width: 100%;
+            padding-right: 40px;
+        }
+        .search-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -63,15 +80,20 @@
                 </div>
                 <div class="form-group">
                     <label>任课老师</label>
-                    <input type="text" id="teacher_name" placeholder="自动获取，可修改">
+                    <input type="text" id="teacher_name" placeholder="自动获取，可修改" list="teacher_name_list">
+                    <datalist id="teacher_name_list">
+                        <!-- 任课老师选项将通过JavaScript动态加载 -->
+                    </datalist>
                 </div>
             </div>
             
-            <div class="form-group">
+            <div class="form-group searchable-input">
                 <label>跟班老师</label>
-                <select id="follow_teacher">
-                    <option value="">请选择跟班老师</option>
-                </select>
+                <input type="text" id="follow_teacher" list="follow_teacher_list" placeholder="输入名字搜索或选择">
+                <datalist id="follow_teacher_list">
+                    <!-- 跟班老师选项将通过JavaScript动态加载 -->
+                </datalist>
+                <div class="search-icon">🔍</div>
             </div>
             
             <div class="form-group">
@@ -100,11 +122,13 @@
                 <textarea id="environment" rows="2" placeholder="如：卫生整洁，设备正常"></textarea>
             </div>
             
-            <div class="form-group">
+            <div class="form-group searchable-input">
                 <label>检查人</label>
-                <select id="inspector" required>
-                    <option value="">请选择检查人</option>
-                </select>
+                <input type="text" id="inspector" list="inspector_list" placeholder="输入名字搜索或选择" required>
+                <datalist id="inspector_list">
+                    <!-- 检查人选项将通过JavaScript动态加载 -->
+                </datalist>
+                <div class="search-icon">🔍</div>
             </div>
             
             <div class="form-group">
@@ -167,10 +191,11 @@
             
             document.getElementById('period').addEventListener('change', autoFillSchedule);
             
-            // 5. 加载检查人和跟班老师列表
+            // 5. 加载检查人、跟班老师和任课老师列表
             await Promise.all([
                 loadInspectors(),
-                loadFollowTeachers()
+                loadFollowTeachers(),
+                loadTeachersForDatalist()
             ]);
             
             // 6. 绑定提交按钮
@@ -212,15 +237,14 @@
                     return;
                 }
                 
-                const select = document.getElementById('inspector');
-                select.innerHTML = '<option value="">请选择检查人</option>';
+                const datalist = document.getElementById('inspector_list');
+                datalist.innerHTML = '';
                 
                 if (data && data.length > 0) {
                     data.forEach(row => {
                         const option = document.createElement('option');
                         option.value = row.inspector_name;
-                        option.textContent = row.inspector_name;
-                        select.appendChild(option);
+                        datalist.appendChild(option);
                     });
                 } else {
                     // 如果inspectors表没有数据，从inspections表获取
@@ -237,8 +261,7 @@
                             if (inspector) {
                                 const option = document.createElement('option');
                                 option.value = inspector;
-                                option.textContent = inspector;
-                                select.appendChild(option);
+                                datalist.appendChild(option);
                             }
                         });
                     }
@@ -266,15 +289,14 @@
                     return;
                 }
                 
-                const select = document.getElementById('follow_teacher');
-                select.innerHTML = '<option value="">请选择跟班老师</option>';
+                const datalist = document.getElementById('follow_teacher_list');
+                datalist.innerHTML = '';
                 
                 if (data && data.length > 0) {
                     data.forEach(row => {
                         const option = document.createElement('option');
                         option.value = row.teacher_name;
-                        option.textContent = row.teacher_name;
-                        select.appendChild(option);
+                        datalist.appendChild(option);
                     });
                 } else {
                     // 如果teachers表没有数据，从inspections表获取已有的跟班老师
@@ -291,14 +313,46 @@
                             if (teacher) {
                                 const option = document.createElement('option');
                                 option.value = teacher;
-                                option.textContent = teacher;
-                                select.appendChild(option);
+                                datalist.appendChild(option);
                             }
                         });
                     }
                 }
             } catch (error) {
                 console.error("加载跟班老师异常:", error);
+            }
+        }
+        
+        // 加载任课老师列表（用于datalist）
+        async function loadTeachersForDatalist() {
+            try {
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
+                    .from('teachers')
+                    .select('teacher_name')
+                    .order('teacher_name');
+                    
+                if (error) {
+                    console.error("加载任课老师失败:", error);
+                    return;
+                }
+                
+                const datalist = document.getElementById('teacher_name_list');
+                datalist.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        const option = document.createElement('option');
+                        option.value = row.teacher_name;
+                        datalist.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("加载任课老师异常:", error);
             }
         }
         

@@ -249,6 +249,24 @@
             border-bottom: 1px solid #f0f0f0;
             font-size: 13px;
         }
+        
+        /* 搜索下拉框样式 */
+        .searchable-group {
+            position: relative;
+        }
+        .searchable-group input {
+            width: 100%;
+            padding-right: 35px;
+        }
+        .search-icon {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            font-size: 14px;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -308,32 +326,32 @@
                 </select>
             </div>
             
-            <div class="filter-group">
+            <div class="filter-group searchable-group">
                 <label>任课老师</label>
-                <select id="filter_teacher">
-                    <option value="">全部老师</option>
-                </select>
+                <input type="text" id="filter_teacher" list="filter_teacher_list" placeholder="输入名字搜索或选择">
+                <datalist id="filter_teacher_list"></datalist>
+                <div class="search-icon">🔍</div>
             </div>
             
-            <div class="filter-group">
+            <div class="filter-group searchable-group">
                 <label>跟班老师</label>
-                <select id="filter_follow_teacher">
-                    <option value="">全部</option>
-                </select>
+                <input type="text" id="filter_follow_teacher" list="filter_follow_teacher_list" placeholder="输入名字搜索或选择">
+                <datalist id="filter_follow_teacher_list"></datalist>
+                <div class="search-icon">🔍</div>
             </div>
             
             <div class="filter-group">
                 <label>科目</label>
-                <select id="filter_subject">
-                    <option value="">全部科目</option>
-                </select>
+                <input type="text" id="filter_subject" list="filter_subject_list" placeholder="输入科目搜索或选择">
+                <datalist id="filter_subject_list"></datalist>
+                <div class="search-icon">🔍</div>
             </div>
             
-            <div class="filter-group">
+            <div class="filter-group searchable-group">
                 <label>检查人</label>
-                <select id="filter_inspector">
-                    <option value="">全部检查人</option>
-                </select>
+                <input type="text" id="filter_inspector" list="filter_inspector_list" placeholder="输入名字搜索或选择">
+                <datalist id="filter_inspector_list"></datalist>
+                <div class="search-icon">🔍</div>
             </div>
             
             <div class="filter-group">
@@ -428,15 +446,15 @@
                     </div>
                     <div class="form-group">
                         <label>任课老师</label>
-                        <input type="text" id="edit_teacher_name">
+                        <input type="text" id="edit_teacher_name" list="edit_teacher_name_list">
+                        <datalist id="edit_teacher_name_list"></datalist>
                     </div>
                 </div>
                 
                 <div class="form-group">
                     <label>跟班老师</label>
-                    <select id="edit_follow_teacher">
-                        <option value="">请选择跟班老师</option>
-                    </select>
+                    <input type="text" id="edit_follow_teacher" list="edit_follow_teacher_list" placeholder="输入名字搜索或选择">
+                    <datalist id="edit_follow_teacher_list"></datalist>
                 </div>
                 
                 <div class="form-group">
@@ -513,7 +531,8 @@
                 loadFilterTeachers(),
                 loadFilterFollowTeachers(),
                 loadFilterInspectors(),
-                loadFollowTeachersForEdit()
+                loadFollowTeachersForEdit(),
+                loadTeachersForEditDatalist()
             ]);
             
             // 绑定编辑表单的日期变化事件
@@ -546,14 +565,34 @@
                     .order('teacher_name');
                     
                 if (!error && data) {
-                    const select = document.getElementById('edit_follow_teacher');
+                    const datalist = document.getElementById('edit_follow_teacher_list');
                     data.forEach(teacher => {
                         const option = new Option(teacher.teacher_name, teacher.teacher_name);
-                        select.add(option);
+                        datalist.appendChild(option);
                     });
                 }
             } catch (error) {
                 console.error("加载编辑用跟班老师列表失败:", error);
+            }
+        }
+        
+        // 加载编辑弹窗的任课老师列表
+        async function loadTeachersForEditDatalist() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('teachers')
+                    .select('teacher_name')
+                    .order('teacher_name');
+                    
+                if (!error && data) {
+                    const datalist = document.getElementById('edit_teacher_name_list');
+                    data.forEach(teacher => {
+                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
+                        datalist.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error("加载编辑用任课老师列表失败:", error);
             }
         }
         
@@ -585,10 +624,10 @@
                     
                 if (!error && data) {
                     const uniqueSubjects = [...new Set(data.map(item => item.subject).filter(s => s))];
-                    const select = document.getElementById('filter_subject');
+                    const datalist = document.getElementById('filter_subject_list');
                     uniqueSubjects.sort().forEach(subject => {
                         const option = new Option(subject, subject);
-                        select.add(option);
+                        datalist.appendChild(option);
                     });
                 }
             } catch (error) {
@@ -599,17 +638,32 @@
         async function loadFilterTeachers() {
             try {
                 const { data, error } = await supabaseClient
-                    .from('inspections')
+                    .from('teachers')
                     .select('teacher_name')
-                    .not('teacher_name', 'is', null);
+                    .order('teacher_name');
                     
                 if (!error && data) {
-                    const uniqueTeachers = [...new Set(data.map(item => item.teacher_name).filter(t => t))];
-                    const select = document.getElementById('filter_teacher');
-                    uniqueTeachers.sort().forEach(teacher => {
-                        const option = new Option(teacher, teacher);
-                        select.add(option);
+                    const datalist = document.getElementById('filter_teacher_list');
+                    data.forEach(teacher => {
+                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
+                        datalist.appendChild(option);
                     });
+                } else {
+                    // 如果teachers表没有数据，从inspections表获取
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                        .from('inspections')
+                        .select('teacher_name')
+                        .not('teacher_name', 'is', null)
+                        .order('teacher_name');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        const uniqueTeachers = [...new Set(inspectionsData.map(item => item.teacher_name).filter(t => t))];
+                        const datalist = document.getElementById('filter_teacher_list');
+                        uniqueTeachers.sort().forEach(teacher => {
+                            const option = new Option(teacher, teacher);
+                            datalist.appendChild(option);
+                        });
+                    }
                 }
             } catch (error) {
                 console.error("加载老师筛选失败:", error);
@@ -624,10 +678,10 @@
                     .order('teacher_name');
                     
                 if (!error && data) {
-                    const select = document.getElementById('filter_follow_teacher');
+                    const datalist = document.getElementById('filter_follow_teacher_list');
                     data.forEach(teacher => {
                         const option = new Option(teacher.teacher_name, teacher.teacher_name);
-                        select.add(option);
+                        datalist.appendChild(option);
                     });
                 } else {
                     // 如果teachers表没有数据，从inspections表获取已有的跟班老师
@@ -639,10 +693,10 @@
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
                         const uniqueTeachers = [...new Set(inspectionsData.map(item => item.follow_teacher).filter(i => i))];
-                        const select = document.getElementById('filter_follow_teacher');
+                        const datalist = document.getElementById('filter_follow_teacher_list');
                         uniqueTeachers.sort().forEach(teacher => {
                             const option = new Option(teacher, teacher);
-                            select.add(option);
+                            datalist.appendChild(option);
                         });
                     }
                 }
@@ -659,10 +713,10 @@
                     .order('inspector_name');
                     
                 if (!error && data) {
-                    const select = document.getElementById('filter_inspector');
+                    const datalist = document.getElementById('filter_inspector_list');
                     data.forEach(insp => {
                         const option = new Option(insp.inspector_name, insp.inspector_name);
-                        select.add(option);
+                        datalist.appendChild(option);
                     });
                 } else {
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
@@ -673,10 +727,10 @@
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
                         const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
-                        const select = document.getElementById('filter_inspector');
+                        const datalist = document.getElementById('filter_inspector_list');
                         uniqueInspectors.sort().forEach(inspector => {
                             const option = new Option(inspector, inspector);
-                            select.add(option);
+                            datalist.appendChild(option);
                         });
                     }
                 }
