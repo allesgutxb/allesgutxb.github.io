@@ -591,8 +591,8 @@
             }
             
             // 验证密码
-            const password = prompt('请输入修改密码 (admin)：');
-            if (password !== 'admin') {
+            const password = prompt('请输入修改密码：');
+            if (password !== '123') {
                 alert('密码错误，无法修改记录！');
                 return;
             }
@@ -687,7 +687,7 @@
         
         // 下载数据（带密码验证）
         function downloadDataWithPassword() {
-            const password = prompt('请输入下载密码 (admin)：');
+            const password = prompt('请输入下载密码：');
             if (password !== 'admin') {
                 alert('密码错误，无法下载数据！');
                 return;
