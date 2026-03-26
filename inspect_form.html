@@ -68,6 +68,13 @@
             </div>
             
             <div class="form-group">
+                <label>跟班老师</label>
+                <select id="follow_teacher">
+                    <option value="">请选择跟班老师</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
                 <label>教师到岗情况</label>
                 <select id="arrival_status" required>
                     <option value="">请选择</option>
@@ -101,8 +108,8 @@
             </div>
             
             <div class="form-group">
-                <label>发现问题</label>
-                <textarea id="problem" rows="3" placeholder="填写巡查中发现的问题"></textarea>
+                <label>查课记录</label>
+                <textarea id="problem" rows="3" placeholder="填写查课中发现的问题"></textarea>
             </div>
             
             <div class="form-group">
@@ -160,8 +167,11 @@
             
             document.getElementById('period').addEventListener('change', autoFillSchedule);
             
-            // 5. 加载检查人列表
-            await loadInspectors();
+            // 5. 加载检查人和跟班老师列表
+            await Promise.all([
+                loadInspectors(),
+                loadFollowTeachers()
+            ]);
             
             // 6. 绑定提交按钮
             document.getElementById('submitBtn').addEventListener('click', submitForm);
@@ -238,6 +248,60 @@
             }
         }
         
+        // 加载跟班老师
+        async function loadFollowTeachers() {
+            try {
+                if (!supabaseClient) {
+                    console.error("Supabase客户端未初始化");
+                    return;
+                }
+                
+                const { data, error } = await supabaseClient
+                    .from('teachers')
+                    .select('teacher_name')
+                    .order('teacher_name');
+                    
+                if (error) {
+                    console.error("加载跟班老师失败:", error);
+                    return;
+                }
+                
+                const select = document.getElementById('follow_teacher');
+                select.innerHTML = '<option value="">请选择跟班老师</option>';
+                
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        const option = document.createElement('option');
+                        option.value = row.teacher_name;
+                        option.textContent = row.teacher_name;
+                        select.appendChild(option);
+                    });
+                } else {
+                    // 如果teachers表没有数据，从inspections表获取已有的跟班老师
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                        .from('inspections')
+                        .select('follow_teacher')
+                        .not('follow_teacher', 'is', null)
+                        .order('follow_teacher');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        // 去重
+                        const uniqueTeachers = [...new Set(inspectionsData.map(item => item.follow_teacher))].sort();
+                        uniqueTeachers.forEach(teacher => {
+                            if (teacher) {
+                                const option = document.createElement('option');
+                                option.value = teacher;
+                                option.textContent = teacher;
+                                select.appendChild(option);
+                            }
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("加载跟班老师异常:", error);
+            }
+        }
+        
         // 自动填充课表
         async function autoFillSchedule() {
             const date = document.getElementById('inspection_date').value;
@@ -289,6 +353,7 @@
                 period: parseInt(document.getElementById('period').value) || 0,
                 subject: document.getElementById('subject').value.trim() || '',
                 teacher_name: document.getElementById('teacher_name').value.trim() || '',
+                follow_teacher: document.getElementById('follow_teacher').value.trim() || '',
                 inspector: document.getElementById('inspector').value.trim(),
                 arrival_status: document.getElementById('arrival_status').value.trim(),
                 arrival_time: document.getElementById('arrival_time_detail').value.trim() || '',
@@ -299,29 +364,16 @@
             };
             
             // 验证必填项
-            if (!formData.date) {
-                alert('请选择日期');
-                document.getElementById('inspection_date').focus();
-                return;
-            }
-            if (!formData.period || formData.period < 1 || formData.period > 8) {
-                alert('请选择正确的节次（1-8）');
-                document.getElementById('period').focus();
+            if (!formData.period) {
+                alert('请选择节次');
                 return;
             }
             if (!formData.inspector) {
                 alert('请选择检查人');
-                document.getElementById('inspector').focus();
                 return;
             }
             if (!formData.arrival_status) {
                 alert('请选择教师到岗情况');
-                document.getElementById('arrival_status').focus();
-                return;
-            }
-            if (!formData.class_name) {
-                alert('班级信息错误，请重新选择班级');
-                window.location.href = 'inspect.html';
                 return;
             }
             
@@ -329,7 +381,6 @@
             const allowedStatuses = ['按时到达', '迟到', '旷课', '其他', '正常', '异常'];
             if (!allowedStatuses.includes(formData.arrival_status)) {
                 alert('请选择有效的教师到岗情况');
-                document.getElementById('arrival_status').focus();
                 return;
             }
             
@@ -356,6 +407,7 @@
                 // 重置表单，保留班级和日期
                 document.getElementById('subject').value = '';
                 document.getElementById('teacher_name').value = '';
+                document.getElementById('follow_teacher').value = '';
                 document.getElementById('arrival_status').value = '';
                 document.getElementById('arrival_time_detail').value = '';
                 document.getElementById('student_status').value = '';

@@ -118,7 +118,7 @@
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 800px; /* 最小宽度确保表格不折行 */
+            min-width: 900px; /* 增加最小宽度，因为新增了列 */
         }
         th { 
             background: #f8f9fa; 
@@ -316,6 +316,13 @@
             </div>
             
             <div class="filter-group">
+                <label>跟班老师</label>
+                <select id="filter_follow_teacher">
+                    <option value="">全部</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
                 <label>科目</label>
                 <select id="filter_subject">
                     <option value="">全部科目</option>
@@ -363,6 +370,7 @@
                         <th>科目</th>
                         <th>老师</th>
                         <th>检查人</th>
+                        <th>跟班老师</th>
                         <th>到岗</th>
                         <th>学生状态</th>
                         <th>教室环境</th>
@@ -370,7 +378,7 @@
                     </tr>
                 </thead>
                 <tbody id="resultBody">
-                    <tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
+                    <tr><td colspan="12" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
                 </tbody>
             </table>
         </div>
@@ -425,6 +433,13 @@
                 </div>
                 
                 <div class="form-group">
+                    <label>跟班老师</label>
+                    <select id="edit_follow_teacher">
+                        <option value="">请选择跟班老师</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
                     <label>教师到岗情况</label>
                     <select id="edit_arrival_status" required>
                         <option value="">请选择</option>
@@ -451,7 +466,7 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>发现问题</label>
+                    <label>查课记录</label>
                     <textarea id="edit_problem" rows="3"></textarea>
                 </div>
                 
@@ -496,7 +511,9 @@
                 loadFilterClasses(),
                 loadFilterSubjects(),
                 loadFilterTeachers(),
-                loadFilterInspectors()
+                loadFilterFollowTeachers(),
+                loadFilterInspectors(),
+                loadFollowTeachersForEdit()
             ]);
             
             // 绑定编辑表单的日期变化事件
@@ -517,6 +534,26 @@
                 document.getElementById('edit_week_day').value = weekDay;
             } catch (error) {
                 console.error("计算星期失败:", error);
+            }
+        }
+        
+        // 加载编辑弹窗的跟班老师列表
+        async function loadFollowTeachersForEdit() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('teachers')
+                    .select('teacher_name')
+                    .order('teacher_name');
+                    
+                if (!error && data) {
+                    const select = document.getElementById('edit_follow_teacher');
+                    data.forEach(teacher => {
+                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
+                        select.add(option);
+                    });
+                }
+            } catch (error) {
+                console.error("加载编辑用跟班老师列表失败:", error);
             }
         }
         
@@ -579,6 +616,41 @@
             }
         }
         
+        async function loadFilterFollowTeachers() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('teachers')
+                    .select('teacher_name')
+                    .order('teacher_name');
+                    
+                if (!error && data) {
+                    const select = document.getElementById('filter_follow_teacher');
+                    data.forEach(teacher => {
+                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
+                        select.add(option);
+                    });
+                } else {
+                    // 如果teachers表没有数据，从inspections表获取已有的跟班老师
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                        .from('inspections')
+                        .select('follow_teacher')
+                        .not('follow_teacher', 'is', null)
+                        .order('follow_teacher');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        const uniqueTeachers = [...new Set(inspectionsData.map(item => item.follow_teacher).filter(i => i))];
+                        const select = document.getElementById('filter_follow_teacher');
+                        uniqueTeachers.sort().forEach(teacher => {
+                            const option = new Option(teacher, teacher);
+                            select.add(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error("加载跟班老师筛选失败:", error);
+            }
+        }
+        
         async function loadFilterInspectors() {
             try {
                 const { data, error } = await supabaseClient
@@ -628,13 +700,14 @@
                 class_name: document.getElementById('filter_class').value || null,
                 period: document.getElementById('filter_period').value || null,
                 teacher_name: document.getElementById('filter_teacher').value || null,
+                follow_teacher: document.getElementById('filter_follow_teacher').value || null,
                 subject: document.getElementById('filter_subject').value || null,
                 inspector: document.getElementById('filter_inspector').value || null,
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
             
             const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
                 let query = supabaseClient
@@ -662,7 +735,7 @@
                 
             } catch (error) {
                 console.error("查询失败:", error);
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
             }
         }
         
@@ -671,7 +744,7 @@
             const tbody = document.getElementById('resultBody');
             
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
                 return;
             }
             
@@ -699,6 +772,7 @@
                         <td>${record.subject || ''}</td>
                         <td>${record.teacher_name || ''}</td>
                         <td>${record.inspector || ''}</td>
+                        <td>${record.follow_teacher || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
                         <td title="${record.student_status || ''}" class="text-truncate">${studentStatusTruncated}</td>
                         <td title="${record.environment || ''}" class="text-truncate">${environmentTruncated}</td>
@@ -726,12 +800,13 @@
             detailText += `⏰ 节次：第${record.period}节\n`;
             detailText += `📚 科目：${record.subject}\n`;
             detailText += `👨‍🏫 任课老师：${record.teacher_name}\n`;
+            detailText += `🧑‍🏫 跟班老师：${record.follow_teacher || '无'}\n`;
             detailText += `👤 检查人：${record.inspector}\n`;
             detailText += `✅ 到岗情况：${record.arrival_status}\n`;
             if (record.arrival_time) detailText += `⏱️ 到岗时间：${record.arrival_time}\n`;
             if (record.student_status) detailText += `📖 学生状态：${record.student_status}\n`;
             if (record.environment) detailText += `🏫 教室环境：${record.environment}\n`;
-            if (record.problem) detailText += `⚠️ 发现问题：${record.problem}\n`;
+            if (record.problem) detailText += `📝 查课记录：${record.problem}\n`;
             if (record.suggestion) detailText += `💡 整改建议：${record.suggestion}\n`;
             
             alert(detailText);
@@ -759,6 +834,7 @@
             document.getElementById('edit_period').value = record.period || '';
             document.getElementById('edit_subject').value = record.subject || '';
             document.getElementById('edit_teacher_name').value = record.teacher_name || '';
+            document.getElementById('edit_follow_teacher').value = record.follow_teacher || '';
             document.getElementById('edit_arrival_status').value = record.arrival_status || '';
             document.getElementById('edit_arrival_time').value = record.arrival_time || '';
             document.getElementById('edit_student_status').value = record.student_status || '';
@@ -789,6 +865,7 @@
                 period: document.getElementById('edit_period').value,
                 subject: document.getElementById('edit_subject').value,
                 teacher_name: document.getElementById('edit_teacher_name').value,
+                follow_teacher: document.getElementById('edit_follow_teacher').value,
                 arrival_status: document.getElementById('edit_arrival_status').value,
                 arrival_time: document.getElementById('edit_arrival_time').value,
                 student_status: document.getElementById('edit_student_status').value,
@@ -871,12 +948,13 @@
             document.getElementById('filter_class').value = '';
             document.getElementById('filter_period').value = '';
             document.getElementById('filter_teacher').value = '';
+            document.getElementById('filter_follow_teacher').value = '';
             document.getElementById('filter_subject').value = '';
             document.getElementById('filter_inspector').value = '';
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
@@ -897,7 +975,7 @@
                 return;
             }
             
-            const headers = ['日期','星期','班级','节次','科目','任课老师','检查人','到岗情况','到岗时间','学生状态','教室环境','发现问题','整改建议'];
+            const headers = ['日期','星期','班级','节次','科目','任课老师','跟班老师','检查人','到岗情况','到岗时间','学生状态','教室环境','查课记录','整改建议'];
             const csvRows = [
                 headers.join(','),
                 ...allData.map(record => [
@@ -907,6 +985,7 @@
                     record.period,
                     `"${record.subject || ''}"`,
                     `"${record.teacher_name || ''}"`,
+                    `"${record.follow_teacher || ''}"`,
                     `"${record.inspector || ''}"`,
                     `"${record.arrival_status || ''}"`,
                     `"${record.arrival_time || ''}"`,
