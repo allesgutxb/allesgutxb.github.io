@@ -29,14 +29,74 @@
         .status-on-time { color: #4CAF50; font-weight: bold; }
         .status-late { color: #FF9800; font-weight: bold; }
         .status-absent { color: #f44336; font-weight: bold; }
-        .btn-detail { padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-detail { padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px; }
+        .btn-edit { padding: 6px 12px; background: #FF9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        .btn-edit:hover { background: #F57C00; }
         .back-btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 8px; }
+        
+        /* 修改表单弹窗样式 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .modal-form .form-group { margin-bottom: 15px; }
+        .modal-form label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        .modal-form input, .modal-form select, .modal-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .btn-save { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; }
+        .btn-cancel { background: #666; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; }
     </style>
 </head>
 <body>
     <div class="header">
         <h2>🔍 查询巡课记录</h2>
-        <p style="color: #666;">支持多条件筛选查询</p>
+        <p style="color: #666;">支持多条件筛选查询 | 检查人可以修改自己填写的记录</p>
     </div>
     
     <div class="filter-container">
@@ -121,7 +181,7 @@
         <div class="btn-group">
             <button class="btn btn-query" onclick="fetchData()">🔍 查询记录</button>
             <button class="btn btn-reset" onclick="resetFilters()">🔄 重置条件</button>
-            <button class="btn btn-download" onclick="downloadData()">📥 下载数据</button>
+            <button class="btn btn-download" onclick="downloadDataWithPassword()">📥 下载数据</button>
         </div>
     </div>
     
@@ -155,28 +215,112 @@
         <a href="index.html" class="back-btn">← 返回首页</a>
     </div>
 
+    <!-- 修改记录弹窗 -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">✏️ 修改巡查记录</div>
+                <button class="modal-close" onclick="closeEditModal()">×</button>
+            </div>
+            
+            <form id="editForm" class="modal-form">
+                <input type="hidden" id="edit_id">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>巡查日期</label>
+                        <input type="date" id="edit_date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>星期</label>
+                        <input type="text" id="edit_week_day" readonly style="background: #f5f5f5;">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>节次</label>
+                    <select id="edit_period" required>
+                        <option value="">请选择节次</option>
+                        <option value="1">第1节</option>
+                        <option value="2">第2节</option>
+                        <option value="3">第3节</option>
+                        <option value="4">第4节</option>
+                        <option value="5">第5节</option>
+                        <option value="6">第6节</option>
+                        <option value="7">第7节</option>
+                        <option value="8">第8节</option>
+                    </select>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>科目</label>
+                        <input type="text" id="edit_subject">
+                    </div>
+                    <div class="form-group">
+                        <label>任课老师</label>
+                        <input type="text" id="edit_teacher_name">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>教师到岗情况</label>
+                    <select id="edit_arrival_status" required>
+                        <option value="">请选择</option>
+                        <option value="按时到达">按时到达</option>
+                        <option value="迟到">迟到</option>
+                        <option value="旷课">旷课</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>到岗时间补充</label>
+                    <input type="text" id="edit_arrival_time" placeholder="若选'其他'，请填写具体时间">
+                </div>
+                
+                <div class="form-group">
+                    <label>学生课前状态</label>
+                    <textarea id="edit_student_status" rows="2"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>教室环境</label>
+                    <textarea id="edit_environment" rows="2"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>发现问题</label>
+                    <textarea id="edit_problem" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>整改建议</label>
+                    <textarea id="edit_suggestion" rows="3"></textarea>
+                </div>
+                
+                <div class="modal-buttons">
+                    <button type="button" class="btn-save" onclick="updateRecord()">💾 保存修改</button>
+                    <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
-        // 全局变量
-        let supabaseClient = null;
+        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        
         let allData = [];
         
-        // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', function() {
-            initPage();
-        });
-        
-        async function initPage() {
-            // 设置默认日期为最近7天
+        // 页面加载初始化
+        document.addEventListener('DOMContentLoaded', async function() {
             const endDate = new Date();
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - 7);
             document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
             document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
-            
-            // 初始化Supabase
-            const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-            const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             
             // 加载所有下拉框数据
             await Promise.all([
@@ -188,146 +332,99 @@
             
             // 默认执行一次查询
             await fetchData();
+            
+            // 绑定日期变化事件
+            document.getElementById('edit_date').addEventListener('change', function() {
+                calculateWeekDayForEdit(this.value);
+            });
+        });
+        
+        // 为编辑表单计算星期
+        function calculateWeekDayForEdit(dateString) {
+            try {
+                const dateObj = new Date(dateString);
+                const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                const weekDay = weekDays[dateObj.getDay()];
+                document.getElementById('edit_week_day').value = weekDay;
+            } catch (error) {
+                console.error("计算星期失败:", error);
+            }
         }
         
-        // 加载班级筛选列表
         async function loadFilterClasses() {
             try {
-                if (!supabaseClient) {
-                    console.error("Supabase客户端未初始化");
-                    return;
-                }
-                
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('classes')
                     .select('class_name')
                     .order('class_name');
                     
-                if (error) {
-                    console.error("加载班级筛选失败:", error);
-                    return;
-                }
-                
-                const select = document.getElementById('filter_class');
-                
-                if (data && data.length > 0) {
+                if (!error && data) {
+                    const select = document.getElementById('filter_class');
                     data.forEach(cls => {
                         const option = new Option(cls.class_name, cls.class_name);
                         select.add(option);
                     });
-                } else {
-                    // 如果classes表没有数据，从inspections表获取
-                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
-                        .from('inspections')
-                        .select('class_name')
-                        .not('class_name', 'is', null)
-                        .order('class_name');
-                        
-                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
-                        const uniqueClasses = [...new Set(inspectionsData.map(item => item.class_name).filter(c => c))];
-                        uniqueClasses.sort().forEach(className => {
-                            const option = new Option(className, className);
-                            select.add(option);
-                        });
-                    }
                 }
             } catch (error) {
-                console.error("加载班级筛选异常:", error);
+                console.error("加载班级筛选失败:", error);
             }
         }
         
-        // 加载科目筛选列表
         async function loadFilterSubjects() {
             try {
-                if (!supabaseClient) {
-                    console.error("Supabase客户端未初始化");
-                    return;
-                }
-                
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('inspections')
                     .select('subject')
                     .not('subject', 'is', null);
                     
-                if (error) {
-                    console.error("加载科目筛选失败:", error);
-                    return;
-                }
-                
-                const select = document.getElementById('filter_subject');
-                
-                if (data && data.length > 0) {
+                if (!error && data) {
                     const uniqueSubjects = [...new Set(data.map(item => item.subject).filter(s => s))];
+                    const select = document.getElementById('filter_subject');
                     uniqueSubjects.sort().forEach(subject => {
                         const option = new Option(subject, subject);
                         select.add(option);
                     });
                 }
             } catch (error) {
-                console.error("加载科目筛选异常:", error);
+                console.error("加载科目筛选失败:", error);
             }
         }
         
-        // 加载老师筛选列表
         async function loadFilterTeachers() {
             try {
-                if (!supabaseClient) {
-                    console.error("Supabase客户端未初始化");
-                    return;
-                }
-                
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('inspections')
                     .select('teacher_name')
                     .not('teacher_name', 'is', null);
                     
-                if (error) {
-                    console.error("加载老师筛选失败:", error);
-                    return;
-                }
-                
-                const select = document.getElementById('filter_teacher');
-                
-                if (data && data.length > 0) {
+                if (!error && data) {
                     const uniqueTeachers = [...new Set(data.map(item => item.teacher_name).filter(t => t))];
+                    const select = document.getElementById('filter_teacher');
                     uniqueTeachers.sort().forEach(teacher => {
                         const option = new Option(teacher, teacher);
                         select.add(option);
                     });
                 }
             } catch (error) {
-                console.error("加载老师筛选异常:", error);
+                console.error("加载老师筛选失败:", error);
             }
         }
         
-        // 加载检查人筛选列表
         async function loadFilterInspectors() {
             try {
-                if (!supabaseClient) {
-                    console.error("Supabase客户端未初始化");
-                    return;
-                }
-                
-                const { data, error } = await supabaseClient
+                const { data, error } = await supabase
                     .from('inspectors')
                     .select('inspector_name')
                     .order('inspector_name');
                     
-                if (error) {
-                    console.error("从inspectors表加载检查人筛选失败:", error);
-                    return;
-                }
-                
-                const select = document.getElementById('filter_inspector');
-                
-                if (data && data.length > 0) {
+                if (!error && data) {
+                    const select = document.getElementById('filter_inspector');
                     data.forEach(insp => {
                         const option = new Option(insp.inspector_name, insp.inspector_name);
                         select.add(option);
                     });
                 } else {
-                    // 如果inspectors表没有数据，从inspections表获取
-                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                    const { data: inspectionsData, error: inspectionsError } = await supabase
                         .from('inspections')
                         .select('inspector')
                         .not('inspector', 'is', null)
@@ -335,6 +432,7 @@
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
                         const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
+                        const select = document.getElementById('filter_inspector');
                         uniqueInspectors.sort().forEach(inspector => {
                             const option = new Option(inspector, inspector);
                             select.add(option);
@@ -342,17 +440,11 @@
                     }
                 }
             } catch (error) {
-                console.error("加载检查人筛选异常:", error);
+                console.error("加载检查人筛选失败:", error);
             }
         }
         
-        // 查询数据
         async function fetchData() {
-            if (!supabaseClient) {
-                alert('系统未初始化，请刷新页面重试');
-                return;
-            }
-            
             const startDate = document.getElementById('filter_date_start').value;
             const endDate = document.getElementById('filter_date_end').value;
             
@@ -370,7 +462,7 @@
             tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
-                let query = supabaseClient
+                let query = supabase
                     .from('inspections')
                     .select('*')
                     .order('date', { ascending: false })
@@ -399,7 +491,6 @@
             }
         }
         
-        // 渲染表格
         function renderTable(data) {
             const tbody = document.getElementById('resultBody');
             
@@ -426,14 +517,16 @@
                         <td>${record.teacher_name || ''}</td>
                         <td>${record.inspector || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
-                        <td><button class="btn-detail" onclick="viewDetail(${record.id})">详情</button></td>
+                        <td>
+                            <button class="btn-detail" onclick="viewDetail(${record.id})">详情</button>
+                            <button class="btn-edit" onclick="showEditModal(${record.id})">修改</button>
+                        </td>
                     </tr>
                 `;
             });
             tbody.innerHTML = html;
         }
         
-        // 查看详情
         function viewDetail(recordId) {
             const record = allData.find(r => r.id === recordId);
             if (!record) return;
@@ -455,7 +548,92 @@
             alert(detailText);
         }
         
-        // 重置筛选条件
+        // 显示修改模态框
+        function showEditModal(recordId) {
+            const record = allData.find(r => r.id === recordId);
+            if (!record) {
+                alert('未找到记录');
+                return;
+            }
+            
+            // 验证密码
+            const password = prompt('请输入修改密码 (admin)：');
+            if (password !== 'admin') {
+                alert('密码错误，无法修改记录！');
+                return;
+            }
+            
+            // 填充表单数据
+            document.getElementById('edit_id').value = record.id;
+            document.getElementById('edit_date').value = record.date || '';
+            document.getElementById('edit_week_day').value = record.week_day || '';
+            document.getElementById('edit_period').value = record.period || '';
+            document.getElementById('edit_subject').value = record.subject || '';
+            document.getElementById('edit_teacher_name').value = record.teacher_name || '';
+            document.getElementById('edit_arrival_status').value = record.arrival_status || '';
+            document.getElementById('edit_arrival_time').value = record.arrival_time || '';
+            document.getElementById('edit_student_status').value = record.student_status || '';
+            document.getElementById('edit_environment').value = record.environment || '';
+            document.getElementById('edit_problem').value = record.problem || '';
+            document.getElementById('edit_suggestion').value = record.suggestion || '';
+            
+            // 显示模态框
+            document.getElementById('editModal').style.display = 'flex';
+        }
+        
+        // 关闭修改模态框
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+        
+        // 更新记录
+        async function updateRecord() {
+            const recordId = document.getElementById('edit_id').value;
+            if (!recordId) {
+                alert('记录ID不存在');
+                return;
+            }
+            
+            const formData = {
+                date: document.getElementById('edit_date').value,
+                week_day: document.getElementById('edit_week_day').value,
+                period: document.getElementById('edit_period').value,
+                subject: document.getElementById('edit_subject').value,
+                teacher_name: document.getElementById('edit_teacher_name').value,
+                arrival_status: document.getElementById('edit_arrival_status').value,
+                arrival_time: document.getElementById('edit_arrival_time').value,
+                student_status: document.getElementById('edit_student_status').value,
+                environment: document.getElementById('edit_environment').value,
+                problem: document.getElementById('edit_problem').value,
+                suggestion: document.getElementById('edit_suggestion').value
+            };
+            
+            // 验证必填项
+            if (!formData.date || !formData.week_day || !formData.period || !formData.arrival_status) {
+                alert('请填写必填项：日期、星期、节次、到岗情况');
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('inspections')
+                    .update(formData)
+                    .eq('id', recordId);
+                    
+                if (error) throw error;
+                
+                alert('✅ 记录修改成功！');
+                closeEditModal();
+                
+                // 刷新数据
+                await fetchData();
+                
+            } catch (error) {
+                console.error("修改失败:", error);
+                alert(`修改失败: ${error.message}`);
+            }
+        }
+        
         function resetFilters() {
             document.getElementById('filter_date_start').value = '';
             document.getElementById('filter_date_end').value = '';
@@ -472,7 +650,17 @@
             document.getElementById('resultCount').textContent = '0';
         }
         
-        // 下载数据
+        // 下载数据（带密码验证）
+        function downloadDataWithPassword() {
+            const password = prompt('请输入下载密码 (admin)：');
+            if (password !== 'admin') {
+                alert('密码错误，无法下载数据！');
+                return;
+            }
+            downloadData();
+        }
+        
+        // 实际下载数据函数
         function downloadData() {
             if (allData.length === 0) {
                 alert('没有数据可下载');
