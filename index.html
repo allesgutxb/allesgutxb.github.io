@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>锦艺初中教务巡查系统</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -27,13 +27,8 @@
         }
         h1 {
             color: #333;
-            margin-bottom: 10px;
-            font-size: 24px;
-        }
-        .subtitle {
-            color: #666;
             margin-bottom: 40px;
-            font-size: 16px;
+            font-size: 24px;
         }
         .btn {
             display: block;
@@ -60,20 +55,23 @@
         .btn-secondary:hover {
             box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
         }
+        .icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>锦艺初中教务巡查系统</h1>
-        <p class="subtitle">教学督导管理系统</p>
         
         <a href="query.html" class="btn">
-            <div style="font-size: 20px;">🔍</div>
+            <div class="icon">🔍</div>
             查询巡课记录
         </a>
         
         <a href="login.html?redirect=inspect" class="btn btn-secondary">
-            <div style="font-size: 20px;">📝</div>
+            <div class="icon">📝</div>
             填写巡课记录
         </a>
     </div>

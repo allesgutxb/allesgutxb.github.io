@@ -2,48 +2,172 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>查询巡课记录</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; padding: 20px; }
-        .header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2 { color: #333; margin-bottom: 10px; }
-        .filter-container { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-        .filter-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px; }
-        input, select { width: 100%; padding: 10px 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.3s; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: #f5f7fa; 
+            padding: 10px;
+            padding-top: 60px; /* 为返回按钮留出空间 */
+        }
+        
+        /* 返回按钮在右上角 */
+        .top-header {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+        }
+        .back-btn {
+            padding: 8px 15px;
+            background: #666;
+            color: white;
+            text-decoration: none;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .header { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 { 
+            color: #333; 
+            margin-bottom: 5px; 
+            font-size: 18px;
+        }
+        .subtitle {
+            color: #666; 
+            font-size: 12px;
+        }
+        
+        .filter-container { 
+            background: white; 
+            padding: 15px; 
+            border-radius: 15px; 
+            margin-bottom: 15px; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* 移动端筛选条件单列布局 */
+        .filter-grid { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        .filter-group { 
+            margin-bottom: 10px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            color: #555; 
+            font-weight: 500; 
+            font-size: 13px; 
+        }
+        input, select { 
+            width: 100%; 
+            padding: 8px 10px; 
+            border: 2px solid #e0e0e0; 
+            border-radius: 8px; 
+            font-size: 13px; 
+        }
+        
+        /* 按钮组水平排列 */
+        .btn-group { 
+            display: flex; 
+            gap: 8px; 
+            margin-top: 15px; 
+        }
+        .btn { 
+            flex: 1; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: 500; 
+            cursor: pointer; 
+            transition: all 0.3s; 
+        }
         .btn-query { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .btn-reset { background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%); color: white; }
         .btn-download { background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .table-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #f8f9fa; padding: 15px; text-align: left; font-weight: 600; color: #333; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; }
-        td { padding: 12px 15px; border-bottom: 1px solid #f0f0f0; }
+        
+        .table-container { 
+            background: white; 
+            border-radius: 15px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        /* 表格响应式处理 */
+        .table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 800px; /* 最小宽度确保表格不折行 */
+        }
+        th { 
+            background: #f8f9fa; 
+            padding: 12px 8px; 
+            text-align: left; 
+            font-weight: 600; 
+            color: #333; 
+            border-bottom: 2px solid #e0e0e0; 
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        td { 
+            padding: 10px 8px; 
+            border-bottom: 1px solid #f0f0f0; 
+            font-size: 12px;
+        }
         tr:hover { background: #f9f9f9; }
+        
         .status-on-time { color: #4CAF50; font-weight: bold; }
         .status-late { color: #FF9800; font-weight: bold; }
         .status-absent { color: #f44336; font-weight: bold; }
-        .btn-detail { padding: 6px 12px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px; }
-        .btn-edit { padding: 6px 12px; background: #FF9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; margin-right: 5px; }
-        .btn-delete { padding: 6px 12px; background: #f44336; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
-        .btn-edit:hover { background: #F57C00; }
-        .btn-delete:hover { background: #d32f2f; }
-        .back-btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 8px; }
-        /* 新增：长文本截断样式 */
+        
+        /* 操作按钮调整为垂直排列 */
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .btn-action { 
+            padding: 5px 8px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 11px; 
+            width: 100%;
+        }
+        .btn-detail { background: #2196F3; color: white; }
+        .btn-edit { background: #FF9800; color: white; }
+        .btn-delete { background: #f44336; color: white; }
+        
+        /* 长文本截断样式 */
         .text-truncate { 
-            max-width: 150px; 
+            max-width: 100px; 
             white-space: nowrap; 
             overflow: hidden; 
             text-overflow: ellipsis; 
         }
         
-        /* 修改表单弹窗样式 */
+        /* 修改表单弹窗样式 - 移动端优化 */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -55,14 +179,14 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            padding: 10px;
         }
         .modal-content {
             background: white;
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
-            width: 90%;
-            max-width: 600px;
-            max-height: 80vh;
+            width: 100%;
+            max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
@@ -70,42 +194,72 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .modal-title {
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 600;
             color: #333;
         }
         .modal-close {
             background: none;
             border: none;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
             color: #666;
         }
-        .modal-form .form-group { margin-bottom: 15px; }
-        .modal-form label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; }
+        .modal-form .form-group { margin-bottom: 12px; }
+        .modal-form label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; font-size: 13px; }
         .modal-form input, .modal-form select, .modal-form textarea {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 14px;
+            font-size: 13px;
         }
         .modal-buttons {
             display: flex;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 8px;
+            margin-top: 15px;
         }
-        .btn-save { background: #4CAF50; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; }
-        .btn-cancel { background: #666; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; flex: 1; }
+        .btn-save { 
+            background: #4CAF50; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            flex: 1; 
+            font-size: 14px;
+        }
+        .btn-cancel { 
+            background: #666; 
+            color: white; 
+            padding: 10px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            flex: 1; 
+            font-size: 14px;
+        }
+        
+        /* 结果计数 */
+        .result-count {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
     </style>
 </head>
 <body>
+    <!-- 返回按钮在右上角 -->
+    <div class="top-header">
+        <a href="index.html" class="back-btn">← 返回</a>
+    </div>
+    
     <div class="header">
         <h2>🔍 查询巡课记录</h2>
-        <p style="color: #666;">支持多条件筛选查询 | 检查人可以修改/删除自己填写的记录</p>
+        <p class="subtitle">支持多条件筛选查询 | 检查人可以修改/删除自己填写的记录</p>
     </div>
     
     <div class="filter-container">
@@ -188,17 +342,17 @@
         </div>
         
         <div class="btn-group">
-            <button class="btn btn-query" onclick="fetchData()">🔍 查询记录</button>
-            <button class="btn btn-reset" onclick="resetFilters()">🔄 重置条件</button>
-            <button class="btn btn-download" onclick="downloadDataWithPassword()">📥 下载数据</button>
+            <button class="btn btn-query" onclick="fetchData()">查询</button>
+            <button class="btn btn-reset" onclick="resetFilters()">重置</button>
+            <button class="btn btn-download" onclick="downloadDataWithPassword()">下载</button>
         </div>
     </div>
     
     <div class="table-container">
-        <div style="padding: 15px; border-bottom: 1px solid #f0f0f0;">
-            <strong>查询结果：</strong> <span id="resultCount">0</span> 条记录
+        <div class="result-count">
+            查询结果：<span id="resultCount">0</span> 条记录
         </div>
-        <div style="max-height: 500px; overflow-y: auto;">
+        <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
@@ -207,23 +361,19 @@
                         <th>班级</th>
                         <th>节次</th>
                         <th>科目</th>
-                        <th>任课老师</th>
+                        <th>老师</th>
                         <th>检查人</th>
-                        <th>到岗情况</th>
+                        <th>到岗</th>
                         <th>学生状态</th>
                         <th>教室环境</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="resultBody">
-                    <tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>
+                    <tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
                 </tbody>
             </table>
         </div>
-    </div>
-    
-    <div style="text-align: center; margin-top: 20px;">
-        <a href="index.html" class="back-btn">← 返回首页</a>
     </div>
 
     <!-- 修改记录弹窗 -->
@@ -237,7 +387,7 @@
             <form id="editForm" class="modal-form">
                 <input type="hidden" id="edit_id">
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                     <div class="form-group">
                         <label>巡查日期</label>
                         <input type="date" id="edit_date" required>
@@ -263,7 +413,7 @@
                     </select>
                 </div>
                 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
                     <div class="form-group">
                         <label>科目</label>
                         <input type="text" id="edit_subject">
@@ -311,7 +461,7 @@
                 </div>
                 
                 <div class="modal-buttons">
-                    <button type="button" class="btn-save" onclick="updateRecord()">💾 保存修改</button>
+                    <button type="button" class="btn-save" onclick="updateRecord()">💾 保存</button>
                     <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
                 </div>
             </form>
@@ -535,10 +685,10 @@
                 
                 // 对长文本进行截断处理
                 const studentStatusTruncated = record.student_status ? 
-                    (record.student_status.length > 20 ? record.student_status.substring(0, 20) + '...' : record.student_status) : '';
+                    (record.student_status.length > 10 ? record.student_status.substring(0, 10) + '...' : record.student_status) : '';
                 
                 const environmentTruncated = record.environment ? 
-                    (record.environment.length > 20 ? record.environment.substring(0, 20) + '...' : record.environment) : '';
+                    (record.environment.length > 10 ? record.environment.substring(0, 10) + '...' : record.environment) : '';
                 
                 html += `
                     <tr>
@@ -553,9 +703,11 @@
                         <td title="${record.student_status || ''}" class="text-truncate">${studentStatusTruncated}</td>
                         <td title="${record.environment || ''}" class="text-truncate">${environmentTruncated}</td>
                         <td>
-                            <button class="btn-detail" onclick="viewDetail(${record.id})">详情</button>
-                            <button class="btn-edit" onclick="showEditModal(${record.id})">修改</button>
-                            <button class="btn-delete" onclick="deleteRecord(${record.id})">删除</button>
+                            <div class="action-buttons">
+                                <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
+                                <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
+                                <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -724,7 +876,7 @@
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
