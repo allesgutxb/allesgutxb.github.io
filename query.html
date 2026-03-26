@@ -33,6 +33,13 @@
         .btn-edit { padding: 6px 12px; background: #FF9800; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
         .btn-edit:hover { background: #F57C00; }
         .back-btn { display: inline-block; margin-top: 20px; padding: 10px 20px; background: #666; color: white; text-decoration: none; border-radius: 8px; }
+        /* 新增：长文本截断样式 */
+        .text-truncate { 
+            max-width: 150px; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+        }
         
         /* 修改表单弹窗样式 */
         .modal-overlay {
@@ -201,11 +208,13 @@
                         <th>任课老师</th>
                         <th>检查人</th>
                         <th>到岗情况</th>
+                        <th>学生状态</th>
+                        <th>教室环境</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="resultBody">
-                    <tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>
+                    <tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>
                 </tbody>
             </table>
         </div>
@@ -473,7 +482,7 @@
             };
             
             const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
                 let query = supabaseClient
@@ -501,7 +510,7 @@
                 
             } catch (error) {
                 console.error("查询失败:", error);
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
             }
         }
         
@@ -510,7 +519,7 @@
             const tbody = document.getElementById('resultBody');
             
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
                 return;
             }
             
@@ -522,6 +531,13 @@
                 if (record.arrival_status === '旷课') statusClass = 'status-absent';
                 if (record.arrival_status === '其他') statusClass = 'status-absent';
                 
+                // 对长文本进行截断处理
+                const studentStatusTruncated = record.student_status ? 
+                    (record.student_status.length > 20 ? record.student_status.substring(0, 20) + '...' : record.student_status) : '';
+                
+                const environmentTruncated = record.environment ? 
+                    (record.environment.length > 20 ? record.environment.substring(0, 20) + '...' : record.environment) : '';
+                
                 html += `
                     <tr>
                         <td>${record.date || ''}</td>
@@ -532,6 +548,8 @@
                         <td>${record.teacher_name || ''}</td>
                         <td>${record.inspector || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
+                        <td title="${record.student_status || ''}" class="text-truncate">${studentStatusTruncated}</td>
+                        <td title="${record.environment || ''}" class="text-truncate">${environmentTruncated}</td>
                         <td>
                             <button class="btn-detail" onclick="viewDetail(${record.id})">详情</button>
                             <button class="btn-edit" onclick="showEditModal(${record.id})">修改</button>
@@ -663,7 +681,7 @@
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="11" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
