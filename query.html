@@ -179,9 +179,9 @@
         </div>
         
         <div class="btn-group">
-            <button class="btn btn-query" onclick="fetchData()">🔍 查询记录</button>
-            <button class="btn btn-reset" onclick="resetFilters()">🔄 重置条件</button>
-            <button class="btn btn-download" onclick="downloadDataWithPassword()">📥 下载数据</button>
+            <button class="btn btn-query" onclick="doFetchData()">🔍 查询记录</button>
+            <button class="btn btn-reset" onclick="doResetFilters()">🔄 重置条件</button>
+            <button class="btn btn-download" onclick="doDownloadDataWithPassword()">📥 下载数据</button>
         </div>
     </div>
     
@@ -300,7 +300,7 @@
                 </div>
                 
                 <div class="modal-buttons">
-                    <button type="button" class="btn-save" onclick="updateRecord()">💾 保存修改</button>
+                    <button type="button" class="btn-save" onclick="doUpdateRecord()">💾 保存修改</button>
                     <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
                 </div>
             </form>
@@ -308,161 +308,240 @@
     </div>
 
     <script>
-        const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
-        const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
-        let allData = [];
-        
-        // 页面加载初始化
-        document.addEventListener('DOMContentLoaded', async function() {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - 7);
-            document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
-            document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+        // 全局变量
+        var app = {
+            supabaseClient: null,
+            allData: [],
             
-            // 加载所有下拉框数据
-            await Promise.all([
-                loadFilterClasses(),
-                loadFilterSubjects(),
-                loadFilterTeachers(),
-                loadFilterInspectors()
-            ]);
+            // 初始化页面
+            init: function() {
+                this.setupSupabase();
+                this.setupDefaultDates();
+                this.loadFilterData();
+                this.bindEvents();
+            },
             
-            // 默认执行一次查询
-            await fetchData();
+            // 设置Supabase连接
+            setupSupabase: function() {
+                var supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
+                var supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
+                this.supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+            },
             
-            // 绑定日期变化事件
-            document.getElementById('edit_date').addEventListener('change', function() {
-                calculateWeekDayForEdit(this.value);
-            });
-        });
-        
-        // 为编辑表单计算星期
-        function calculateWeekDayForEdit(dateString) {
-            try {
-                const dateObj = new Date(dateString);
-                const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-                const weekDay = weekDays[dateObj.getDay()];
-                document.getElementById('edit_week_day').value = weekDay;
-            } catch (error) {
-                console.error("计算星期失败:", error);
-            }
-        }
-        
-        async function loadFilterClasses() {
-            try {
-                const { data, error } = await supabase
+            // 设置默认日期
+            setupDefaultDates: function() {
+                var endDate = new Date();
+                var startDate = new Date();
+                startDate.setDate(startDate.getDate() - 7);
+                document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
+                document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+            },
+            
+            // 绑定事件
+            bindEvents: function() {
+                var self = this;
+                document.getElementById('edit_date').addEventListener('change', function() {
+                    self.calculateWeekDayForEdit(this.value);
+                });
+                
+                // 页面加载完成后自动查询
+                setTimeout(function() {
+                    self.doFetchData();
+                }, 500);
+            },
+            
+            // 为编辑表单计算星期
+            calculateWeekDayForEdit: function(dateString) {
+                try {
+                    var dateObj = new Date(dateString);
+                    var weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+                    var weekDay = weekDays[dateObj.getDay()];
+                    document.getElementById('edit_week_day').value = weekDay;
+                } catch (error) {
+                    console.error("计算星期失败:", error);
+                }
+            },
+            
+            // 加载筛选下拉列表数据
+            loadFilterData: function() {
+                var self = this;
+                
+                // 加载班级
+                this.loadFilterClasses();
+                
+                // 加载科目
+                this.loadFilterSubjects();
+                
+                // 加载老师
+                this.loadFilterTeachers();
+                
+                // 加载检查人
+                this.loadFilterInspectors();
+            },
+            
+            // 加载班级筛选列表
+            loadFilterClasses: function() {
+                var self = this;
+                if (!this.supabaseClient) {
+                    setTimeout(function() { self.loadFilterClasses(); }, 100);
+                    return;
+                }
+                
+                this.supabaseClient
                     .from('classes')
                     .select('class_name')
-                    .order('class_name');
-                    
-                if (!error && data) {
-                    const select = document.getElementById('filter_class');
-                    data.forEach(cls => {
-                        const option = new Option(cls.class_name, cls.class_name);
-                        select.add(option);
+                    .order('class_name')
+                    .then(function(response) {
+                        if (!response.error && response.data) {
+                            var select = document.getElementById('filter_class');
+                            response.data.forEach(function(cls) {
+                                var option = new Option(cls.class_name, cls.class_name);
+                                select.add(option);
+                            });
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error("加载班级筛选失败:", error);
                     });
+            },
+            
+            // 加载科目筛选列表
+            loadFilterSubjects: function() {
+                var self = this;
+                if (!this.supabaseClient) {
+                    setTimeout(function() { self.loadFilterSubjects(); }, 100);
+                    return;
                 }
-            } catch (error) {
-                console.error("加载班级筛选失败:", error);
-            }
-        }
-        
-        async function loadFilterSubjects() {
-            try {
-                const { data, error } = await supabase
+                
+                this.supabaseClient
                     .from('inspections')
                     .select('subject')
-                    .not('subject', 'is', null);
-                    
-                if (!error && data) {
-                    const uniqueSubjects = [...new Set(data.map(item => item.subject).filter(s => s))];
-                    const select = document.getElementById('filter_subject');
-                    uniqueSubjects.sort().forEach(subject => {
-                        const option = new Option(subject, subject);
-                        select.add(option);
+                    .not('subject', 'is', null)
+                    .then(function(response) {
+                        if (!response.error && response.data) {
+                            var uniqueSubjects = [...new Set(response.data.map(function(item) { 
+                                return item.subject; 
+                            }).filter(function(s) { 
+                                return s; 
+                            }))];
+                            
+                            var select = document.getElementById('filter_subject');
+                            uniqueSubjects.sort().forEach(function(subject) {
+                                var option = new Option(subject, subject);
+                                select.add(option);
+                            });
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error("加载科目筛选失败:", error);
                     });
+            },
+            
+            // 加载老师筛选列表
+            loadFilterTeachers: function() {
+                var self = this;
+                if (!this.supabaseClient) {
+                    setTimeout(function() { self.loadFilterTeachers(); }, 100);
+                    return;
                 }
-            } catch (error) {
-                console.error("加载科目筛选失败:", error);
-            }
-        }
-        
-        async function loadFilterTeachers() {
-            try {
-                const { data, error } = await supabase
+                
+                this.supabaseClient
                     .from('inspections')
                     .select('teacher_name')
-                    .not('teacher_name', 'is', null);
-                    
-                if (!error && data) {
-                    const uniqueTeachers = [...new Set(data.map(item => item.teacher_name).filter(t => t))];
-                    const select = document.getElementById('filter_teacher');
-                    uniqueTeachers.sort().forEach(teacher => {
-                        const option = new Option(teacher, teacher);
-                        select.add(option);
+                    .not('teacher_name', 'is', null)
+                    .then(function(response) {
+                        if (!response.error && response.data) {
+                            var uniqueTeachers = [...new Set(response.data.map(function(item) { 
+                                return item.teacher_name; 
+                            }).filter(function(t) { 
+                                return t; 
+                            }))];
+                            
+                            var select = document.getElementById('filter_teacher');
+                            uniqueTeachers.sort().forEach(function(teacher) {
+                                var option = new Option(teacher, teacher);
+                                select.add(option);
+                            });
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error("加载老师筛选失败:", error);
                     });
+            },
+            
+            // 加载检查人筛选列表
+            loadFilterInspectors: function() {
+                var self = this;
+                if (!this.supabaseClient) {
+                    setTimeout(function() { self.loadFilterInspectors(); }, 100);
+                    return;
                 }
-            } catch (error) {
-                console.error("加载老师筛选失败:", error);
-            }
-        }
-        
-        async function loadFilterInspectors() {
-            try {
-                const { data, error } = await supabase
+                
+                this.supabaseClient
                     .from('inspectors')
                     .select('inspector_name')
-                    .order('inspector_name');
-                    
-                if (!error && data) {
-                    const select = document.getElementById('filter_inspector');
-                    data.forEach(insp => {
-                        const option = new Option(insp.inspector_name, insp.inspector_name);
-                        select.add(option);
+                    .order('inspector_name')
+                    .then(function(response) {
+                        if (!response.error && response.data) {
+                            var select = document.getElementById('filter_inspector');
+                            response.data.forEach(function(insp) {
+                                var option = new Option(insp.inspector_name, insp.inspector_name);
+                                select.add(option);
+                            });
+                        } else {
+                            // 如果inspectors表没有数据，从inspections表获取
+                            self.supabaseClient
+                                .from('inspections')
+                                .select('inspector')
+                                .not('inspector', 'is', null)
+                                .order('inspector')
+                                .then(function(inspectionsResponse) {
+                                    if (!inspectionsResponse.error && inspectionsResponse.data && inspectionsResponse.data.length > 0) {
+                                        var uniqueInspectors = [...new Set(inspectionsResponse.data.map(function(item) { 
+                                            return item.inspector; 
+                                        }).filter(function(i) { 
+                                            return i; 
+                                        }))];
+                                        
+                                        var select = document.getElementById('filter_inspector');
+                                        uniqueInspectors.sort().forEach(function(inspector) {
+                                            var option = new Option(inspector, inspector);
+                                            select.add(option);
+                                        });
+                                    }
+                                });
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error("加载检查人筛选失败:", error);
                     });
-                } else {
-                    const { data: inspectionsData, error: inspectionsError } = await supabase
-                        .from('inspections')
-                        .select('inspector')
-                        .not('inspector', 'is', null)
-                        .order('inspector');
-                        
-                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
-                        const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
-                        const select = document.getElementById('filter_inspector');
-                        uniqueInspectors.sort().forEach(inspector => {
-                            const option = new Option(inspector, inspector);
-                            select.add(option);
-                        });
-                    }
+            },
+            
+            // 查询数据
+            doFetchData: function() {
+                var self = this;
+                if (!this.supabaseClient) {
+                    alert('系统正在初始化，请稍后再试');
+                    return;
                 }
-            } catch (error) {
-                console.error("加载检查人筛选失败:", error);
-            }
-        }
-        
-        async function fetchData() {
-            const startDate = document.getElementById('filter_date_start').value;
-            const endDate = document.getElementById('filter_date_end').value;
-            
-            const filters = {
-                week_day: document.getElementById('filter_weekday').value || null,
-                class_name: document.getElementById('filter_class').value || null,
-                period: document.getElementById('filter_period').value || null,
-                teacher_name: document.getElementById('filter_teacher').value || null,
-                subject: document.getElementById('filter_subject').value || null,
-                inspector: document.getElementById('filter_inspector').value || null,
-                arrival_status: document.getElementById('filter_arrival').value || null
-            };
-            
-            const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
-            
-            try {
-                let query = supabase
+                
+                var startDate = document.getElementById('filter_date_start').value;
+                var endDate = document.getElementById('filter_date_end').value;
+                
+                var filters = {
+                    week_day: document.getElementById('filter_weekday').value || null,
+                    class_name: document.getElementById('filter_class').value || null,
+                    period: document.getElementById('filter_period').value || null,
+                    teacher_name: document.getElementById('filter_teacher').value || null,
+                    subject: document.getElementById('filter_subject').value || null,
+                    inspector: document.getElementById('filter_inspector').value || null,
+                    arrival_status: document.getElementById('filter_arrival').value || null
+                };
+                
+                var tbody = document.getElementById('resultBody');
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+                
+                var query = this.supabaseClient
                     .from('inspections')
                     .select('*')
                     .order('date', { ascending: false })
@@ -471,228 +550,248 @@
                 if (startDate) query = query.gte('date', startDate);
                 if (endDate) query = query.lte('date', endDate);
                 
-                Object.keys(filters).forEach(key => {
+                Object.keys(filters).forEach(function(key) {
                     if (filters[key]) {
                         query = query.eq(key, filters[key]);
                     }
                 });
                 
-                const { data, error } = await query;
+                query.then(function(response) {
+                    if (response.error) {
+                        console.error("查询失败:", response.error);
+                        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ' + response.error.message + '</td></tr>';
+                        return;
+                    }
+                    
+                    self.allData = response.data || [];
+                    self.renderTable(self.allData);
+                    document.getElementById('resultCount').textContent = self.allData.length;
+                    
+                }).catch(function(error) {
+                    console.error("查询异常:", error);
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: #f44336;">查询异常: ' + error.message + '</td></tr>';
+                });
+            },
+            
+            // 渲染表格
+            renderTable: function(data) {
+                var tbody = document.getElementById('resultBody');
                 
-                if (error) throw error;
+                if (data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
+                    return;
+                }
                 
-                allData = data || [];
-                renderTable(allData);
-                document.getElementById('resultCount').textContent = allData.length;
+                var html = '';
+                var self = this;
                 
-            } catch (error) {
-                console.error("查询失败:", error);
-                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
-            }
-        }
-        
-        function renderTable(data) {
-            const tbody = document.getElementById('resultBody');
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
-                return;
-            }
-            
-            let html = '';
-            data.forEach(record => {
-                let statusClass = '';
-                if (record.arrival_status === '按时到达') statusClass = 'status-on-time';
-                if (record.arrival_status === '迟到') statusClass = 'status-late';
-                if (record.arrival_status === '旷课') statusClass = 'status-absent';
-                if (record.arrival_status === '其他') statusClass = 'status-absent';
+                data.forEach(function(record) {
+                    var statusClass = '';
+                    if (record.arrival_status === '按时到达') statusClass = 'status-on-time';
+                    if (record.arrival_status === '迟到') statusClass = 'status-late';
+                    if (record.arrival_status === '旷课' || record.arrival_status === '其他') statusClass = 'status-absent';
+                    
+                    html += `
+                        <tr>
+                            <td>${record.date || ''}</td>
+                            <td>${record.week_day || ''}</td>
+                            <td>${record.class_name || ''}</td>
+                            <td>${record.period ? '第' + record.period + '节' : ''}</td>
+                            <td>${record.subject || ''}</td>
+                            <td>${record.teacher_name || ''}</td>
+                            <td>${record.inspector || ''}</td>
+                            <td class="${statusClass}">${record.arrival_status || ''}</td>
+                            <td>
+                                <button class="btn-detail" onclick="app.viewDetail(${record.id})">详情</button>
+                                <button class="btn-edit" onclick="app.showEditModal(${record.id})">修改</button>
+                            </td>
+                        </tr>
+                    `;
+                });
                 
-                html += `
-                    <tr>
-                        <td>${record.date || ''}</td>
-                        <td>${record.week_day || ''}</td>
-                        <td>${record.class_name || ''}</td>
-                        <td>${record.period ? '第' + record.period + '节' : ''}</td>
-                        <td>${record.subject || ''}</td>
-                        <td>${record.teacher_name || ''}</td>
-                        <td>${record.inspector || ''}</td>
-                        <td class="${statusClass}">${record.arrival_status || ''}</td>
-                        <td>
-                            <button class="btn-detail" onclick="viewDetail(${record.id})">详情</button>
-                            <button class="btn-edit" onclick="showEditModal(${record.id})">修改</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-        }
-        
-        function viewDetail(recordId) {
-            const record = allData.find(r => r.id === recordId);
-            if (!record) return;
+                tbody.innerHTML = html;
+            },
             
-            let detailText = `📅 日期：${record.date}\n`;
-            detailText += `📅 星期：${record.week_day}\n`;
-            detailText += `🏫 班级：${record.class_name}\n`;
-            detailText += `⏰ 节次：第${record.period}节\n`;
-            detailText += `📚 科目：${record.subject}\n`;
-            detailText += `👨‍🏫 任课老师：${record.teacher_name}\n`;
-            detailText += `👤 检查人：${record.inspector}\n`;
-            detailText += `✅ 到岗情况：${record.arrival_status}\n`;
-            if (record.arrival_time) detailText += `⏱️ 到岗时间：${record.arrival_time}\n`;
-            if (record.student_status) detailText += `📖 学生状态：${record.student_status}\n`;
-            if (record.environment) detailText += `🏫 教室环境：${record.environment}\n`;
-            if (record.problem) detailText += `⚠️ 发现问题：${record.problem}\n`;
-            if (record.suggestion) detailText += `💡 整改建议：${record.suggestion}\n`;
+            // 查看详情
+            viewDetail: function(recordId) {
+                var record = this.allData.find(function(r) { return r.id === recordId; });
+                if (!record) return;
+                
+                var detailText = '📅 日期：' + (record.date || '') + '\n';
+                detailText += '📅 星期：' + (record.week_day || '') + '\n';
+                detailText += '🏫 班级：' + (record.class_name || '') + '\n';
+                detailText += '⏰ 节次：第' + (record.period || '') + '节\n';
+                detailText += '📚 科目：' + (record.subject || '') + '\n';
+                detailText += '👨‍🏫 任课老师：' + (record.teacher_name || '') + '\n';
+                detailText += '👤 检查人：' + (record.inspector || '') + '\n';
+                detailText += '✅ 到岗情况：' + (record.arrival_status || '') + '\n';
+                if (record.arrival_time) detailText += '⏱️ 到岗时间：' + record.arrival_time + '\n';
+                if (record.student_status) detailText += '📖 学生状态：' + record.student_status + '\n';
+                if (record.environment) detailText += '🏫 教室环境：' + record.environment + '\n';
+                if (record.problem) detailText += '⚠️ 发现问题：' + record.problem + '\n';
+                if (record.suggestion) detailText += '💡 整改建议：' + record.suggestion + '\n';
+                
+                alert(detailText);
+            },
             
-            alert(detailText);
-        }
-        
-        // 显示修改模态框
-        function showEditModal(recordId) {
-            const record = allData.find(r => r.id === recordId);
-            if (!record) {
-                alert('未找到记录');
-                return;
-            }
+            // 显示修改模态框
+            showEditModal: function(recordId) {
+                var record = this.allData.find(function(r) { return r.id === recordId; });
+                if (!record) {
+                    alert('未找到记录');
+                    return;
+                }
+                
+                // 验证密码
+                var password = prompt('请输入修改密码 (admin)：');
+                if (password !== 'admin') {
+                    alert('密码错误，无法修改记录！');
+                    return;
+                }
+                
+                // 填充表单数据
+                document.getElementById('edit_id').value = record.id;
+                document.getElementById('edit_date').value = record.date || '';
+                document.getElementById('edit_week_day').value = record.week_day || '';
+                document.getElementById('edit_period').value = record.period || '';
+                document.getElementById('edit_subject').value = record.subject || '';
+                document.getElementById('edit_teacher_name').value = record.teacher_name || '';
+                document.getElementById('edit_arrival_status').value = record.arrival_status || '';
+                document.getElementById('edit_arrival_time').value = record.arrival_time || '';
+                document.getElementById('edit_student_status').value = record.student_status || '';
+                document.getElementById('edit_environment').value = record.environment || '';
+                document.getElementById('edit_problem').value = record.problem || '';
+                document.getElementById('edit_suggestion').value = record.suggestion || '';
+                
+                // 显示模态框
+                document.getElementById('editModal').style.display = 'flex';
+            },
             
-            // 验证密码
-            const password = prompt('请输入修改密码 (admin)：');
-            if (password !== 'admin') {
-                alert('密码错误，无法修改记录！');
-                return;
-            }
+            // 关闭修改模态框
+            closeEditModal: function() {
+                document.getElementById('editModal').style.display = 'none';
+            },
             
-            // 填充表单数据
-            document.getElementById('edit_id').value = record.id;
-            document.getElementById('edit_date').value = record.date || '';
-            document.getElementById('edit_week_day').value = record.week_day || '';
-            document.getElementById('edit_period').value = record.period || '';
-            document.getElementById('edit_subject').value = record.subject || '';
-            document.getElementById('edit_teacher_name').value = record.teacher_name || '';
-            document.getElementById('edit_arrival_status').value = record.arrival_status || '';
-            document.getElementById('edit_arrival_time').value = record.arrival_time || '';
-            document.getElementById('edit_student_status').value = record.student_status || '';
-            document.getElementById('edit_environment').value = record.environment || '';
-            document.getElementById('edit_problem').value = record.problem || '';
-            document.getElementById('edit_suggestion').value = record.suggestion || '';
-            
-            // 显示模态框
-            document.getElementById('editModal').style.display = 'flex';
-        }
-        
-        // 关闭修改模态框
-        function closeEditModal() {
-            document.getElementById('editModal').style.display = 'none';
-        }
-        
-        // 更新记录
-        async function updateRecord() {
-            const recordId = document.getElementById('edit_id').value;
-            if (!recordId) {
-                alert('记录ID不存在');
-                return;
-            }
-            
-            const formData = {
-                date: document.getElementById('edit_date').value,
-                week_day: document.getElementById('edit_week_day').value,
-                period: document.getElementById('edit_period').value,
-                subject: document.getElementById('edit_subject').value,
-                teacher_name: document.getElementById('edit_teacher_name').value,
-                arrival_status: document.getElementById('edit_arrival_status').value,
-                arrival_time: document.getElementById('edit_arrival_time').value,
-                student_status: document.getElementById('edit_student_status').value,
-                environment: document.getElementById('edit_environment').value,
-                problem: document.getElementById('edit_problem').value,
-                suggestion: document.getElementById('edit_suggestion').value
-            };
-            
-            // 验证必填项
-            if (!formData.date || !formData.week_day || !formData.period || !formData.arrival_status) {
-                alert('请填写必填项：日期、星期、节次、到岗情况');
-                return;
-            }
-            
-            try {
-                const { error } = await supabase
+            // 更新记录
+            doUpdateRecord: function() {
+                var self = this;
+                var recordId = document.getElementById('edit_id').value;
+                if (!recordId) {
+                    alert('记录ID不存在');
+                    return;
+                }
+                
+                var formData = {
+                    date: document.getElementById('edit_date').value,
+                    week_day: document.getElementById('edit_week_day').value,
+                    period: document.getElementById('edit_period').value,
+                    subject: document.getElementById('edit_subject').value,
+                    teacher_name: document.getElementById('edit_teacher_name').value,
+                    arrival_status: document.getElementById('edit_arrival_status').value,
+                    arrival_time: document.getElementById('edit_arrival_time').value,
+                    student_status: document.getElementById('edit_student_status').value,
+                    environment: document.getElementById('edit_environment').value,
+                    problem: document.getElementById('edit_problem').value,
+                    suggestion: document.getElementById('edit_suggestion').value
+                };
+                
+                // 验证必填项
+                if (!formData.date || !formData.week_day || !formData.period || !formData.arrival_status) {
+                    alert('请填写必填项：日期、星期、节次、到岗情况');
+                    return;
+                }
+                
+                this.supabaseClient
                     .from('inspections')
                     .update(formData)
-                    .eq('id', recordId);
-                    
-                if (error) throw error;
-                
-                alert('✅ 记录修改成功！');
-                closeEditModal();
-                
-                // 刷新数据
-                await fetchData();
-                
-            } catch (error) {
-                console.error("修改失败:", error);
-                alert(`修改失败: ${error.message}`);
-            }
-        }
-        
-        function resetFilters() {
-            document.getElementById('filter_date_start').value = '';
-            document.getElementById('filter_date_end').value = '';
-            document.getElementById('filter_weekday').value = '';
-            document.getElementById('filter_class').value = '';
-            document.getElementById('filter_period').value = '';
-            document.getElementById('filter_teacher').value = '';
-            document.getElementById('filter_subject').value = '';
-            document.getElementById('filter_inspector').value = '';
-            document.getElementById('filter_arrival').value = '';
+                    .eq('id', recordId)
+                    .then(function(response) {
+                        if (response.error) {
+                            throw response.error;
+                        }
+                        
+                        alert('✅ 记录修改成功！');
+                        self.closeEditModal();
+                        
+                        // 刷新数据
+                        self.doFetchData();
+                        
+                    }).catch(function(error) {
+                        console.error("修改失败:", error);
+                        alert('修改失败: ' + error.message);
+                    });
+            },
             
-            allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
-            document.getElementById('resultCount').textContent = '0';
-        }
-        
-        // 下载数据（带密码验证）
-        function downloadDataWithPassword() {
-            const password = prompt('请输入下载密码 (admin)：');
-            if (password !== 'admin') {
-                alert('密码错误，无法下载数据！');
-                return;
+            // 重置筛选条件
+            doResetFilters: function() {
+                document.getElementById('filter_date_start').value = '';
+                document.getElementById('filter_date_end').value = '';
+                document.getElementById('filter_weekday').value = '';
+                document.getElementById('filter_class').value = '';
+                document.getElementById('filter_period').value = '';
+                document.getElementById('filter_teacher').value = '';
+                document.getElementById('filter_subject').value = '';
+                document.getElementById('filter_inspector').value = '';
+                document.getElementById('filter_arrival').value = '';
+                
+                this.allData = [];
+                document.getElementById('resultBody').innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 40px; color: #999;">点击"查询记录"按钮加载数据</td></tr>';
+                document.getElementById('resultCount').textContent = '0';
+            },
+            
+            // 下载数据（带密码验证）
+            doDownloadDataWithPassword: function() {
+                var password = prompt('请输入下载密码 (admin)：');
+                if (password !== 'admin') {
+                    alert('密码错误，无法下载数据！');
+                    return;
+                }
+                this.doDownloadData();
+            },
+            
+            // 实际下载数据函数
+            doDownloadData: function() {
+                if (this.allData.length === 0) {
+                    alert('没有数据可下载');
+                    return;
+                }
+                
+                var headers = ['日期','星期','班级','节次','科目','任课老师','检查人','到岗情况','到岗时间','学生状态','教室环境','发现问题','整改建议'];
+                var csvRows = [headers.join(',')];
+                
+                this.allData.forEach(function(record) {
+                    var row = [
+                        record.date,
+                        record.week_day,
+                        '"' + (record.class_name || '') + '"',
+                        record.period,
+                        '"' + (record.subject || '') + '"',
+                        '"' + (record.teacher_name || '') + '"',
+                        '"' + (record.inspector || '') + '"',
+                        '"' + (record.arrival_status || '') + '"',
+                        '"' + (record.arrival_time || '') + '"',
+                        '"' + ((record.student_status || '').replace(/"/g, '""')) + '"',
+                        '"' + ((record.environment || '').replace(/"/g, '""')) + '"',
+                        '"' + ((record.problem || '').replace(/"/g, '""')) + '"',
+                        '"' + ((record.suggestion || '').replace(/"/g, '""')) + '"'
+                    ];
+                    csvRows.push(row.join(','));
+                });
+                
+                var csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + csvRows.join('\n');
+                var link = document.createElement('a');
+                link.setAttribute('href', encodeURI(csvContent));
+                link.setAttribute('download', '巡课记录_' + new Date().toISOString().split('T')[0] + '.csv');
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
-            downloadData();
-        }
+        };
         
-        // 实际下载数据函数
-        function downloadData() {
-            if (allData.length === 0) {
-                alert('没有数据可下载');
-                return;
-            }
-            const headers = ['日期','星期','班级','节次','科目','任课老师','检查人','到岗情况','到岗时间','学生状态','教室环境','发现问题','整改建议'];
-            const csvRows = [
-                headers.join(','),
-                ...allData.map(record => [
-                    record.date,
-                    record.week_day,
-                    `"${record.class_name}"`,
-                    record.period,
-                    `"${record.subject || ''}"`,
-                    `"${record.teacher_name || ''}"`,
-                    `"${record.inspector || ''}"`,
-                    `"${record.arrival_status || ''}"`,
-                    `"${record.arrival_time || ''}"`,
-                    `"${(record.student_status || '').replace(/"/g, '""')}"`,
-                    `"${(record.environment || '').replace(/"/g, '""')}"`,
-                    `"${(record.problem || '').replace(/"/g, '""')}"`,
-                    `"${(record.suggestion || '').replace(/"/g, '""')}"`
-                ].join(','))
-            ];
-            const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + csvRows.join('\n');
-            const link = document.createElement('a');
-            link.setAttribute('href', encodeURI(csvContent));
-            link.setAttribute('download', `巡课记录_${new Date().toISOString().split('T')[0]}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+        // 页面加载完成后初始化应用
+        document.addEventListener('DOMContentLoaded', function() {
+            app.init();
+        });
     </script>
 </body>
 </html>
