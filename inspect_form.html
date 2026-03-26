@@ -136,11 +136,11 @@
                 return;
             }
             
-            // 解码班级参数（处理URL编码）
+            // 解码班级参数
             selectedClass = decodeURIComponent(classParam.replace(/\+/g, ' '));
             document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
             
-            // 2. 初始化Supabase（只初始化一次！）
+            // 2. 初始化Supabase
             const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
             const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
             supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
@@ -148,11 +148,12 @@
             // 3. 设置今天日期并计算星期
             const today = new Date();
             const formattedDate = today.toISOString().split('T')[0];
-            document.getElementById('inspection_date').value = formattedDate;
+            const dateInput = document.getElementById('inspection_date');
+            dateInput.value = formattedDate;
             calculateWeekDay(formattedDate);
             
             // 4. 绑定事件监听器
-            document.getElementById('inspection_date').addEventListener('change', function() {
+            dateInput.addEventListener('change', function() {
                 calculateWeekDay(this.value);
                 autoFillSchedule();
             });
@@ -211,6 +212,26 @@
                         option.textContent = row.inspector_name;
                         select.appendChild(option);
                     });
+                } else {
+                    // 如果inspectors表没有数据，从inspections表获取
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                        .from('inspections')
+                        .select('inspector')
+                        .not('inspector', 'is', null)
+                        .order('inspector');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        // 去重
+                        const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector))].sort();
+                        uniqueInspectors.forEach(inspector => {
+                            if (inspector) {
+                                const option = document.createElement('option');
+                                option.value = inspector;
+                                option.textContent = inspector;
+                                select.appendChild(option);
+                            }
+                        });
+                    }
                 }
             } catch (error) {
                 console.error("加载检查人异常:", error);
@@ -262,34 +283,57 @@
             }
             
             const formData = {
-                date: document.getElementById('inspection_date').value,
-                week_day: document.getElementById('week_day').value,
+                date: document.getElementById('inspection_date').value.trim(),
+                week_day: document.getElementById('week_day').value.trim(),
                 class_name: selectedClass,
-                period: document.getElementById('period').value,
-                subject: document.getElementById('subject').value,
-                teacher_name: document.getElementById('teacher_name').value,
-                inspector: document.getElementById('inspector').value,
-                arrival_status: document.getElementById('arrival_status').value,
-                arrival_time: document.getElementById('arrival_time_detail').value,
-                student_status: document.getElementById('student_status').value,
-                environment: document.getElementById('environment').value,
-                problem: document.getElementById('problem').value,
-                suggestion: document.getElementById('suggestion').value
+                period: parseInt(document.getElementById('period').value) || 0,
+                subject: document.getElementById('subject').value.trim() || '',
+                teacher_name: document.getElementById('teacher_name').value.trim() || '',
+                inspector: document.getElementById('inspector').value.trim(),
+                arrival_status: document.getElementById('arrival_status').value.trim(),
+                arrival_time: document.getElementById('arrival_time_detail').value.trim() || '',
+                student_status: document.getElementById('student_status').value.trim() || '',
+                environment: document.getElementById('environment').value.trim() || '',
+                problem: document.getElementById('problem').value.trim() || '',
+                suggestion: document.getElementById('suggestion').value.trim() || ''
             };
             
             // 验证必填项
-            if (!formData.period) {
-                alert('请选择节次');
+            if (!formData.date) {
+                alert('请选择日期');
+                document.getElementById('inspection_date').focus();
+                return;
+            }
+            if (!formData.period || formData.period < 1 || formData.period > 8) {
+                alert('请选择正确的节次（1-8）');
+                document.getElementById('period').focus();
                 return;
             }
             if (!formData.inspector) {
                 alert('请选择检查人');
+                document.getElementById('inspector').focus();
                 return;
             }
             if (!formData.arrival_status) {
                 alert('请选择教师到岗情况');
+                document.getElementById('arrival_status').focus();
                 return;
             }
+            if (!formData.class_name) {
+                alert('班级信息错误，请重新选择班级');
+                window.location.href = 'inspect.html';
+                return;
+            }
+            
+            // 验证arrival_status的值符合数据库约束
+            const allowedStatuses = ['按时到达', '迟到', '旷课', '其他', '正常', '异常'];
+            if (!allowedStatuses.includes(formData.arrival_status)) {
+                alert('请选择有效的教师到岗情况');
+                document.getElementById('arrival_status').focus();
+                return;
+            }
+            
+            console.log('准备提交的数据:', formData);
             
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.textContent;
@@ -302,11 +346,14 @@
                     .insert([formData])
                     .select();
                     
-                if (error) throw error;
+                if (error) {
+                    console.error('数据库返回错误:', error);
+                    throw error;
+                }
                 
                 alert('✅ 巡查记录提交成功！');
                 
-                // 重置部分表单
+                // 重置表单，保留班级和日期
                 document.getElementById('subject').value = '';
                 document.getElementById('teacher_name').value = '';
                 document.getElementById('arrival_status').value = '';
@@ -316,10 +363,22 @@
                 document.getElementById('inspector').value = '';
                 document.getElementById('problem').value = '';
                 document.getElementById('suggestion').value = '';
+                document.getElementById('period').selectedIndex = 0;
                 
             } catch (error) {
-                console.error("提交失败:", error);
-                alert(`提交失败: ${error.message}`);
+                console.error("提交失败详情:", error);
+                
+                if (error.code === '23514') {
+                    alert(`❌ 提交失败：数据不符合数据库约束\n\n错误代码: 23514\n错误: ${error.message}\n\n请确保：\n1. 教师到岗情况必须为：按时到达、迟到、旷课、其他、正常、异常\n2. 所有必填字段已填写`);
+                } else if (error.code === '23502') {
+                    alert(`❌ 提交失败：缺少必填字段\n\n错误: ${error.message}\n\n请确保所有必填字段都已填写`);
+                } else if (error.code === '23505') {
+                    alert(`❌ 提交失败：记录已存在\n\n错误: ${error.message}`);
+                } else if (error.code === '23503') {
+                    alert(`❌ 提交失败：外键约束错误\n\n错误: ${error.message}`);
+                } else {
+                    alert(`❌ 提交失败: ${error.message}\n错误代码: ${error.code || '未知'}`);
+                }
             } finally {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;

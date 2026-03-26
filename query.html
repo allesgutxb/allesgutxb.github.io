@@ -113,6 +113,7 @@
                     <option value="按时到达">按时到达</option>
                     <option value="迟到">迟到</option>
                     <option value="旷课">旷课</option>
+                    <option value="其他">其他</option>
                 </select>
             </div>
         </div>
@@ -253,6 +254,22 @@
                         const option = new Option(insp.inspector_name, insp.inspector_name);
                         select.add(option);
                     });
+                } else {
+                    // 如果inspectors表没有数据，从inspections表获取
+                    const { data: inspectionsData, error: inspectionsError } = await supabase
+                        .from('inspections')
+                        .select('inspector')
+                        .not('inspector', 'is', null)
+                        .order('inspector');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
+                        const select = document.getElementById('filter_inspector');
+                        uniqueInspectors.sort().forEach(inspector => {
+                            const option = new Option(inspector, inspector);
+                            select.add(option);
+                        });
+                    }
                 }
             } catch (error) {
                 console.error("加载检查人筛选失败:", error);
@@ -320,6 +337,7 @@
                 if (record.arrival_status === '按时到达') statusClass = 'status-on-time';
                 if (record.arrival_status === '迟到') statusClass = 'status-late';
                 if (record.arrival_status === '旷课') statusClass = 'status-absent';
+                if (record.arrival_status === '其他') statusClass = 'status-absent';
                 
                 html += `
                     <tr>
