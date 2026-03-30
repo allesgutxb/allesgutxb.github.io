@@ -121,7 +121,7 @@
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 1000px; /* 增加最小宽度，因为新增了列 */
+            /* 移除固定的最小宽度，让表格自适应 */
         }
         th { 
             background: #f8f9fa; 
@@ -164,7 +164,7 @@
         .btn-edit { background: #FF9800; color: white; }
         .btn-delete { background: #f44336; color: white; }
         
-        /* 长文本换行显示，而不是截断 */
+        /* 长文本换行显示，而不是截断 - 针对所有设备 */
         .text-wrap { 
             max-width: 120px; /* 设置最大宽度 */
             white-space: normal; /* 允许换行 */
@@ -285,9 +285,34 @@
                 grid-template-columns: 1fr;
             }
             
+            /* 在手机上设置表格列的最小宽度，避免过度压缩 */
+            table {
+                min-width: 100%; /* 表格宽度为100%，不再有最小宽度限制 */
+            }
+            
+            /* 在手机上，设置表格单元格的最小宽度，但允许压缩 */
+            th, td {
+                min-width: 60px; /* 设置最小宽度，但允许更小 */
+            }
+            
+            /* 特定列设置不同的最小宽度 */
+            th:nth-child(1), td:nth-child(1) { min-width: 80px; } /* 日期列 */
+            th:nth-child(3), td:nth-child(3) { min-width: 70px; } /* 班级列 */
+            th:nth-child(9), td:nth-child(9) { min-width: 60px; } /* 到岗列 */
+            
+            /* 文本列的最小宽度 */
+            th:nth-child(10), td:nth-child(10) { min-width: 80px; } /* 学生状态 */
+            th:nth-child(11), td:nth-child(11) { min-width: 80px; } /* 教室环境 */
+            th:nth-child(12), td:nth-child(12) { min-width: 100px; } /* 查课记录 */
+            
+            /* 操作列的最小宽度 */
+            th:nth-child(13), td:nth-child(13) { min-width: 70px; }
+            
             .text-wrap {
-                max-width: 80px; /* 移动端更小宽度 */
+                max-width: 100%; /* 移动端使用100%宽度 */
                 font-size: 11px; /* 移动端更小字体 */
+                -webkit-line-clamp: 3; /* 移动端显示3行 */
+                max-height: 4.2em; /* 3行高度 (1.4 * 3) */
             }
             
             .action-buttons {
@@ -297,6 +322,24 @@
             .btn-action {
                 padding: 3px 5px;
                 font-size: 9px;
+            }
+        }
+        
+        /* 超小屏幕手机适配 */
+        @media (max-width: 480px) {
+            .text-wrap {
+                -webkit-line-clamp: 2; /* 超小屏幕显示2行 */
+                max-height: 2.8em; /* 2行高度 */
+            }
+            
+            /* 进一步减少内边距 */
+            td {
+                padding: 6px 4px;
+            }
+            
+            th {
+                padding: 8px 4px;
+                font-size: 11px;
             }
         }
     </style>
