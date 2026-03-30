@@ -2,434 +2,257 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>填写巡查记录</title>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
-            background: #f5f7fa; 
-            padding: 20px; 
-            padding-top: 60px;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; padding: 20px; }
+        .header { background: white; padding: 20px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        h2 { color: #333; margin-bottom: 10px; }
+        .current-class { background: #667eea; color: white; padding: 8px 15px; border-radius: 20px; display: inline-block; font-weight: bold; margin-bottom: 15px; }
+        .form-container { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: #555; font-weight: 500; }
+        input, select, textarea { width: 100%; padding: 12px 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 16px; transition: border-color 0.3s; }
+        input:focus, select:focus, textarea:focus { outline: none; border-color: #667eea; }
+        .form-row { display: flex; gap: 15px; }
+        .form-row .form-group { flex: 1; }
+        .btn-submit { width: 100%; padding: 18px; background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%); color: white; border: none; border-radius: 12px; font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.2s; }
+        .btn-submit:hover { transform: translateY(-2px); }
+        .btn-back { width: 100%; padding: 15px; background: #666; color: white; border: none; border-radius: 12px; font-size: 16px; margin-top: 10px; cursor: pointer; }
         
-        .top-header {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
+        /* 搜索下拉框样式 */
+        .searchable-input {
+            position: relative;
         }
-        .back-btn {
-            padding: 8px 15px;
-            background: #666;
-            color: white;
-            text-decoration: none;
-            border-radius: 20px;
-            font-size: 14px;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
+        .searchable-input input {
+            width: 100%;
+            padding-right: 40px;
         }
-        
-        .header { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 15px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        h2 { 
-            color: #333; 
-            margin-bottom: 5px; 
-            font-size: 20px;
-        }
-        .subtitle {
-            color: #666; 
-            font-size: 13px;
-        }
-        
-        .form-container { 
-            background: white; 
-            padding: 20px; 
-            border-radius: 15px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .form-grid { 
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px 20px;
-        }
-        .form-group { margin-bottom: 0; }
-        .form-group.full-width { grid-column: 1 / -1; }
-        .form-group.wide { grid-column: 1 / -1; }
-        label { 
-            display: block; 
-            margin-bottom: 8px; 
-            color: #555; 
-            font-weight: 500; 
-            font-size: 13px; 
-        }
-        .required::after { 
-            content: " *"; 
-            color: #f44336; 
-        }
-        input, select, textarea { 
-            width: 100%; 
-            padding: 12px 15px; 
-            border: 2px solid #e0e0e0; 
-            border-radius: 10px; 
-            font-size: 14px; 
-            transition: all 0.3s; 
-        }
-        input:focus, select:focus, textarea:focus { 
-            outline: none; 
-            border-color: #667eea; 
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); 
-        }
-        textarea { 
-            min-height: 100px; 
-            resize: vertical; 
-            font-family: inherit; 
-        }
-        
-        .submit-btn { 
-            width: 100%; 
-            padding: 18px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
-            color: white; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 18px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: all 0.3s; 
-            margin-top: 20px; 
-        }
-        .submit-btn:hover { 
-            transform: translateY(-2px); 
-            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); 
-        }
-        .submit-btn:disabled { 
-            opacity: 0.6; 
-            cursor: not-allowed; 
-            transform: none !important; 
-        }
-        
-        /* 时间容器样式 */
-        .time-container { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-        }
-        
-        /* 自动填充样式 */
-        .auto-fill-hint {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .auto-fill-hint.success { color: #4CAF50; }
-        .auto-fill-hint.error { color: #f44336; }
-        
-        /* 调试按钮 */
-        .debug-btn {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            padding: 10px 15px;
-            background: #666;
-            color: white;
-            border: none;
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            z-index: 1000;
-            opacity: 0.5;
-        }
-        .debug-btn:hover { opacity: 1; }
-        
-        /* 响应式设计 */
-        @media (max-width: 768px) {
-            .form-grid { grid-template-columns: 1fr; }
-        }
-        
-        /* 日期选择器样式 */
-        input[type="date"] {
-            appearance: none;
-            -webkit-appearance: none;
-        }
-        
-        /* 数据列表样式 */
-        datalist {
+        .search-icon {
             position: absolute;
-            background: white;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+            pointer-events: none;
         }
         
-        /* 成功提示 */
-        .success-message {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
+        /* 状态提示样式 */
+        .status-message {
+            padding: 10px 15px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            z-index: 2000;
-            animation: slideIn 0.3s ease-out;
+            margin: 10px 0;
+            font-size: 14px;
+            display: none;
         }
-        
-        @keyframes slideIn {
-            from { transform: translate(-50%, -100%); opacity: 0; }
-            to { transform: translate(-50%, 0); opacity: 1; }
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
         }
     </style>
 </head>
 <body>
-    <div class="top-header">
-        <a href="index.html" class="back-btn">← 返回首页</a>
-    </div>
-    
     <div class="header">
-        <h2>📝 填写巡查记录</h2>
-        <p class="subtitle">选择班级、日期和节次后，系统将自动填充课表信息</p>
+        <h2>📋 填写巡查记录</h2>
+        <div class="current-class" id="classDisplay">班级：</div>
     </div>
     
     <div class="form-container">
         <form id="inspectionForm">
-            <div class="form-grid">
+            <div id="autoFillStatus" class="status-message"></div>
+            
+            <div class="form-group">
+                <label>巡查日期</label>
+                <input type="date" id="inspection_date" required>
+            </div>
+            
+            <div class="form-group">
+                <label>星期</label>
+                <input type="text" id="week_day" readonly style="background: #f5f5f5;">
+            </div>
+            
+            <div class="form-group">
+                <label>节次</label>
+                <select id="period" required>
+                    <option value="">请选择节次</option>
+                    <option value="1">第1节</option>
+                    <option value="2">第2节</option>
+                    <option value="3">第3节</option>
+                    <option value="4">第4节</option>
+                    <option value="5">第5节</option>
+                    <option value="6">第6节</option>
+                    <option value="7">第7节</option>
+                    <option value="8">第8节</option>
+                </select>
+            </div>
+            
+            <div class="form-row">
                 <div class="form-group">
-                    <label for="inspection_date" class="required">巡查日期</label>
-                    <input type="date" id="inspection_date" required>
+                    <label>科目</label>
+                    <input type="text" id="subject" placeholder="自动获取，可修改">
                 </div>
-                
                 <div class="form-group">
-                    <label for="week_day" class="required">星期</label>
-                    <input type="text" id="week_day" readonly style="background: #f5f5f5;">
-                </div>
-                
-                <div class="form-group">
-                    <label for="class_name" class="required">班级</label>
-                    <select id="class_name" required>
-                        <option value="">请选择班级</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="period" class="required">节次</label>
-                    <select id="period" required>
-                        <option value="">请选择节次</option>
-                        <option value="1">第1节</option>
-                        <option value="2">第2节</option>
-                        <option value="3">第3节</option>
-                        <option value="4">第4节</option>
-                        <option value="5">第5节</option>
-                        <option value="6">第6节</option>
-                        <option value="7">第7节</option>
-                        <option value="8">第8节</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="subject">科目</label>
-                    <input type="text" id="subject" list="subject_list" placeholder="选择班级、日期和节次后自动填充">
-                    <datalist id="subject_list"></datalist>
-                </div>
-                
-                <div class="form-group">
-                    <label for="teacher_name">任课老师</label>
-                    <input type="text" id="teacher_name" list="teacher_name_list" placeholder="选择班级、日期和节次后自动填充">
-                    <datalist id="teacher_name_list"></datalist>
-                </div>
-                
-                <div class="form-group">
-                    <label for="follow_teacher">跟班老师</label>
-                    <input type="text" id="follow_teacher" list="follow_teacher_list" placeholder="输入或选择跟班老师">
-                    <datalist id="follow_teacher_list"></datalist>
-                </div>
-                
-                <div class="form-group">
-                    <label for="inspector" class="required">检查人</label>
-                    <select id="inspector" required>
-                        <option value="">请选择检查人</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="arrival_status" class="required">教师到岗情况</label>
-                    <select id="arrival_status" required>
-                        <option value="">请选择到岗情况</option>
-                        <option value="按时到达">按时到达</option>
-                        <option value="迟到">迟到</option>
-                        <option value="旷课">旷课</option>
-                        <option value="其他">其他</option>
-                        <option value="正常">正常</option>
-                        <option value="异常">异常</option>
-                    </select>
-                </div>
-                
-                <div class="form-group">
-                    <label for="arrival_time_detail">到岗时间补充</label>
-                    <input type="text" id="arrival_time_detail" placeholder="若选'其他'，请填写具体时间">
-                </div>
-                
-                <div class="form-group wide">
-                    <label for="student_status">学生课前状态</label>
-                    <textarea id="student_status" placeholder="例如：学生精神状态、纪律情况等"></textarea>
-                </div>
-                
-                <div class="form-group wide">
-                    <label for="environment">教室环境</label>
-                    <textarea id="environment" placeholder="例如：教室卫生、桌椅摆放、多媒体设备等"></textarea>
-                </div>
-                
-                <div class="form-group wide">
-                    <label for="problem">查课记录</label>
-                    <textarea id="problem" placeholder="记录巡查中发现的具体问题"></textarea>
-                </div>
-                
-                <div class="form-group wide">
-                    <label for="suggestion">整改建议</label>
-                    <textarea id="suggestion" placeholder="针对问题的改进建议"></textarea>
+                    <label>任课老师</label>
+                    <input type="text" id="teacher_name" placeholder="自动获取，可修改" list="teacher_name_list">
+                    <datalist id="teacher_name_list">
+                        <!-- 任课老师选项将通过JavaScript动态加载 -->
+                    </datalist>
                 </div>
             </div>
             
-            <div id="autoFillStatus"></div>
+            <div class="form-group searchable-input">
+                <label>跟班老师</label>
+                <input type="text" id="follow_teacher" list="follow_teacher_list" placeholder="输入名字搜索或选择">
+                <datalist id="follow_teacher_list">
+                    <!-- 跟班老师选项将通过JavaScript动态加载 -->
+                </datalist>
+                <div class="search-icon">🔍</div>
+            </div>
             
-            <button type="button" class="submit-btn" id="submitBtn" onclick="submitForm()">提交记录</button>
+            <div class="form-group">
+                <label>教师到岗情况</label>
+                <select id="arrival_status" required>
+                    <option value="">请选择</option>
+                    <option value="按时到达">✅ 按时到达</option>
+                    <option value="迟到">⏰ 迟到</option>
+                    <option value="旷课">❌ 旷课</option>
+                    <option value="其他">🔍 其他（需填写具体时间）</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label>到岗时间补充</label>
+                <input type="text" id="arrival_time_detail" placeholder="若选'其他'，请填写具体时间">
+            </div>
+            
+            <div class="form-group">
+                <label>学生课前状态</label>
+                <textarea id="student_status" rows="2" placeholder="如：课前准备充分，秩序良好"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>教室环境</label>
+                <textarea id="environment" rows="2" placeholder="如：卫生整洁，设备正常"></textarea>
+            </div>
+            
+            <div class="form-group searchable-input">
+                <label>检查人</label>
+                <input type="text" id="inspector" list="inspector_list" placeholder="输入名字搜索或选择" required>
+                <datalist id="inspector_list">
+                    <!-- 检查人选项将通过JavaScript动态加载 -->
+                </datalist>
+                <div class="search-icon">🔍</div>
+            </div>
+            
+            <div class="form-group">
+                <label>查课记录</label>
+                <textarea id="problem" rows="3" placeholder="填写查课中发现的问题"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>整改建议</label>
+                <textarea id="suggestion" rows="3" placeholder="针对问题的建议"></textarea>
+            </div>
+            
+            <button type="button" class="btn-submit" id="submitBtn">📤 提交记录</button>
+            <button type="button" class="btn-back" onclick="window.location.href='inspect.html'">← 返回班级选择</button>
         </form>
     </div>
-    
-    <button class="debug-btn" onclick="runDebug()">调试</button>
 
     <script>
+        // 全局变量
+        let selectedClass = '';
         let supabaseClient = null;
-        let selectedClass = null;
         
+        // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
-            console.log("页面加载完成，正在初始化...");
             initPage();
         });
         
         async function initPage() {
-            console.log("初始化页面...");
+            console.log("页面初始化开始...");
             
-            // 设置默认日期为今天
-            const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
-            document.getElementById('inspection_date').value = todayStr;
-            calculateWeekDay(todayStr);
+            // 1. 获取班级参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const classParam = urlParams.get('class') || urlParams.get('cl') || localStorage.getItem('currentInspectClass');
             
-            // 1. 初始化Supabase客户端
+            if (!classParam) {
+                alert('请先选择班级');
+                window.location.href = 'inspect.html';
+                return;
+            }
+            
+            // 解码班级参数
+            selectedClass = decodeURIComponent(classParam.replace(/\+/g, ' '));
+            document.getElementById('classDisplay').textContent = `班级：${selectedClass}`;
+            console.log("当前班级:", selectedClass);
+            
+            // 2. 初始化Supabase
             const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
             const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
             supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+            console.log("Supabase客户端已初始化");
             
-            // 2. 加载班级列表
-            await loadClasses();
-            
-            // 3. 加载检查人列表
-            await loadInspectors();
-            
-            // 4. 加载科目列表（用于datalist）
-            await loadSubjects();
-            
-            // 5. 加载老师列表（用于datalist）
-            await loadTeachersForDatalist();
-            
-            // 6. 加载跟班老师列表（用于datalist）
-            await loadFollowTeachersForDatalist();
-            
-            console.log("页面初始化完成");
-            
-            // 7. 绑定事件监听器
+            // 3. 设置今天日期并计算星期
+            const today = new Date();
+            const formattedDate = today.toISOString().split('T')[0];
             const dateInput = document.getElementById('inspection_date');
+            dateInput.value = formattedDate;
+            const weekDay = calculateWeekDay(formattedDate);
+            console.log("初始日期:", formattedDate, "星期:", weekDay);
+            
+            // 4. 绑定事件监听器
             dateInput.addEventListener('change', function() {
+                console.log("日期变化:", this.value);
                 const weekDay = calculateWeekDay(this.value);
-                document.getElementById('week_day').value = weekDay;
-                console.log("日期变化，星期为:", weekDay);
-                autoFillSchedule();
+                console.log("星期计算结果:", weekDay);
+                setTimeout(() => {
+                    autoFillSchedule();
+                }, 100);
             });
             
-            const classSelect = document.getElementById('class_name');
-            classSelect.addEventListener('change', function() {
-                selectedClass = this.value;
-                console.log("班级选择变化:", selectedClass);
-                autoFillSchedule();
-            });
-            
-            const periodSelect = document.getElementById('period');
-            periodSelect.addEventListener('change', function() {
+            document.getElementById('period').addEventListener('change', function() {
                 console.log("节次变化:", this.value);
-                autoFillSchedule();
+                setTimeout(() => {
+                    autoFillSchedule();
+                }, 100);
             });
             
-            // 8. 调试函数
-            window.debugAutoFill = async function(testClassName, testDate, testPeriod) {
-                console.log("=== 调试自动填充功能 ===");
-                
-                const className = testClassName || selectedClass;
-                const dateStr = testDate || document.getElementById('inspection_date').value;
-                const period = testPeriod || document.getElementById('period').value;
-                
-                if (!className || !dateStr || !period) {
-                    console.error("缺少调试参数");
-                    console.log("当前参数:", { className, dateStr, period });
-                    return;
-                }
-                
-                const weekDay = calculateWeekDay(dateStr);
-                console.log("调试参数:", { className, dateStr, period, weekDay });
-                
-                // 直接查询数据库
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('schedule')
-                        .select('*')
-                        .eq('class_name', className)
-                        .eq('week_day', weekDay)
-                        .eq('period', parseInt(period))
-                        .limit(5);
-                        
-                    console.log("直接查询结果:", { data, error });
-                    
-                    if (data && data.length > 0) {
-                        console.log("找到的课表数据:", data);
-                    } else {
-                        console.log("未找到匹配的课表数据");
-                        
-                        // 检查schedule表中这个班级的所有数据
-                        const { data: allClassData } = await supabaseClient
-                            .from('schedule')
-                            .select('*')
-                            .eq('class_name', className)
-                            .limit(10);
-                            
-                        console.log(`${className}班的所有课表数据:`, allClassData);
-                    }
-                } catch (err) {
-                    console.error("调试查询失败:", err);
-                }
-            };
+            // 5. 加载检查人、跟班老师和任课老师列表
+            try {
+                await Promise.all([
+                    loadInspectors(),
+                    loadFollowTeachers(),
+                    loadTeachersForDatalist()
+                ]);
+                console.log("老师列表加载完成");
+            } catch (error) {
+                console.error("加载老师列表失败:", error);
+            }
             
-            // 立即尝试自动填充一次
+            // 6. 绑定提交按钮
+            document.getElementById('submitBtn').addEventListener('click', submitForm);
+            
+            // 7. 尝试自动填充课表
             setTimeout(() => {
                 autoFillSchedule();
-            }, 500);
+            }, 300);
         }
         
-        // 修复calculateWeekDay函数
+        // 计算星期
         function calculateWeekDay(dateString) {
             if (!dateString) {
                 console.error("日期字符串为空");
@@ -445,6 +268,12 @@
                 
                 const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
                 const weekDay = weekDays[dateObj.getDay()];
+                
+                const weekDayInput = document.getElementById('week_day');
+                if (weekDayInput) {
+                    weekDayInput.value = weekDay;
+                }
+                
                 console.log("计算星期:", { dateString, weekDay });
                 return weekDay;
             } catch (error) {
@@ -453,39 +282,7 @@
             }
         }
         
-        // 加载班级列表
-        async function loadClasses() {
-            try {
-                if (!supabaseClient) {
-                    console.error("Supabase客户端未初始化");
-                    return;
-                }
-                
-                const { data, error } = await supabaseClient
-                    .from('classes')
-                    .select('class_name')
-                    .order('class_name');
-                    
-                if (error) {
-                    console.error("加载班级列表失败:", error);
-                    return;
-                }
-                
-                const classSelect = document.getElementById('class_name');
-                if (data && data.length > 0) {
-                    data.forEach(row => {
-                        const option = document.createElement('option');
-                        option.value = row.class_name;
-                        option.textContent = row.class_name;
-                        classSelect.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error("加载班级列表异常:", error);
-            }
-        }
-        
-        // 加载检查人列表
+        // 加载检查人
         async function loadInspectors() {
             try {
                 if (!supabaseClient) {
@@ -503,54 +300,42 @@
                     return;
                 }
                 
-                const inspectorSelect = document.getElementById('inspector');
+                const datalist = document.getElementById('inspector_list');
+                datalist.innerHTML = '';
+                
                 if (data && data.length > 0) {
                     data.forEach(row => {
                         const option = document.createElement('option');
                         option.value = row.inspector_name;
-                        option.textContent = row.inspector_name;
-                        inspectorSelect.appendChild(option);
+                        datalist.appendChild(option);
                     });
+                } else {
+                    // 如果inspectors表没有数据，从inspections表获取
+                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
+                        .from('inspections')
+                        .select('inspector')
+                        .not('inspector', 'is', null)
+                        .order('inspector');
+                        
+                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        // 去重
+                        const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector))].sort();
+                        uniqueInspectors.forEach(inspector => {
+                            if (inspector) {
+                                const option = document.createElement('option');
+                                option.value = inspector;
+                                datalist.appendChild(option);
+                            }
+                        });
+                    }
                 }
             } catch (error) {
                 console.error("加载检查人异常:", error);
             }
         }
         
-        // 加载科目列表（用于datalist）
-        async function loadSubjects() {
-            try {
-                if (!supabaseClient) {
-                    console.error("Supabase客户端未初始化");
-                    return;
-                }
-                
-                const { data, error } = await supabaseClient
-                    .from('inspections')
-                    .select('subject')
-                    .not('subject', 'is', null);
-                    
-                if (error) {
-                    console.error("加载科目失败:", error);
-                    return;
-                }
-                
-                const datalist = document.getElementById('subject_list');
-                if (data && data.length > 0) {
-                    const uniqueSubjects = [...new Set(data.map(item => item.subject).filter(s => s))];
-                    uniqueSubjects.sort().forEach(subject => {
-                        const option = document.createElement('option');
-                        option.value = subject;
-                        datalist.appendChild(option);
-                    });
-                }
-            } catch (error) {
-                console.error("加载科目异常:", error);
-            }
-        }
-        
-        // 加载跟班老师列表（用于datalist）
-        async function loadFollowTeachersForDatalist() {
+        // 加载跟班老师
+        async function loadFollowTeachers() {
             try {
                 if (!supabaseClient) {
                     console.error("Supabase客户端未初始化");
@@ -563,31 +348,36 @@
                     .order('teacher_name');
                     
                 if (error) {
-                    console.error("从teachers表加载跟班老师失败，尝试从inspections表获取:", error);
-                    
+                    console.error("加载跟班老师失败:", error);
+                    return;
+                }
+                
+                const datalist = document.getElementById('follow_teacher_list');
+                datalist.innerHTML = '';
+                
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        const option = document.createElement('option');
+                        option.value = row.teacher_name;
+                        datalist.appendChild(option);
+                    });
+                } else {
+                    // 如果teachers表没有数据，从inspections表获取已有的跟班老师
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
                         .from('inspections')
                         .select('follow_teacher')
-                        .not('follow_teacher', 'is', null);
+                        .not('follow_teacher', 'is', null)
+                        .order('follow_teacher');
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
+                        // 去重
                         const uniqueTeachers = [...new Set(inspectionsData.map(item => item.follow_teacher))].sort();
-                        const datalist = document.getElementById('follow_teacher_list');
                         uniqueTeachers.forEach(teacher => {
                             if (teacher) {
                                 const option = document.createElement('option');
                                 option.value = teacher;
                                 datalist.appendChild(option);
                             }
-                        });
-                    }
-                } else {
-                    const datalist = document.getElementById('follow_teacher_list');
-                    if (data && data.length > 0) {
-                        data.forEach(row => {
-                            const option = document.createElement('option');
-                            option.value = row.teacher_name;
-                            datalist.appendChild(option);
                         });
                     }
                 }
@@ -629,8 +419,28 @@
             }
         }
         
-        // 自动填充课表 - 修复版本
+        // 显示状态消息
+        function showStatusMessage(message, type) {
+            const statusDiv = document.getElementById('autoFillStatus');
+            if (statusDiv) {
+                statusDiv.textContent = message;
+                statusDiv.className = 'status-message';
+                statusDiv.classList.add(`status-${type}`);
+                statusDiv.style.display = 'block';
+                
+                // 5秒后自动隐藏成功/信息消息
+                if (type === 'success' || type === 'info') {
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 5000);
+                }
+            }
+        }
+        
+        // 自动填充课表 - 修复版
         async function autoFillSchedule() {
+            console.log("=== 开始自动填充 ===");
+            
             const date = document.getElementById('inspection_date').value;
             const period = document.getElementById('period').value;
             
@@ -641,35 +451,40 @@
                 hasSupabase: !!supabaseClient 
             });
             
-            if (!date || !period || !selectedClass || !supabaseClient) {
-                console.log("缺少必要信息，跳过自动填充:", { date, period, selectedClass, supabaseClient });
-                updateAutoFillStatus("请先选择班级、日期和节次", "error");
+            if (!date) {
+                console.log("日期未选择");
+                return;
+            }
+            
+            if (!period) {
+                console.log("节次未选择");
+                return;
+            }
+            
+            if (!selectedClass) {
+                console.log("班级未选择");
+                return;
+            }
+            
+            if (!supabaseClient) {
+                console.log("Supabase客户端未初始化");
                 return;
             }
             
             const weekDay = calculateWeekDay(date);
             if (!weekDay) {
-                console.error("无法计算星期，跳过自动填充");
-                updateAutoFillStatus("无法计算星期，请检查日期格式", "error");
+                console.error("无法计算星期");
+                showStatusMessage("无法计算星期，请检查日期格式", "error");
                 return;
             }
             
-            // 将period转换为整数
-            const periodNum = parseInt(period, 10);
-            if (isNaN(periodNum)) {
-                console.error("无效的节次格式:", period);
-                updateAutoFillStatus("无效的节次格式", "error");
-                return;
-            }
-            
-            console.log("查询课表:", { 
+            console.log("查询条件:", { 
                 class: selectedClass, 
                 weekDay, 
-                period: periodNum,
-                queryTime: new Date().toISOString()
+                period: period 
             });
             
-            updateAutoFillStatus("正在查询课表信息...", "info");
+            showStatusMessage("正在查询课表信息...", "info");
             
             try {
                 const { data, error } = await supabaseClient
@@ -677,14 +492,14 @@
                     .select('subject, teacher_name')
                     .eq('class_name', selectedClass)
                     .eq('week_day', weekDay)
-                    .eq('period', periodNum)
+                    .eq('period', parseInt(period))
                     .maybeSingle();
                     
                 console.log("课表查询结果:", { data, error });
                 
                 if (error) {
                     console.error("查询课表失败:", error);
-                    updateAutoFillStatus(`查询失败: ${error.message}`, "error");
+                    showStatusMessage("查询课表失败，请手动填写科目和老师", "error");
                     return;
                 }
                 
@@ -692,31 +507,30 @@
                     // 更新科目
                     const subjectInput = document.getElementById('subject');
                     if (subjectInput) {
-                        const oldSubject = subjectInput.value;
+                        const oldValue = subjectInput.value;
                         subjectInput.value = data.subject || '';
-                        console.log("科目已更新:", { from: oldSubject, to: data.subject });
+                        console.log("科目已更新:", { from: oldValue, to: data.subject });
                     }
                     
                     // 更新任课老师
                     const teacherInput = document.getElementById('teacher_name');
                     if (teacherInput) {
-                        const oldTeacher = teacherInput.value;
+                        const oldValue = teacherInput.value;
                         teacherInput.value = data.teacher_name || '';
-                        console.log("老师已更新:", { from: oldTeacher, to: data.teacher_name });
+                        console.log("老师已更新:", { from: oldValue, to: data.teacher_name });
                     }
                     
-                    // 更新状态提示
                     if (data.subject || data.teacher_name) {
-                        const message = `✅ 已自动填充: ${data.subject || ''} ${data.teacher_name || ''}`;
-                        updateAutoFillStatus(message, "success");
-                        console.log("✅ 自动填充成功:", message);
+                        const message = `已自动填充: ${data.subject || ''} ${data.teacher_name ? `- ${data.teacher_name}` : ''}`;
+                        showStatusMessage(message, "success");
+                        console.log("自动填充成功:", message);
                     } else {
-                        updateAutoFillStatus("⚠️ 该时间段无课表信息", "info");
-                        console.log("该时间段无课表信息");
+                        showStatusMessage("该时间段无课程安排", "info");
+                        console.log("该时间段无课程安排");
                     }
                 } else {
                     console.log("未找到对应的课表信息");
-                    updateAutoFillStatus("该时间段无课表信息", "info");
+                    showStatusMessage("该时间段无课程安排，请手动填写", "info");
                     
                     // 清空科目和老师字段
                     const subjectInput = document.getElementById('subject');
@@ -727,33 +541,14 @@
                 }
             } catch (error) {
                 console.error("自动填充异常:", error);
-                updateAutoFillStatus(`自动填充异常: ${error.message}`, "error");
-            }
-        }
-        
-        // 更新自动填充状态
-        function updateAutoFillStatus(message, type) {
-            let statusDiv = document.getElementById('autoFillStatus');
-            if (!statusDiv) {
-                statusDiv = document.createElement('div');
-                statusDiv.id = 'autoFillStatus';
-                document.querySelector('.form-grid').appendChild(statusDiv);
-            }
-            
-            statusDiv.innerHTML = `<div class="auto-fill-hint ${type}">${message}</div>`;
-            
-            // 5秒后清除成功/错误消息
-            if (type === 'success' || type === 'error') {
-                setTimeout(() => {
-                    statusDiv.innerHTML = '';
-                }, 5000);
+                showStatusMessage("自动填充失败，请手动填写", "error");
             }
         }
         
         // 提交表单
         async function submitForm() {
             if (!supabaseClient) {
-                showMessage('系统未初始化完成，请刷新页面重试', 'error');
+                alert('系统未初始化完成，请刷新页面重试');
                 return;
             }
             
@@ -775,30 +570,23 @@
             };
             
             // 验证必填项
-            if (!selectedClass) {
-                showMessage('请选择班级', 'error');
-                return;
-            }
-            
             if (!formData.period) {
-                showMessage('请选择节次', 'error');
+                alert('请选择节次');
                 return;
             }
-            
             if (!formData.inspector) {
-                showMessage('请选择检查人', 'error');
+                alert('请选择检查人');
                 return;
             }
-            
             if (!formData.arrival_status) {
-                showMessage('请选择教师到岗情况', 'error');
+                alert('请选择教师到岗情况');
                 return;
             }
             
             // 验证arrival_status的值符合数据库约束
             const allowedStatuses = ['按时到达', '迟到', '旷课', '其他', '正常', '异常'];
             if (!allowedStatuses.includes(formData.arrival_status)) {
-                showMessage('请选择有效的教师到岗情况', 'error');
+                alert('请选择有效的教师到岗情况');
                 return;
             }
             
@@ -820,8 +608,7 @@
                     throw error;
                 }
                 
-                showMessage('✅ 巡查记录提交成功！', 'success');
-                console.log('提交成功，返回数据:', data);
+                alert('✅ 巡查记录提交成功！');
                 
                 // 重置表单，保留班级和日期
                 document.getElementById('subject').value = '';
@@ -836,22 +623,19 @@
                 document.getElementById('suggestion').value = '';
                 document.getElementById('period').selectedIndex = 0;
                 
-                // 清除自动填充状态
-                updateAutoFillStatus("", "info");
-                
             } catch (error) {
                 console.error("提交失败详情:", error);
                 
                 if (error.code === '23514') {
-                    showMessage(`❌ 提交失败：数据不符合数据库约束\n\n错误代码: 23514\n错误: ${error.message}\n\n请确保：\n1. 教师到岗情况必须为：按时到达、迟到、旷课、其他、正常、异常\n2. 所有必填字段已填写`, 'error');
+                    alert(`❌ 提交失败：数据不符合数据库约束\n\n错误代码: 23514\n错误: ${error.message}\n\n请确保：\n1. 教师到岗情况必须为：按时到达、迟到、旷课、其他、正常、异常\n2. 所有必填字段已填写`);
                 } else if (error.code === '23502') {
-                    showMessage(`❌ 提交失败：缺少必填字段\n\n错误: ${error.message}\n\n请确保所有必填字段都已填写`, 'error');
+                    alert(`❌ 提交失败：缺少必填字段\n\n错误: ${error.message}\n\n请确保所有必填字段都已填写`);
                 } else if (error.code === '23505') {
-                    showMessage(`❌ 提交失败：记录已存在\n\n错误: ${error.message}`, 'error');
+                    alert(`❌ 提交失败：记录已存在\n\n错误: ${error.message}`);
                 } else if (error.code === '23503') {
-                    showMessage(`❌ 提交失败：外键约束错误\n\n错误: ${error.message}`, 'error');
+                    alert(`❌ 提交失败：外键约束错误\n\n错误: ${error.message}`);
                 } else {
-                    showMessage(`❌ 提交失败: ${error.message}\n错误代码: ${error.code || '未知'}`, 'error');
+                    alert(`❌ 提交失败: ${error.message}\n错误代码: ${error.code || '未知'}`);
                 }
             } finally {
                 submitBtn.textContent = originalText;
@@ -859,40 +643,53 @@
             }
         }
         
-        // 显示消息
-        function showMessage(message, type) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'success-message';
-            messageDiv.style.background = type === 'success' ? '#4CAF50' : '#f44336';
-            messageDiv.textContent = message;
-            document.body.appendChild(messageDiv);
-            
-            setTimeout(() => {
-                messageDiv.remove();
-            }, 3000);
-        }
-        
         // 调试函数
-        function runDebug() {
-            const className = document.getElementById('class_name').value;
-            const dateStr = document.getElementById('inspection_date').value;
-            const period = document.getElementById('period').value;
+        window.debugAutoFill = async function(testClassName, testDate, testPeriod) {
+            console.log("=== 调试自动填充功能 ===");
+            
+            const className = testClassName || selectedClass;
+            const dateStr = testDate || document.getElementById('inspection_date').value;
+            const period = testPeriod || document.getElementById('period').value;
             
             if (!className || !dateStr || !period) {
-                alert("请先选择班级、日期和节次");
+                console.error("缺少调试参数");
+                console.log("当前参数:", { className, dateStr, period });
                 return;
             }
             
-            window.debugAutoFill(className, dateStr, period);
-        }
-        
-        // 添加表单提交的键盘快捷键
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-                e.preventDefault();
-                submitForm();
+            const weekDay = calculateWeekDay(dateStr);
+            console.log("调试参数:", { className, dateStr, period, weekDay });
+            
+            // 直接查询数据库
+            try {
+                const { data, error } = await supabaseClient
+                    .from('schedule')
+                    .select('*')
+                    .eq('class_name', className)
+                    .eq('week_day', weekDay)
+                    .eq('period', parseInt(period))
+                    .limit(5);
+                    
+                console.log("直接查询结果:", { data, error });
+                
+                if (data && data.length > 0) {
+                    console.log("找到的课表数据:", data);
+                } else {
+                    console.log("未找到匹配的课表数据");
+                    
+                    // 检查schedule表中这个班级的所有数据
+                    const { data: allClassData } = await supabaseClient
+                        .from('schedule')
+                        .select('*')
+                        .eq('class_name', className)
+                        .limit(10);
+                        
+                    console.log(`${className}班的所有课表数据:`, allClassData);
+                }
+            } catch (err) {
+                console.error("调试查询失败:", err);
             }
-        });
+        };
     </script>
 </body>
 </html>
