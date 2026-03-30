@@ -121,11 +121,11 @@
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            /* 移除固定的最小宽度，让表格自适应 */
+            table-layout: fixed; /* 固定表格布局，防止列错位 */
         }
         th { 
             background: #f8f9fa; 
-            padding: 12px 8px; 
+            padding: 12px 6px; /* 减少内边距，防止列过宽 */
             text-align: left; 
             font-weight: 600; 
             color: #333; 
@@ -134,7 +134,7 @@
             white-space: nowrap;
         }
         td { 
-            padding: 8px; /* 减少内边距，降低行高 */
+            padding: 8px 6px; /* 减少内边距，防止列过宽 */
             border-bottom: 1px solid #f0f0f0; 
             font-size: 12px;
             line-height: 1.4; /* 设置行高 */
@@ -159,6 +159,7 @@
             cursor: pointer; 
             font-size: 10px; /* 减小字体 */
             width: 100%;
+            white-space: nowrap; /* 防止按钮文字换行 */
         }
         .btn-detail { background: #2196F3; color: white; }
         .btn-edit { background: #FF9800; color: white; }
@@ -166,7 +167,6 @@
         
         /* 长文本换行显示，而不是截断 - 针对所有设备 */
         .text-wrap { 
-            max-width: 120px; /* 设置最大宽度 */
             white-space: normal; /* 允许换行 */
             word-wrap: break-word; /* 允许单词内换行 */
             word-break: break-word; /* 单词内断行 */
@@ -285,34 +285,37 @@
                 grid-template-columns: 1fr;
             }
             
-            /* 在手机上设置表格列的最小宽度，避免过度压缩 */
+            /* 在手机上设置固定表格布局，防止列错位 */
             table {
-                min-width: 100%; /* 表格宽度为100%，不再有最小宽度限制 */
+                table-layout: fixed;
+                width: 100%;
             }
             
-            /* 在手机上，设置表格单元格的最小宽度，但允许压缩 */
+            /* 设置各列固定宽度，确保操作列不会错位 */
+            th:nth-child(1), td:nth-child(1) { width: 60px; } /* 日期列 */
+            th:nth-child(2), td:nth-child(2) { width: 50px; } /* 星期列 */
+            th:nth-child(3), td:nth-child(3) { width: 60px; } /* 班级列 */
+            th:nth-child(4), td:nth-child(4) { width: 50px; } /* 节次列 */
+            th:nth-child(5), td:nth-child(5) { width: 60px; } /* 科目列 */
+            th:nth-child(6), td:nth-child(6) { width: 60px; } /* 老师列 */
+            th:nth-child(7), td:nth-child(7) { width: 60px; } /* 检查人列 */
+            th:nth-child(8), td:nth-child(8) { width: 70px; } /* 跟班老师列 */
+            th:nth-child(9), td:nth-child(9) { width: 60px; } /* 到岗列 */
+            th:nth-child(10), td:nth-child(10) { width: 100px; } /* 学生状态列 */
+            th:nth-child(11), td:nth-child(11) { width: 100px; } /* 教室环境列 */
+            th:nth-child(12), td:nth-child(12) { width: 100px; } /* 查课记录列 */
+            th:nth-child(13), td:nth-child(13) { width: 70px; } /* 操作列 - 确保固定宽度 */
+            
+            /* 减少内边距，防止列过宽 */
             th, td {
-                min-width: 60px; /* 设置最小宽度，但允许更小 */
+                padding: 6px 4px;
             }
-            
-            /* 特定列设置不同的最小宽度 */
-            th:nth-child(1), td:nth-child(1) { min-width: 80px; } /* 日期列 */
-            th:nth-child(3), td:nth-child(3) { min-width: 70px; } /* 班级列 */
-            th:nth-child(9), td:nth-child(9) { min-width: 60px; } /* 到岗列 */
-            
-            /* 文本列的最小宽度 */
-            th:nth-child(10), td:nth-child(10) { min-width: 80px; } /* 学生状态 */
-            th:nth-child(11), td:nth-child(11) { min-width: 80px; } /* 教室环境 */
-            th:nth-child(12), td:nth-child(12) { min-width: 100px; } /* 查课记录 */
-            
-            /* 操作列的最小宽度 */
-            th:nth-child(13), td:nth-child(13) { min-width: 70px; }
             
             .text-wrap {
                 max-width: 100%; /* 移动端使用100%宽度 */
                 font-size: 11px; /* 移动端更小字体 */
-                -webkit-line-clamp: 3; /* 移动端显示3行 */
-                max-height: 4.2em; /* 3行高度 (1.4 * 3) */
+                -webkit-line-clamp: 2; /* 移动端显示2行 */
+                max-height: 2.8em; /* 2行高度 */
             }
             
             .action-buttons {
@@ -320,13 +323,35 @@
             }
             
             .btn-action {
-                padding: 3px 5px;
+                padding: 3px 4px;
                 font-size: 9px;
+            }
+            
+            /* 确保操作列中的按钮不会换行 */
+            .btn-action {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
             }
         }
         
         /* 超小屏幕手机适配 */
         @media (max-width: 480px) {
+            /* 进一步调整列宽，确保在小屏幕上也能正确显示 */
+            th:nth-child(1), td:nth-child(1) { width: 55px; } /* 日期列 */
+            th:nth-child(2), td:nth-child(2) { width: 45px; } /* 星期列 */
+            th:nth-child(3), td:nth-child(3) { width: 55px; } /* 班级列 */
+            th:nth-child(4), td:nth-child(4) { width: 45px; } /* 节次列 */
+            th:nth-child(5), td:nth-child(5) { width: 55px; } /* 科目列 */
+            th:nth-child(6), td:nth-child(6) { width: 55px; } /* 老师列 */
+            th:nth-child(7), td:nth-child(7) { width: 55px; } /* 检查人列 */
+            th:nth-child(8), td:nth-child(8) { width: 65px; } /* 跟班老师列 */
+            th:nth-child(9), td:nth-child(9) { width: 55px; } /* 到岗列 */
+            th:nth-child(10), td:nth-child(10) { width: 90px; } /* 学生状态列 */
+            th:nth-child(11), td:nth-child(11) { width: 90px; } /* 教室环境列 */
+            th:nth-child(12), td:nth-child(12) { width: 90px; } /* 查课记录列 */
+            th:nth-child(13), td:nth-child(13) { width: 65px; } /* 操作列 */
+            
             .text-wrap {
                 -webkit-line-clamp: 2; /* 超小屏幕显示2行 */
                 max-height: 2.8em; /* 2行高度 */
@@ -334,13 +359,41 @@
             
             /* 进一步减少内边距 */
             td {
-                padding: 6px 4px;
+                padding: 5px 3px;
             }
             
             th {
-                padding: 8px 4px;
-                font-size: 11px;
+                padding: 7px 3px;
+                font-size: 10px;
             }
+            
+            /* 操作按钮更紧凑 */
+            .btn-action {
+                padding: 2px 3px;
+                font-size: 8px;
+            }
+        }
+        
+        /* 极小屏幕适配（如iPhone SE等） */
+        @media (max-width: 375px) {
+            /* 隐藏一些次要列，确保主要列和操作列正确显示 */
+            th:nth-child(2), td:nth-child(2),  /* 星期列 */
+            th:nth-child(5), td:nth-child(5) { /* 科目列 */
+                display: none;
+            }
+            
+            /* 调整剩余列的宽度 */
+            th:nth-child(1), td:nth-child(1) { width: 60px; } /* 日期列 */
+            th:nth-child(3), td:nth-child(3) { width: 60px; } /* 班级列 */
+            th:nth-child(4), td:nth-child(4) { width: 50px; } /* 节次列 */
+            th:nth-child(6), td:nth-child(6) { width: 60px; } /* 老师列 */
+            th:nth-child(7), td:nth-child(7) { width: 60px; } /* 检查人列 */
+            th:nth-child(8), td:nth-child(8) { width: 70px; } /* 跟班老师列 */
+            th:nth-child(9), td:nth-child(9) { width: 60px; } /* 到岗列 */
+            th:nth-child(10), td:nth-child(10) { width: 80px; } /* 学生状态列 */
+            th:nth-child(11), td:nth-child(11) { width: 80px; } /* 教室环境列 */
+            th:nth-child(12), td:nth-child(12) { width: 80px; } /* 查课记录列 */
+            th:nth-child(13), td:nth-child(13) { width: 70px; } /* 操作列 */
         }
     </style>
 </head>
