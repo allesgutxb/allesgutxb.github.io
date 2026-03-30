@@ -121,7 +121,7 @@
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 900px;
+            min-width: 1000px; /* 增加最小宽度，因为新增了列 */
         }
         th { 
             background: #f8f9fa; 
@@ -407,11 +407,12 @@
                         <th>到岗</th>
                         <th>学生状态</th>
                         <th>教室环境</th>
+                        <th>查课记录</th> <!-- 新增列 -->
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody id="resultBody">
-                    <tr><td colspan="12" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
+                    <tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
                 </tbody>
             </table>
         </div>
@@ -776,7 +777,7 @@
             };
             
             const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
                 // 按created_at倒序排序，确保最新填写的记录在最上面
@@ -807,7 +808,7 @@
                 
             } catch (error) {
                 console.error("查询失败:", error);
-                tbody.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
             }
         }
         
@@ -816,7 +817,7 @@
             const tbody = document.getElementById('resultBody');
             
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
                 return;
             }
             
@@ -835,6 +836,9 @@
                 const environmentTruncated = record.environment ? 
                     (record.environment.length > 10 ? record.environment.substring(0, 10) + '...' : record.environment) : '';
                 
+                const problemTruncated = record.problem ? 
+                    (record.problem.length > 15 ? record.problem.substring(0, 15) + '...' : record.problem) : '';
+                
                 html += `
                     <tr>
                         <td>${record.date || ''}</td>
@@ -848,6 +852,7 @@
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
                         <td title="${record.student_status || ''}" class="text-truncate">${studentStatusTruncated}</td>
                         <td title="${record.environment || ''}" class="text-truncate">${environmentTruncated}</td>
+                        <td title="${record.problem || ''}" class="text-truncate">${problemTruncated}</td>
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
@@ -1026,7 +1031,7 @@
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
