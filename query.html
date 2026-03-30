@@ -104,6 +104,9 @@
             overflow: hidden; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+        }
+        
+        .table-wrapper {
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
         }
@@ -113,15 +116,13 @@
             padding: 10px 15px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 13px;
-            position: sticky;
-            left: 0;
         }
         
         /* 表格样式 */
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 1200px; /* 确保表格在手机上可以横向滚动 */
+            min-width: 1200px;
         }
         th { 
             background: #f8f9fa; 
@@ -132,9 +133,6 @@
             border-bottom: 2px solid #e0e0e0; 
             font-size: 12px;
             white-space: nowrap;
-            position: sticky;
-            top: 0;
-            z-index: 10;
         }
         td { 
             padding: 8px; 
@@ -161,50 +159,6 @@
             white-space: nowrap;
         }
         
-        /* 表格列宽设置 */
-        th:nth-child(1), td:nth-child(1) { /* 日期 */
-            min-width: 100px;
-        }
-        th:nth-child(2), td:nth-child(2) { /* 星期 */
-            min-width: 60px;
-        }
-        th:nth-child(3), td:nth-child(3) { /* 班级 */
-            min-width: 80px;
-        }
-        th:nth-child(4), td:nth-child(4) { /* 节次 */
-            min-width: 60px;
-        }
-        th:nth-child(5), td:nth-child(5) { /* 科目 */
-            min-width: 80px;
-        }
-        th:nth-child(6), td:nth-child(6) { /* 老师 */
-            min-width: 80px;
-        }
-        th:nth-child(7), td:nth-child(7) { /* 检查人 */
-            min-width: 80px;
-        }
-        th:nth-child(8), td:nth-child(8) { /* 跟班老师 */
-            min-width: 80px;
-        }
-        th:nth-child(9), td:nth-child(9) { /* 到岗情况 */
-            min-width: 80px;
-        }
-        th:nth-child(10), td:nth-child(10) { /* 学生状态 */
-            min-width: 150px;
-            max-width: 200px;
-        }
-        th:nth-child(11), td:nth-child(11) { /* 教室环境 */
-            min-width: 120px;
-            max-width: 180px;
-        }
-        th:nth-child(12), td:nth-child(12) { /* 查课记录 */
-            min-width: 150px;
-            max-width: 200px;
-        }
-        th:nth-child(13), td:nth-child(13) { /* 操作 */
-            min-width: 120px;
-        }
-        
         /* 文本换行设置 */
         .text-wrap { 
             word-wrap: break-word;
@@ -215,14 +169,14 @@
         /* 操作按钮 */
         .action-buttons {
             display: flex;
-            gap: 4px;
+            gap: 5px;
         }
         .btn-action { 
-            padding: 4px 8px;
+            padding: 6px 10px;
             border: none; 
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer; 
-            font-size: 10px;
+            font-size: 12px;
             white-space: nowrap;
         }
         .btn-detail { 
@@ -238,35 +192,29 @@
             color: white; 
         }
         
-        /* 移动端适配 - 保持表格布局，但调整样式 */
+        /* 移动端适配 */
         @media (max-width: 768px) {
             .filter-grid {
                 grid-template-columns: 1fr;
             }
             
             .btn-action {
-                padding: 6px 8px;
+                padding: 5px 8px;
                 font-size: 11px;
             }
             
-            /* 在手机上调整操作按钮布局 */
             .action-buttons {
-                display: flex;
-                flex-direction: column;
-                gap: 3px;
+                flex-wrap: wrap;
             }
             
-            th:nth-child(10), td:nth-child(10) { /* 学生状态 */
-                min-width: 120px;
-                max-width: 150px;
+            /* 在手机上显示更紧凑 */
+            th, td {
+                padding: 6px 4px;
             }
-            th:nth-child(11), td:nth-child(11) { /* 教室环境 */
-                min-width: 100px;
-                max-width: 140px;
-            }
-            th:nth-child(12), td:nth-child(12) { /* 查课记录 */
-                min-width: 120px;
-                max-width: 160px;
+            
+            /* 在手机上隐藏某些列，或者调整显示 */
+            .mobile-hide {
+                display: none;
             }
         }
         
@@ -288,10 +236,121 @@
             pointer-events: none;
         }
         
-        /* 表格滚动容器 */
-        .table-scroll-container {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        /* 无数据样式 */
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        /* 修改记录弹窗样式 - 重新设计 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #999;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-form {
+            padding: 20px;
+        }
+        
+        .modal-form .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .modal-form label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        
+        .modal-form input,
+        .modal-form select,
+        .modal-form textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .modal-form textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-save,
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        
+        .btn-save {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            color: white;
+        }
+        
+        .btn-cancel {
+            background: #f0f0f0;
+            color: #666;
         }
     </style>
 </head>
@@ -394,7 +453,7 @@
             查询结果：<span id="resultCount">0</span> 条记录
         </div>
         
-        <div class="table-scroll-container">
+        <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
@@ -403,7 +462,7 @@
                         <th>班级</th>
                         <th>节次</th>
                         <th>科目</th>
-                        <th>老师</th>
+                        <th>任课老师</th>
                         <th>检查人</th>
                         <th>跟班老师</th>
                         <th>到岗</th>
@@ -414,13 +473,13 @@
                     </tr>
                 </thead>
                 <tbody id="resultBody">
-                    <tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
+                    <tr><td colspan="13" class="no-data">点击"查询"按钮加载数据</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
-    <!-- 修改记录弹窗 -->
+    <!-- 修改记录弹窗 - 只在点击修改时显示 -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -512,7 +571,7 @@
                 </div>
                 
                 <div class="modal-buttons">
-                    <button type="button" class="btn-save" onclick="updateRecord()">💾 保存</button>
+                    <button type="button" class="btn-save" onclick="updateRecord()">保存</button>
                     <button type="button" class="btn-cancel" onclick="closeEditModal()">取消</button>
                 </div>
             </form>
@@ -550,6 +609,13 @@
             
             document.getElementById('edit_date').addEventListener('change', function() {
                 calculateWeekDayForEdit(this.value);
+            });
+            
+            // 点击模态框外部关闭
+            document.getElementById('editModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEditModal();
+                }
             });
             
             await fetchData();
@@ -766,7 +832,7 @@
             };
             
             const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="13" class="no-data">正在查询...</td></tr>';
             
             try {
                 let query = supabaseClient
@@ -796,7 +862,7 @@
                 
             } catch (error) {
                 console.error("查询失败:", error);
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="13" class="no-data">查询失败: ${error.message}</td></tr>`;
             }
         }
         
@@ -805,7 +871,7 @@
             const tbody = document.getElementById('resultBody');
             
             if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="13" class="no-data">没有找到匹配的记录</td></tr>';
                 return;
             }
             
@@ -881,6 +947,7 @@
                 return;
             }
             
+            // 填充表单数据
             document.getElementById('edit_id').value = record.id;
             document.getElementById('edit_date').value = record.date || '';
             document.getElementById('edit_week_day').value = record.week_day || '';
@@ -895,6 +962,7 @@
             document.getElementById('edit_problem').value = record.problem || '';
             document.getElementById('edit_suggestion').value = record.suggestion || '';
             
+            // 显示模态框
             document.getElementById('editModal').style.display = 'flex';
         }
         
@@ -989,8 +1057,12 @@
         
         // 重置筛选条件
         function resetFilters() {
-            document.getElementById('filter_date_start').value = '';
-            document.getElementById('filter_date_end').value = '';
+            const endDate = new Date();
+            const startDate = new Date();
+            startDate.setDate(startDate.getDate() - 7);
+            
+            document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
+            document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
             document.getElementById('filter_weekday').value = '';
             document.getElementById('filter_class').value = '';
             document.getElementById('filter_period').value = '';
@@ -1001,7 +1073,7 @@
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="13" class="no-data">点击"查询"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
