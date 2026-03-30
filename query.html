@@ -11,10 +11,9 @@
             font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
             background: #f5f7fa; 
             padding: 10px;
-            padding-top: 60px; /* 为返回按钮留出空间 */
+            padding-top: 60px;
         }
         
-        /* 返回按钮在右上角 */
         .top-header {
             position: fixed;
             top: 10px;
@@ -58,18 +57,13 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        /* 查询条件两列布局 - 每行显示2个 */
         .filter-grid { 
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 两列布局 */
-            gap: 10px 15px; /* 行间距10px，列间距15px */
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 15px;
         }
-        .filter-group { 
-            margin-bottom: 0; /* 移除外边距，用grid的gap控制 */
-        }
-        .filter-group.full-width {
-            grid-column: 1 / -1; /* 占据整行 */
-        }
+        .filter-group { margin-bottom: 0; }
+        .filter-group.full-width { grid-column: 1 / -1; }
         label { 
             display: block; 
             margin-bottom: 5px; 
@@ -85,7 +79,6 @@
             font-size: 13px; 
         }
         
-        /* 按钮组水平排列 */
         .btn-group { 
             display: flex; 
             gap: 8px; 
@@ -113,17 +106,23 @@
             margin-bottom: 20px;
         }
         
-        /* 表格响应式处理 */
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        /* 结果计数 */
+        .result-count {
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
         }
-        table { 
+        
+        /* 电脑端表格样式 */
+        .desktop-table {
+            display: block;
+        }
+        .desktop-table table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 900px; /* 电脑端最小宽度 */
+            min-width: 900px;
         }
-        th { 
+        .desktop-table th { 
             background: #f8f9fa; 
             padding: 12px 8px; 
             text-align: left; 
@@ -133,128 +132,175 @@
             font-size: 12px;
             white-space: nowrap;
         }
-        td { 
+        .desktop-table td { 
             padding: 8px; 
             border-bottom: 1px solid #f0f0f0; 
             font-size: 12px;
-            line-height: 1.4; /* 设置行高 */
-            vertical-align: top; /* 文本顶部对齐 */
+            line-height: 1.4;
+            vertical-align: top;
         }
-        tr:hover { background: #f9f9f9; }
+        .desktop-table tr:hover { background: #f9f9f9; }
         
         .status-on-time { color: #4CAF50; font-weight: bold; }
         .status-late { color: #FF9800; font-weight: bold; }
         .status-absent { color: #f44336; font-weight: bold; }
         
-        /* 操作按钮调整为水平排列（像图片中那样） */
-        .action-buttons {
+        /* 电脑端表格容器 */
+        .desktop-table-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* 电脑端操作按钮 */
+        .desktop-action-buttons {
             display: flex;
-            flex-direction: row; /* 水平排列 */
-            gap: 3px; /* 按钮间距 */
+            gap: 4px;
         }
         .btn-action { 
-            padding: 4px 6px; /* 减小内边距 */
+            padding: 4px 6px;
             border: none; 
-            border-radius: 4px; /* 减小圆角 */
+            border-radius: 4px;
             cursor: pointer; 
-            font-size: 10px; /* 减小字体 */
-            white-space: nowrap; /* 防止按钮文字换行 */
+            font-size: 10px;
+            white-space: nowrap;
         }
         .btn-detail { background: #2196F3; color: white; }
         .btn-edit { background: #FF9800; color: white; }
         .btn-delete { background: #f44336; color: white; }
         
-        /* 长文本换行显示，设置最小高度防止重叠 */
-        .text-wrap { 
-            white-space: normal; /* 允许换行 */
-            word-wrap: break-word; /* 允许单词内换行 */
-            word-break: break-word; /* 单词内断行 */
-            overflow: visible; /* 显示全部内容 */
-            line-height: 1.5; /* 增加行高防止重叠 */
-            min-height: 2.5em; /* 设置最小高度，防止文字重叠 */
+        /* 电脑端文本换行 */
+        .desktop-text-wrap { 
+            white-space: normal;
+            word-wrap: break-word;
+            word-break: break-word;
+            overflow: visible;
+            line-height: 1.5;
+            max-width: 120px;
         }
         
-        /* 修改表单弹窗样式 - 移动端优化 */
-        .modal-overlay {
+        /* 手机端卡片布局 - 完全隐藏电脑表格 */
+        .mobile-cards {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
         }
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        
+        /* 手机端卡片样式 */
+        .mobile-card {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 15px;
         }
-        .modal-header {
+        .mobile-card:last-child {
+            border-bottom: none;
+        }
+        
+        .mobile-card-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
-        .modal-title {
-            font-size: 16px;
+        
+        .mobile-card-date {
             font-weight: 600;
             color: #333;
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #666;
-        }
-        .modal-form .form-group { margin-bottom: 12px; }
-        .modal-form label { display: block; margin-bottom: 5px; color: #555; font-weight: 500; font-size: 13px; }
-        .modal-form input, .modal-form select, .modal-form textarea {
-            width: 100%;
-            padding: 8px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 13px;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 15px;
-        }
-        .btn-save { 
-            background: #4CAF50; 
-            color: white; 
-            padding: 10px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            flex: 1; 
-            font-size: 14px;
-        }
-        .btn-cancel { 
-            background: #666; 
-            color: white; 
-            padding: 10px; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            flex: 1; 
             font-size: 14px;
         }
         
-        /* 结果计数 */
-        .result-count {
-            padding: 10px 15px;
-            border-bottom: 1px solid #f0f0f0;
+        .mobile-card-class {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .mobile-card-row {
+            display: flex;
+            margin-bottom: 8px;
             font-size: 13px;
+        }
+        
+        .mobile-card-label {
+            width: 80px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        
+        .mobile-card-value {
+            flex: 1;
+            color: #333;
+        }
+        
+        .mobile-card-status {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .mobile-text-wrap {
+            line-height: 1.6;
+        }
+        
+        .mobile-action-buttons {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        
+        .mobile-btn-action {
+            flex: 1;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            /* 在手机上隐藏电脑表格，显示卡片布局 */
+            .desktop-table {
+                display: none;
+            }
+            
+            .mobile-cards {
+                display: block;
+            }
+            
+            /* 调整卡片内部样式 */
+            .mobile-card-row {
+                flex-direction: column;
+                margin-bottom: 6px;
+            }
+            
+            .mobile-card-label {
+                width: 100%;
+                margin-bottom: 2px;
+            }
+            
+            .mobile-card-value {
+                width: 100%;
+            }
+            
+            .mobile-text-wrap {
+                line-height: 1.7;
+            }
+            
+            .mobile-action-buttons {
+                flex-direction: column;
+                gap: 6px;
+            }
+            
+            .mobile-btn-action {
+                width: 100%;
+            }
         }
         
         /* 搜索下拉框样式 */
@@ -274,141 +320,9 @@
             font-size: 14px;
             pointer-events: none;
         }
-        
-        /* 移动端适配：小屏幕时重新设计表格布局 */
-        @media (max-width: 768px) {
-            .filter-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            /* 在手机上设置表格为块级显示，而不是表格布局 */
-            table, thead, tbody, th, td, tr { 
-                display: block; 
-            }
-            
-            /* 隐藏表格头部 */
-            thead tr { 
-                position: absolute;
-                top: -9999px;
-                left: -9999px;
-            }
-            
-            /* 设置表格行样式 */
-            tr { 
-                border-bottom: 1px solid #ddd; 
-                margin-bottom: 10px;
-                background: white;
-                border-radius: 8px;
-                padding: 10px;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            }
-            
-            /* 设置单元格样式 */
-            td { 
-                border: none;
-                position: relative;
-                padding-left: 40% !important; /* 左边留出标签位置 */
-                padding-top: 6px;
-                padding-bottom: 6px;
-                padding-right: 6px;
-                min-height: 2.5em; /* 最小高度防止重叠 */
-            }
-            
-            /* 在每行数据前添加标签 */
-            td:before { 
-                position: absolute;
-                top: 6px;
-                left: 6px;
-                width: 35%; 
-                padding-right: 10px; 
-                white-space: nowrap;
-                font-weight: 600;
-                color: #555;
-            }
-            
-            /* 为每列设置标签 */
-            td:nth-of-type(1):before { content: "日期:"; }
-            td:nth-of-type(2):before { content: "星期:"; }
-            td:nth-of-type(3):before { content: "班级:"; }
-            td:nth-of-type(4):before { content: "节次:"; }
-            td:nth-of-type(5):before { content: "科目:"; }
-            td:nth-of-type(6):before { content: "老师:"; }
-            td:nth-of-type(7):before { content: "检查人:"; }
-            td:nth-of-type(8):before { content: "跟班老师:"; }
-            td:nth-of-type(9):before { content: "到岗:"; }
-            td:nth-of-type(10):before { content: "学生状态:"; }
-            td:nth-of-type(11):before { content: "教室环境:"; }
-            td:nth-of-type(12):before { content: "查课记录:"; }
-            td:nth-of-type(13):before { content: "操作:"; }
-            
-            /* 操作列特殊处理 */
-            td:nth-of-type(13) {
-                padding-left: 6px !important; /* 操作列不需要左边标签 */
-            }
-            td:nth-of-type(13):before {
-                display: none; /* 隐藏操作列的标签 */
-            }
-            
-            /* 文本换行设置 */
-            .text-wrap {
-                line-height: 1.6; /* 增加行高 */
-                min-height: 3em; /* 增加最小高度 */
-            }
-            
-            /* 操作按钮在手机上垂直排列 */
-            .action-buttons {
-                flex-direction: column; /* 手机上垂直排列 */
-                gap: 4px;
-            }
-            
-            .btn-action {
-                width: 100%; /* 按钮宽度100% */
-                padding: 6px 8px;
-                font-size: 11px;
-            }
-        }
-        
-        /* 中等屏幕手机 */
-        @media (max-width: 480px) {
-            td {
-                padding-left: 45% !important; /* 左边标签位置更大 */
-            }
-            
-            /* 减小内边距 */
-            tr {
-                padding: 8px;
-            }
-            
-            .text-wrap {
-                line-height: 1.7;
-                min-height: 3.2em;
-            }
-        }
-        
-        /* 小屏幕手机 */
-        @media (max-width: 375px) {
-            td {
-                padding-left: 50% !important; /* 左边标签位置更大 */
-            }
-            
-            /* 减小字体 */
-            td:before {
-                font-size: 11px;
-            }
-            
-            td {
-                font-size: 11px;
-            }
-            
-            .text-wrap {
-                line-height: 1.8;
-                min-height: 3.4em;
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- 返回按钮在右上角 -->
     <div class="top-header">
         <a href="index.html" class="back-btn">← 返回</a>
     </div>
@@ -420,18 +334,14 @@
     
     <div class="filter-container">
         <div class="filter-grid">
-            <!-- 第1行：2个条件 -->
             <div class="filter-group">
                 <label>开始日期</label>
                 <input type="date" id="filter_date_start">
             </div>
-            
             <div class="filter-group">
                 <label>结束日期</label>
                 <input type="date" id="filter_date_end">
             </div>
-            
-            <!-- 第2行：2个条件 -->
             <div class="filter-group">
                 <label>星期</label>
                 <select id="filter_weekday">
@@ -443,15 +353,12 @@
                     <option value="星期五">星期五</option>
                 </select>
             </div>
-            
             <div class="filter-group">
                 <label>班级</label>
                 <select id="filter_class">
                     <option value="">全部班级</option>
                 </select>
             </div>
-            
-            <!-- 第3行：2个条件 -->
             <div class="filter-group">
                 <label>节次</label>
                 <select id="filter_period">
@@ -466,37 +373,30 @@
                     <option value="8">第8节</option>
                 </select>
             </div>
-            
             <div class="filter-group searchable-group">
                 <label>任课老师</label>
                 <input type="text" id="filter_teacher" list="filter_teacher_list" placeholder="输入名字搜索或选择">
                 <datalist id="filter_teacher_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
-            
-            <!-- 第4行：2个条件 -->
             <div class="filter-group searchable-group">
                 <label>跟班老师</label>
                 <input type="text" id="filter_follow_teacher" list="filter_follow_teacher_list" placeholder="输入名字搜索或选择">
                 <datalist id="filter_follow_teacher_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
-            
             <div class="filter-group searchable-group full-width">
                 <label>科目</label>
                 <input type="text" id="filter_subject" list="filter_subject_list" placeholder="输入科目搜索或选择">
                 <datalist id="filter_subject_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
-            
-            <!-- 第5行：2个条件 -->
             <div class="filter-group searchable-group full-width">
                 <label>检查人</label>
                 <input type="text" id="filter_inspector" list="filter_inspector_list" placeholder="输入名字搜索或选择">
                 <datalist id="filter_inspector_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
-            
             <div class="filter-group full-width">
                 <label>到岗情况</label>
                 <select id="filter_arrival">
@@ -520,29 +420,38 @@
         <div class="result-count">
             查询结果：<span id="resultCount">0</span> 条记录
         </div>
-        <div class="table-wrapper">
-            <table>
-                <thead>
-                    <tr>
-                        <th>日期</th>
-                        <th>星期</th>
-                        <th>班级</th>
-                        <th>节次</th>
-                        <th>科目</th>
-                        <th>老师</th>
-                        <th>检查人</th>
-                        <th>跟班老师</th>
-                        <th>到岗</th>
-                        <th>学生状态</th>
-                        <th>教室环境</th>
-                        <th>查课记录</th>
-                        <th>操作</th>
-                    </tr>
-                </thead>
-                <tbody id="resultBody">
-                    <tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
-                </tbody>
-            </table>
+        
+        <!-- 电脑端表格（在手机上隐藏） -->
+        <div class="desktop-table">
+            <div class="desktop-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>日期</th>
+                            <th>星期</th>
+                            <th>班级</th>
+                            <th>节次</th>
+                            <th>科目</th>
+                            <th>老师</th>
+                            <th>检查人</th>
+                            <th>跟班老师</th>
+                            <th>到岗</th>
+                            <th>学生状态</th>
+                            <th>教室环境</th>
+                            <th>查课记录</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="desktopResultBody">
+                        <tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 手机端卡片布局（在电脑上隐藏） -->
+        <div id="mobileResultBody" class="mobile-cards">
+            <div style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</div>
         </div>
     </div>
 
@@ -646,29 +555,24 @@
     </div>
 
     <script>
-        // 全局变量
         let supabaseClient = null;
         let allData = [];
         
-        // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
             initPage();
         });
         
         async function initPage() {
-            // 设置默认日期为最近7天
             const endDate = new Date();
             const startDate = new Date();
             startDate.setDate(startDate.getDate() - 7);
             document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
             document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
             
-            // 初始化Supabase
             const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
             const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
             supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             
-            // 加载所有下拉框数据
             await Promise.all([
                 loadFilterClasses(),
                 loadFilterSubjects(),
@@ -679,16 +583,13 @@
                 loadTeachersForEditDatalist()
             ]);
             
-            // 绑定编辑表单的日期变化事件
             document.getElementById('edit_date').addEventListener('change', function() {
                 calculateWeekDayForEdit(this.value);
             });
             
-            // 默认执行一次查询
             await fetchData();
         }
         
-        // 为编辑表单计算星期
         function calculateWeekDayForEdit(dateString) {
             try {
                 const dateObj = new Date(dateString);
@@ -700,7 +601,6 @@
             }
         }
         
-        // 加载编辑弹窗的跟班老师列表
         async function loadFollowTeachersForEdit() {
             try {
                 const { data, error } = await supabaseClient
@@ -720,7 +620,6 @@
             }
         }
         
-        // 加载编辑弹窗的任课老师列表
         async function loadTeachersForEditDatalist() {
             try {
                 const { data, error } = await supabaseClient
@@ -793,7 +692,6 @@
                         datalist.appendChild(option);
                     });
                 } else {
-                    // 如果teachers表没有数据，从inspections表获取
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
                         .from('inspections')
                         .select('teacher_name')
@@ -828,7 +726,6 @@
                         datalist.appendChild(option);
                     });
                 } else {
-                    // 如果teachers表没有数据，从inspections表获取已有的跟班老师
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
                         .from('inspections')
                         .select('follow_teacher')
@@ -883,7 +780,6 @@
             }
         }
         
-        // 查询数据
         async function fetchData() {
             if (!supabaseClient) {
                 alert('系统正在初始化，请稍后重试');
@@ -904,11 +800,12 @@
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
             
-            const tbody = document.getElementById('resultBody');
-            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+            const desktopTbody = document.getElementById('desktopResultBody');
+            const mobileBody = document.getElementById('mobileResultBody');
+            desktopTbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
+            mobileBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">正在查询...</div>';
             
             try {
-                // 按created_at倒序排序，确保最新填写的记录在最上面
                 let query = supabaseClient
                     .from('inspections')
                     .select('*')
@@ -931,18 +828,20 @@
                 }
                 
                 allData = data || [];
-                renderTable(allData);
+                renderDesktopTable(allData);
+                renderMobileCards(allData);
                 document.getElementById('resultCount').textContent = allData.length;
                 
             } catch (error) {
                 console.error("查询失败:", error);
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
+                desktopTbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
+                mobileBody.innerHTML = `<div style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</div>`;
             }
         }
         
-        // 渲染表格
-        function renderTable(data) {
-            const tbody = document.getElementById('resultBody');
+        // 渲染电脑端表格
+        function renderDesktopTable(data) {
+            const tbody = document.getElementById('desktopResultBody');
             
             if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
@@ -968,11 +867,11 @@
                         <td>${record.inspector || ''}</td>
                         <td>${record.follow_teacher || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
-                        <td title="${record.student_status || ''}" class="text-wrap">${record.student_status || ''}</td>
-                        <td title="${record.environment || ''}" class="text-wrap">${record.environment || ''}</td>
-                        <td title="${record.problem || ''}" class="text-wrap">${record.problem || ''}</td>
+                        <td title="${record.student_status || ''}" class="desktop-text-wrap">${record.student_status || ''}</td>
+                        <td title="${record.environment || ''}" class="desktop-text-wrap">${record.environment || ''}</td>
+                        <td title="${record.problem || ''}" class="desktop-text-wrap">${record.problem || ''}</td>
                         <td>
-                            <div class="action-buttons">
+                            <div class="desktop-action-buttons">
                                 <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
                                 <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
                                 <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
@@ -982,6 +881,102 @@
                 `;
             });
             tbody.innerHTML = html;
+        }
+        
+        // 渲染手机端卡片
+        function renderMobileCards(data) {
+            const container = document.getElementById('mobileResultBody');
+            
+            if (data.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</div>';
+                return;
+            }
+            
+            let html = '';
+            data.forEach(record => {
+                let statusClass = '';
+                let statusBgColor = '';
+                if (record.arrival_status === '按时到达') {
+                    statusClass = 'status-on-time';
+                    statusBgColor = '#4CAF50';
+                } else if (record.arrival_status === '迟到') {
+                    statusClass = 'status-late';
+                    statusBgColor = '#FF9800';
+                } else {
+                    statusClass = 'status-absent';
+                    statusBgColor = '#f44336';
+                }
+                
+                html += `
+                    <div class="mobile-card">
+                        <div class="mobile-card-header">
+                            <div class="mobile-card-date">${record.date || ''}</div>
+                            <div class="mobile-card-class">${record.class_name || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">星期</div>
+                            <div class="mobile-card-value">${record.week_day || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">节次</div>
+                            <div class="mobile-card-value">${record.period ? '第' + record.period + '节' : ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">科目</div>
+                            <div class="mobile-card-value">${record.subject || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">老师</div>
+                            <div class="mobile-card-value">${record.teacher_name || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">检查人</div>
+                            <div class="mobile-card-value">${record.inspector || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">跟班老师</div>
+                            <div class="mobile-card-value">${record.follow_teacher || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">到岗情况</div>
+                            <div class="mobile-card-value">
+                                <span class="mobile-card-status" style="background-color: ${statusBgColor}; color: white;">
+                                    ${record.arrival_status || ''}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">学生状态</div>
+                            <div class="mobile-card-value mobile-text-wrap">${record.student_status || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">教室环境</div>
+                            <div class="mobile-card-value mobile-text-wrap">${record.environment || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-card-row">
+                            <div class="mobile-card-label">查课记录</div>
+                            <div class="mobile-card-value mobile-text-wrap">${record.problem || ''}</div>
+                        </div>
+                        
+                        <div class="mobile-action-buttons">
+                            <button class="mobile-btn-action btn-detail" onclick="viewDetail(${record.id})">📄 详情</button>
+                            <button class="mobile-btn-action btn-edit" onclick="showEditModal(${record.id})">✏️ 修改</button>
+                            <button class="mobile-btn-action btn-delete" onclick="deleteRecord(${record.id})">🗑️ 删除</button>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
         }
         
         // 查看详情
@@ -1015,14 +1010,12 @@
                 return;
             }
             
-            // 验证密码
             const password = prompt('请输入修改密码：');
             if (password !== '123') {
                 alert('密码错误，无法修改记录！');
                 return;
             }
             
-            // 填充表单数据
             document.getElementById('edit_id').value = record.id;
             document.getElementById('edit_date').value = record.date || '';
             document.getElementById('edit_week_day').value = record.week_day || '';
@@ -1037,7 +1030,6 @@
             document.getElementById('edit_problem').value = record.problem || '';
             document.getElementById('edit_suggestion').value = record.suggestion || '';
             
-            // 显示模态框
             document.getElementById('editModal').style.display = 'flex';
         }
         
@@ -1069,7 +1061,6 @@
                 suggestion: document.getElementById('edit_suggestion').value
             };
             
-            // 验证必填项
             if (!formData.date || !formData.week_day || !formData.period || !formData.arrival_status) {
                 alert('请填写必填项：日期、星期、节次、到岗情况');
                 return;
@@ -1086,7 +1077,6 @@
                 alert('✅ 记录修改成功！');
                 closeEditModal();
                 
-                // 刷新数据
                 await fetchData();
                 
             } catch (error) {
@@ -1103,14 +1093,12 @@
                 return;
             }
             
-            // 验证密码
             const password = prompt('请输入删除密码：');
             if (password !== '123') {
                 alert('密码错误，无法删除记录！');
                 return;
             }
             
-            // 确认删除
             const confirmDelete = confirm(`确定要删除这条记录吗？\n\n班级：${record.class_name}\n日期：${record.date}\n科目：${record.subject}\n检查人：${record.inspector}\n\n此操作不可撤销！`);
             if (!confirmDelete) {
                 return;
@@ -1126,7 +1114,6 @@
                 
                 alert('✅ 记录删除成功！');
                 
-                // 刷新数据
                 await fetchData();
                 
             } catch (error) {
@@ -1149,7 +1136,8 @@
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
+            document.getElementById('desktopResultBody').innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
+            document.getElementById('mobileResultBody').innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</div>';
             document.getElementById('resultCount').textContent = '0';
         }
         
