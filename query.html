@@ -134,9 +134,11 @@
             white-space: nowrap;
         }
         td { 
-            padding: 10px 8px; 
+            padding: 8px; /* 减少内边距，降低行高 */
             border-bottom: 1px solid #f0f0f0; 
             font-size: 12px;
+            line-height: 1.4; /* 设置行高 */
+            vertical-align: top; /* 文本顶部对齐 */
         }
         tr:hover { background: #f9f9f9; }
         
@@ -148,26 +150,32 @@
         .action-buttons {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 4px; /* 减少按钮间距 */
         }
         .btn-action { 
-            padding: 5px 8px; 
+            padding: 4px 6px; /* 减少按钮内边距 */
             border: none; 
-            border-radius: 4px; 
+            border-radius: 3px; /* 减小圆角 */
             cursor: pointer; 
-            font-size: 11px; 
+            font-size: 10px; /* 减小字体 */
             width: 100%;
         }
         .btn-detail { background: #2196F3; color: white; }
         .btn-edit { background: #FF9800; color: white; }
         .btn-delete { background: #f44336; color: white; }
         
-        /* 长文本截断样式 */
-        .text-truncate { 
-            max-width: 100px; 
-            white-space: nowrap; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
+        /* 长文本换行显示，而不是截断 */
+        .text-wrap { 
+            max-width: 120px; /* 设置最大宽度 */
+            white-space: normal; /* 允许换行 */
+            word-wrap: break-word; /* 允许单词内换行 */
+            word-break: break-word; /* 单词内断行 */
+            overflow: visible; /* 显示全部内容 */
+            display: -webkit-box; /* 多行显示 */
+            -webkit-line-clamp: 2; /* 最多显示2行 */
+            -webkit-box-orient: vertical; 
+            line-height: 1.4; /* 设置行高 */
+            max-height: 2.8em; /* 2行高度 (1.4 * 2) */
         }
         
         /* 修改表单弹窗样式 - 移动端优化 */
@@ -275,6 +283,20 @@
         @media (max-width: 768px) {
             .filter-grid {
                 grid-template-columns: 1fr;
+            }
+            
+            .text-wrap {
+                max-width: 80px; /* 移动端更小宽度 */
+                font-size: 11px; /* 移动端更小字体 */
+            }
+            
+            .action-buttons {
+                gap: 3px;
+            }
+            
+            .btn-action {
+                padding: 3px 5px;
+                font-size: 9px;
             }
         }
     </style>
@@ -407,7 +429,7 @@
                         <th>到岗</th>
                         <th>学生状态</th>
                         <th>教室环境</th>
-                        <th>查课记录</th> <!-- 新增列 -->
+                        <th>查课记录</th>
                         <th>操作</th>
                     </tr>
                 </thead>
@@ -829,16 +851,6 @@
                 if (record.arrival_status === '旷课') statusClass = 'status-absent';
                 if (record.arrival_status === '其他') statusClass = 'status-absent';
                 
-                // 对长文本进行截断处理
-                const studentStatusTruncated = record.student_status ? 
-                    (record.student_status.length > 10 ? record.student_status.substring(0, 10) + '...' : record.student_status) : '';
-                
-                const environmentTruncated = record.environment ? 
-                    (record.environment.length > 10 ? record.environment.substring(0, 10) + '...' : record.environment) : '';
-                
-                const problemTruncated = record.problem ? 
-                    (record.problem.length > 15 ? record.problem.substring(0, 15) + '...' : record.problem) : '';
-                
                 html += `
                     <tr>
                         <td>${record.date || ''}</td>
@@ -850,9 +862,9 @@
                         <td>${record.inspector || ''}</td>
                         <td>${record.follow_teacher || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
-                        <td title="${record.student_status || ''}" class="text-truncate">${studentStatusTruncated}</td>
-                        <td title="${record.environment || ''}" class="text-truncate">${environmentTruncated}</td>
-                        <td title="${record.problem || ''}" class="text-truncate">${problemTruncated}</td>
+                        <td title="${record.student_status || ''}" class="text-wrap">${record.student_status || ''}</td>
+                        <td title="${record.environment || ''}" class="text-wrap">${record.environment || ''}</td>
+                        <td title="${record.problem || ''}" class="text-wrap">${record.problem || ''}</td>
                         <td>
                             <div class="action-buttons">
                                 <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
