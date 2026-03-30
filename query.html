@@ -159,22 +159,22 @@
             white-space: nowrap;
         }
         
-        /* 表格列宽设置 - 根据您的要求调整 */
+        /* 表格列宽设置 */
         th:nth-child(1), td:nth-child(1) { /* 日期列 */
-            min-width: 110px; /* 加宽，确保"2026-03-30"能完整显示 */
-            white-space: nowrap; /* 禁止换行 */
+            min-width: 110px;
+            white-space: nowrap;
         }
         th:nth-child(2), td:nth-child(2) { /* 星期列 */
-            min-width: 70px; /* 加宽，确保"星期一"能完整显示 */
-            white-space: nowrap; /* 禁止换行 */
+            min-width: 70px;
+            white-space: nowrap;
         }
         th:nth-child(3), td:nth-child(3) { /* 班级列 */
-            min-width: 80px; /* 加宽，确保"八1班"能完整显示 */
-            white-space: nowrap; /* 禁止换行 */
+            min-width: 80px;
+            white-space: nowrap;
         }
         th:nth-child(4), td:nth-child(4) { /* 节次列 */
-            min-width: 70px; /* 加宽，确保"第3节"能完整显示 */
-            white-space: nowrap; /* 禁止换行 */
+            min-width: 70px;
+            white-space: nowrap;
         }
         th:nth-child(5), td:nth-child(5) { /* 科目列 */
             min-width: 80px;
@@ -190,11 +190,11 @@
         }
         th:nth-child(9), td:nth-child(9) { /* 到岗列 */
             min-width: 80px;
-            white-space: nowrap; /* 禁止换行 */
+            white-space: nowrap;
         }
-        th:nth-child(10), td:nth-child(10) { /* 学生状态列 - 调窄 */
+        th:nth-child(10), td:nth-child(10) { /* 学生状态列 */
             min-width: 150px;
-            max-width: 180px; /* 调窄 */
+            max-width: 180px;
         }
         th:nth-child(11), td:nth-child(11) { /* 教室环境列 */
             min-width: 120px;
@@ -205,7 +205,7 @@
             max-width: 180px;
         }
         th:nth-child(13), td:nth-child(13) { /* 操作列 */
-            min-width: 130px; /* 稍微加宽，确保三个按钮能在一行显示 */
+            min-width: 130px;
         }
         
         /* 文本换行设置 */
@@ -215,21 +215,36 @@
             line-height: 1.5;
         }
         
-        /* 操作按钮 */
+        /* 操作按钮 - 修改为两行布局，如您的图片所示 */
         .action-buttons {
             display: flex;
-            gap: 3px; /* 减小间距 */
-            flex-wrap: nowrap; /* 不换行 */
+            flex-direction: column;
+            gap: 4px;
         }
+        
+        .button-row {
+            display: flex;
+            gap: 4px;
+        }
+        
+        /* 第一行按钮（详情和修改） */
+        .top-row {
+            justify-content: space-between;
+        }
+        
+        /* 第二行按钮（删除） */
+        .bottom-row .btn-action {
+            width: 100%;
+        }
+        
         .btn-action { 
-            padding: 5px 8px; /* 稍微减小内边距 */
+            padding: 6px 8px;
             border: none; 
-            border-radius: 4px;
+            border-radius: 5px;
             cursor: pointer; 
-            font-size: 11px; /* 减小字体 */
+            font-size: 12px;
             white-space: nowrap;
-            flex: 1; /* 平均分配宽度 */
-            min-width: 0; /* 允许按钮收缩 */
+            flex: 1;
         }
         .btn-detail { 
             background: #2196F3; 
@@ -279,37 +294,24 @@
                 min-width: 120px;
             }
             
-            /* 手机端操作按钮优化 - 一行显示 */
-            .action-buttons {
-                display: flex;
-                gap: 2px; /* 进一步减小间距 */
+            /* 手机端操作按钮 */
+            .btn-action {
+                padding: 5px 6px;
+                font-size: 11px;
             }
             
-            .btn-action {
-                padding: 4px 6px;
-                font-size: 10px;
-                flex: 1;
-                min-width: 0;
-                overflow: hidden;
-                text-overflow: ellipsis;
+            .action-buttons {
+                gap: 3px;
+            }
+            
+            .button-row {
+                gap: 3px;
             }
         }
         
         /* 极小屏幕手机适配 */
         @media (max-width: 480px) {
-            /* 在极小的屏幕上，让操作列按钮垂直排列 */
-            .action-buttons {
-                flex-direction: column;
-                gap: 3px;
-            }
-            
-            .btn-action {
-                width: 100%;
-                padding: 5px 4px;
-                font-size: 10px;
-            }
-            
-            /* 进一步调整列宽 */
+            /* 在极小的屏幕上，进一步调整 */
             th:nth-child(1), td:nth-child(1) { /* 日期列 */
                 min-width: 90px;
             }
@@ -322,6 +324,11 @@
             }
             th:nth-child(13), td:nth-child(13) { /* 操作列 */
                 min-width: 110px;
+            }
+            
+            .btn-action {
+                padding: 4px 5px;
+                font-size: 10px;
             }
         }
         
@@ -350,7 +357,7 @@
             color: #999;
         }
         
-        /* 修改记录弹窗样式 - 重新设计 */
+        /* 修改记录弹窗样式 */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -586,7 +593,7 @@
         </div>
     </div>
 
-    <!-- 修改记录弹窗 - 只在点击修改时显示 -->
+    <!-- 修改记录弹窗 -->
     <div id="editModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
@@ -990,6 +997,7 @@
                 if (record.arrival_status === '旷课') statusClass = 'status-absent';
                 if (record.arrival_status === '其他') statusClass = 'status-absent';
                 
+                // 操作按钮布局改为两行：第一行详情和修改，第二行删除
                 html += `
                     <tr>
                         <td>${record.date || ''}</td>
@@ -1006,9 +1014,13 @@
                         <td title="${record.problem || ''}" class="text-wrap">${record.problem || ''}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
-                                <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
-                                <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
+                                <div class="button-row top-row">
+                                    <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
+                                    <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
+                                </div>
+                                <div class="button-row bottom-row">
+                                    <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
+                                </div>
                             </div>
                         </td>
                     </tr>
