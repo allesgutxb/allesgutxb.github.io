@@ -58,14 +58,17 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
         
-        /* 移动端筛选条件单列布局 */
+        /* 查询条件两列布局 */
         .filter-grid { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 15px;
         }
         .filter-group { 
             margin-bottom: 10px; 
+        }
+        .filter-group.full-width {
+            grid-column: 1 / -1;
         }
         label { 
             display: block; 
@@ -118,7 +121,7 @@
         table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 900px; /* 增加最小宽度，因为新增了列 */
+            min-width: 900px;
         }
         th { 
             background: #f8f9fa; 
@@ -267,6 +270,13 @@
             font-size: 14px;
             pointer-events: none;
         }
+        
+        /* 移动端适配：小屏幕时恢复单列布局 */
+        @media (max-width: 768px) {
+            .filter-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
@@ -340,21 +350,21 @@
                 <div class="search-icon">🔍</div>
             </div>
             
-            <div class="filter-group">
+            <div class="filter-group searchable-group full-width">
                 <label>科目</label>
                 <input type="text" id="filter_subject" list="filter_subject_list" placeholder="输入科目搜索或选择">
                 <datalist id="filter_subject_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
             
-            <div class="filter-group searchable-group">
+            <div class="filter-group searchable-group full-width">
                 <label>检查人</label>
                 <input type="text" id="filter_inspector" list="filter_inspector_list" placeholder="输入名字搜索或选择">
                 <datalist id="filter_inspector_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
             
-            <div class="filter-group">
+            <div class="filter-group full-width">
                 <label>到岗情况</label>
                 <select id="filter_arrival">
                     <option value="">全部</option>
@@ -764,11 +774,11 @@
             tbody.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
+                // 按created_at倒序排序，确保最新填写的记录在最上面
                 let query = supabaseClient
                     .from('inspections')
                     .select('*')
-                    .order('date', { ascending: false })
-                    .order('period', { ascending: true });
+                    .order('created_at', { ascending: false });
                 
                 if (startDate) query = query.gte('date', startDate);
                 if (endDate) query = query.lte('date', endDate);
@@ -781,7 +791,10 @@
                 
                 const { data, error } = await query;
                 
-                if (error) throw error;
+                if (error) {
+                    console.error("查询失败:", error);
+                    throw error;
+                }
                 
                 allData = data || [];
                 renderTable(allData);
