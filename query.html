@@ -104,6 +104,8 @@
             overflow: hidden; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         /* 结果计数 */
@@ -111,18 +113,17 @@
             padding: 10px 15px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 13px;
+            position: sticky;
+            left: 0;
         }
         
-        /* 电脑端表格样式 */
-        .desktop-table {
-            display: block;
-        }
-        .desktop-table table { 
+        /* 表格样式 */
+        table { 
             width: 100%; 
             border-collapse: collapse; 
-            min-width: 900px;
+            min-width: 1200px; /* 确保表格在手机上可以横向滚动 */
         }
-        .desktop-table th { 
+        th { 
             background: #f8f9fa; 
             padding: 12px 8px; 
             text-align: left; 
@@ -131,175 +132,141 @@
             border-bottom: 2px solid #e0e0e0; 
             font-size: 12px;
             white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
-        .desktop-table td { 
+        td { 
             padding: 8px; 
             border-bottom: 1px solid #f0f0f0; 
             font-size: 12px;
             line-height: 1.4;
             vertical-align: top;
         }
-        .desktop-table tr:hover { background: #f9f9f9; }
+        tr:hover { background: #f9f9f9; }
         
-        .status-on-time { color: #4CAF50; font-weight: bold; }
-        .status-late { color: #FF9800; font-weight: bold; }
-        .status-absent { color: #f44336; font-weight: bold; }
-        
-        /* 电脑端表格容器 */
-        .desktop-table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
+        .status-on-time { 
+            color: #4CAF50; 
+            font-weight: bold; 
+            white-space: nowrap;
+        }
+        .status-late { 
+            color: #FF9800; 
+            font-weight: bold; 
+            white-space: nowrap;
+        }
+        .status-absent { 
+            color: #f44336; 
+            font-weight: bold; 
+            white-space: nowrap;
         }
         
-        /* 电脑端操作按钮 */
-        .desktop-action-buttons {
+        /* 表格列宽设置 */
+        th:nth-child(1), td:nth-child(1) { /* 日期 */
+            min-width: 100px;
+        }
+        th:nth-child(2), td:nth-child(2) { /* 星期 */
+            min-width: 60px;
+        }
+        th:nth-child(3), td:nth-child(3) { /* 班级 */
+            min-width: 80px;
+        }
+        th:nth-child(4), td:nth-child(4) { /* 节次 */
+            min-width: 60px;
+        }
+        th:nth-child(5), td:nth-child(5) { /* 科目 */
+            min-width: 80px;
+        }
+        th:nth-child(6), td:nth-child(6) { /* 老师 */
+            min-width: 80px;
+        }
+        th:nth-child(7), td:nth-child(7) { /* 检查人 */
+            min-width: 80px;
+        }
+        th:nth-child(8), td:nth-child(8) { /* 跟班老师 */
+            min-width: 80px;
+        }
+        th:nth-child(9), td:nth-child(9) { /* 到岗情况 */
+            min-width: 80px;
+        }
+        th:nth-child(10), td:nth-child(10) { /* 学生状态 */
+            min-width: 150px;
+            max-width: 200px;
+        }
+        th:nth-child(11), td:nth-child(11) { /* 教室环境 */
+            min-width: 120px;
+            max-width: 180px;
+        }
+        th:nth-child(12), td:nth-child(12) { /* 查课记录 */
+            min-width: 150px;
+            max-width: 200px;
+        }
+        th:nth-child(13), td:nth-child(13) { /* 操作 */
+            min-width: 120px;
+        }
+        
+        /* 文本换行设置 */
+        .text-wrap { 
+            word-wrap: break-word;
+            word-break: break-word;
+            line-height: 1.5;
+        }
+        
+        /* 操作按钮 */
+        .action-buttons {
             display: flex;
             gap: 4px;
         }
         .btn-action { 
-            padding: 4px 6px;
+            padding: 4px 8px;
             border: none; 
             border-radius: 4px;
             cursor: pointer; 
             font-size: 10px;
             white-space: nowrap;
         }
-        .btn-detail { background: #2196F3; color: white; }
-        .btn-edit { background: #FF9800; color: white; }
-        .btn-delete { background: #f44336; color: white; }
-        
-        /* 电脑端文本换行 */
-        .desktop-text-wrap { 
-            white-space: normal;
-            word-wrap: break-word;
-            word-break: break-word;
-            overflow: visible;
-            line-height: 1.5;
-            max-width: 120px;
+        .btn-detail { 
+            background: #2196F3; 
+            color: white; 
+        }
+        .btn-edit { 
+            background: #FF9800; 
+            color: white; 
+        }
+        .btn-delete { 
+            background: #f44336; 
+            color: white; 
         }
         
-        /* 手机端卡片布局 - 完全隐藏电脑表格 */
-        .mobile-cards {
-            display: none;
-        }
-        
-        /* 手机端卡片样式 */
-        .mobile-card {
-            border-bottom: 1px solid #f0f0f0;
-            padding: 15px;
-        }
-        .mobile-card:last-child {
-            border-bottom: none;
-        }
-        
-        .mobile-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        
-        .mobile-card-date {
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-        
-        .mobile-card-class {
-            background: #e3f2fd;
-            color: #1976d2;
-            padding: 3px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .mobile-card-row {
-            display: flex;
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
-        
-        .mobile-card-label {
-            width: 80px;
-            color: #666;
-            flex-shrink: 0;
-        }
-        
-        .mobile-card-value {
-            flex: 1;
-            color: #333;
-        }
-        
-        .mobile-card-status {
-            display: inline-block;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .mobile-text-wrap {
-            line-height: 1.6;
-        }
-        
-        .mobile-action-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 12px;
-        }
-        
-        .mobile-btn-action {
-            flex: 1;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        /* 移动端适配 */
+        /* 移动端适配 - 保持表格布局，但调整样式 */
         @media (max-width: 768px) {
             .filter-grid {
                 grid-template-columns: 1fr;
             }
             
-            /* 在手机上隐藏电脑表格，显示卡片布局 */
-            .desktop-table {
-                display: none;
+            .btn-action {
+                padding: 6px 8px;
+                font-size: 11px;
             }
             
-            .mobile-cards {
-                display: block;
-            }
-            
-            /* 调整卡片内部样式 */
-            .mobile-card-row {
+            /* 在手机上调整操作按钮布局 */
+            .action-buttons {
+                display: flex;
                 flex-direction: column;
-                margin-bottom: 6px;
+                gap: 3px;
             }
             
-            .mobile-card-label {
-                width: 100%;
-                margin-bottom: 2px;
+            th:nth-child(10), td:nth-child(10) { /* 学生状态 */
+                min-width: 120px;
+                max-width: 150px;
             }
-            
-            .mobile-card-value {
-                width: 100%;
+            th:nth-child(11), td:nth-child(11) { /* 教室环境 */
+                min-width: 100px;
+                max-width: 140px;
             }
-            
-            .mobile-text-wrap {
-                line-height: 1.7;
-            }
-            
-            .mobile-action-buttons {
-                flex-direction: column;
-                gap: 6px;
-            }
-            
-            .mobile-btn-action {
-                width: 100%;
+            th:nth-child(12), td:nth-child(12) { /* 查课记录 */
+                min-width: 120px;
+                max-width: 160px;
             }
         }
         
@@ -319,6 +286,12 @@
             color: #666;
             font-size: 14px;
             pointer-events: none;
+        }
+        
+        /* 表格滚动容器 */
+        .table-scroll-container {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
     </style>
 </head>
@@ -421,37 +394,29 @@
             查询结果：<span id="resultCount">0</span> 条记录
         </div>
         
-        <!-- 电脑端表格（在手机上隐藏） -->
-        <div class="desktop-table">
-            <div class="desktop-table-wrapper">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>日期</th>
-                            <th>星期</th>
-                            <th>班级</th>
-                            <th>节次</th>
-                            <th>科目</th>
-                            <th>老师</th>
-                            <th>检查人</th>
-                            <th>跟班老师</th>
-                            <th>到岗</th>
-                            <th>学生状态</th>
-                            <th>教室环境</th>
-                            <th>查课记录</th>
-                            <th>操作</th>
-                        </tr>
-                    </thead>
-                    <tbody id="desktopResultBody">
-                        <tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- 手机端卡片布局（在电脑上隐藏） -->
-        <div id="mobileResultBody" class="mobile-cards">
-            <div style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</div>
+        <div class="table-scroll-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>星期</th>
+                        <th>班级</th>
+                        <th>节次</th>
+                        <th>科目</th>
+                        <th>老师</th>
+                        <th>检查人</th>
+                        <th>跟班老师</th>
+                        <th>到岗</th>
+                        <th>学生状态</th>
+                        <th>教室环境</th>
+                        <th>查课记录</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="resultBody">
+                    <tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -800,10 +765,8 @@
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
             
-            const desktopTbody = document.getElementById('desktopResultBody');
-            const mobileBody = document.getElementById('mobileResultBody');
-            desktopTbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
-            mobileBody.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">正在查询...</div>';
+            const tbody = document.getElementById('resultBody');
+            tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 20px; color: #666;">正在查询...</td></tr>';
             
             try {
                 let query = supabaseClient
@@ -828,20 +791,18 @@
                 }
                 
                 allData = data || [];
-                renderDesktopTable(allData);
-                renderMobileCards(allData);
+                renderTable(allData);
                 document.getElementById('resultCount').textContent = allData.length;
                 
             } catch (error) {
                 console.error("查询失败:", error);
-                desktopTbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
-                mobileBody.innerHTML = `<div style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</div>`;
+                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; padding: 20px; color: #f44336;">查询失败: ${error.message}</td></tr>`;
             }
         }
         
-        // 渲染电脑端表格
-        function renderDesktopTable(data) {
-            const tbody = document.getElementById('desktopResultBody');
+        // 渲染表格
+        function renderTable(data) {
+            const tbody = document.getElementById('resultBody');
             
             if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</td></tr>';
@@ -867,11 +828,11 @@
                         <td>${record.inspector || ''}</td>
                         <td>${record.follow_teacher || ''}</td>
                         <td class="${statusClass}">${record.arrival_status || ''}</td>
-                        <td title="${record.student_status || ''}" class="desktop-text-wrap">${record.student_status || ''}</td>
-                        <td title="${record.environment || ''}" class="desktop-text-wrap">${record.environment || ''}</td>
-                        <td title="${record.problem || ''}" class="desktop-text-wrap">${record.problem || ''}</td>
+                        <td title="${record.student_status || ''}" class="text-wrap">${record.student_status || ''}</td>
+                        <td title="${record.environment || ''}" class="text-wrap">${record.environment || ''}</td>
+                        <td title="${record.problem || ''}" class="text-wrap">${record.problem || ''}</td>
                         <td>
-                            <div class="desktop-action-buttons">
+                            <div class="action-buttons">
                                 <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
                                 <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
                                 <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
@@ -881,102 +842,6 @@
                 `;
             });
             tbody.innerHTML = html;
-        }
-        
-        // 渲染手机端卡片
-        function renderMobileCards(data) {
-            const container = document.getElementById('mobileResultBody');
-            
-            if (data.length === 0) {
-                container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">没有找到匹配的记录</div>';
-                return;
-            }
-            
-            let html = '';
-            data.forEach(record => {
-                let statusClass = '';
-                let statusBgColor = '';
-                if (record.arrival_status === '按时到达') {
-                    statusClass = 'status-on-time';
-                    statusBgColor = '#4CAF50';
-                } else if (record.arrival_status === '迟到') {
-                    statusClass = 'status-late';
-                    statusBgColor = '#FF9800';
-                } else {
-                    statusClass = 'status-absent';
-                    statusBgColor = '#f44336';
-                }
-                
-                html += `
-                    <div class="mobile-card">
-                        <div class="mobile-card-header">
-                            <div class="mobile-card-date">${record.date || ''}</div>
-                            <div class="mobile-card-class">${record.class_name || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">星期</div>
-                            <div class="mobile-card-value">${record.week_day || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">节次</div>
-                            <div class="mobile-card-value">${record.period ? '第' + record.period + '节' : ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">科目</div>
-                            <div class="mobile-card-value">${record.subject || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">老师</div>
-                            <div class="mobile-card-value">${record.teacher_name || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">检查人</div>
-                            <div class="mobile-card-value">${record.inspector || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">跟班老师</div>
-                            <div class="mobile-card-value">${record.follow_teacher || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">到岗情况</div>
-                            <div class="mobile-card-value">
-                                <span class="mobile-card-status" style="background-color: ${statusBgColor}; color: white;">
-                                    ${record.arrival_status || ''}
-                                </span>
-                            </div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">学生状态</div>
-                            <div class="mobile-card-value mobile-text-wrap">${record.student_status || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">教室环境</div>
-                            <div class="mobile-card-value mobile-text-wrap">${record.environment || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-card-row">
-                            <div class="mobile-card-label">查课记录</div>
-                            <div class="mobile-card-value mobile-text-wrap">${record.problem || ''}</div>
-                        </div>
-                        
-                        <div class="mobile-action-buttons">
-                            <button class="mobile-btn-action btn-detail" onclick="viewDetail(${record.id})">📄 详情</button>
-                            <button class="mobile-btn-action btn-edit" onclick="showEditModal(${record.id})">✏️ 修改</button>
-                            <button class="mobile-btn-action btn-delete" onclick="deleteRecord(${record.id})">🗑️ 删除</button>
-                        </div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
         }
         
         // 查看详情
@@ -1136,8 +1001,7 @@
             document.getElementById('filter_arrival').value = '';
             
             allData = [];
-            document.getElementById('desktopResultBody').innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
-            document.getElementById('mobileResultBody').innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</div>';
+            document.getElementById('resultBody').innerHTML = '<tr><td colspan="13" style="text-align: center; padding: 40px; color: #999;">点击"查询"按钮加载数据</td></tr>';
             document.getElementById('resultCount').textContent = '0';
         }
         
