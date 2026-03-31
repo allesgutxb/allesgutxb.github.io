@@ -545,7 +545,7 @@
             }
         }
         
-        // 提交表单
+        // 提交表单 - 已修改为三字段检查重复记录
         async function submitForm() {
             if (!supabaseClient) {
                 alert('系统未初始化完成，请刷新页面重试');
@@ -590,6 +590,53 @@
                 return;
             }
             
+            // ========== 修改点：检查重复记录（仅使用三个字段） ==========
+            try {
+                console.log('开始检查重复记录（使用三字段检查）...');
+                
+                // 查询是否存在相同的关键字段组合：仅检查日期、班级、节次
+                const { data: existingRecords, error: queryError } = await supabaseClient
+                    .from('inspections')
+                    .select('id, date, class_name, period, subject, teacher_name')
+                    .eq('date', formData.date)
+                    .eq('class_name', formData.class_name)
+                    .eq('period', formData.period)  // 仅这三个字段
+                    .limit(1);
+                    
+                if (queryError) {
+                    console.error('查询重复记录失败:', queryError);
+                } else if (existingRecords && existingRecords.length > 0) {
+                    // 找到重复记录
+                    const existingRecord = existingRecords[0];
+                    const confirmMessage = `⚠️ 发现重复记录！
+                    
+已存在的记录信息：
+- 日期：${existingRecord.date}
+- 班级：${existingRecord.class_name}
+- 节次：第${existingRecord.period}节
+${existingRecord.subject ? `- 科目：${existingRecord.subject}` : ''}
+${existingRecord.teacher_name ? `- 老师：${existingRecord.teacher_name}` : ''}
+
+该时间段已存在巡查记录，您可以去查询页面查找并修改这条记录，避免重复提交。
+
+是否仍要提交新记录？（点击"确定"继续提交，点击"取消"返回修改）`;
+                    
+                    const shouldContinue = confirm(confirmMessage);
+                    if (!shouldContinue) {
+                        // 用户选择取消，不提交表单
+                        console.log('用户取消重复提交');
+                        return;
+                    }
+                    // 用户选择继续提交
+                    console.log('用户选择继续提交重复记录');
+                } else {
+                    console.log('未发现重复记录，可以正常提交');
+                }
+            } catch (checkError) {
+                console.error('检查重复记录时发生异常:', checkError);
+            }
+            // ========== 结束重复检查 ==========
+            
             console.log('准备提交的数据:', formData);
             
             const submitBtn = document.getElementById('submitBtn');
@@ -605,10 +652,42 @@
                     
                 if (error) {
                     console.error('数据库返回错误:', error);
+                    
+                    // 特殊处理唯一约束冲突（重复记录）
+                    if (error.code === '23505') {
+                        const detailedMessage = `❌ 提交失败：记录已存在！
+                        
+可能的原因：
+1. 相同日期、班级、节次已存在记录
+2. 数据库存在唯一性约束冲突
+
+建议操作：
+1. 前往"查询/修改"页面查找现有记录
+2. 修改现有记录而不是创建新记录
+3. 或联系管理员检查数据库约束
+
+错误详情: ${error.message}`;
+                        
+                        alert(detailedMessage);
+                        return; // 不再继续执行
+                    }
+                    
+                    // 其他类型的错误
                     throw error;
                 }
                 
-                alert('✅ 巡查记录提交成功！');
+                // 提交成功
+                const successMessage = `✅ 巡查记录提交成功！
+                
+已成功提交巡查记录：
+- 日期：${formData.date}
+- 班级：${formData.class_name}
+- 节次：第${formData.period}节
+- 科目：${formData.subject}
+- 老师：${formData.teacher_name}
+
+您可以在"查询/修改"页面查看和管理此记录。`;
+                alert(successMessage);
                 
                 // 重置表单，保留班级和日期
                 document.getElementById('subject').value = '';
@@ -630,11 +709,9 @@
                     alert(`❌ 提交失败：数据不符合数据库约束\n\n错误代码: 23514\n错误: ${error.message}\n\n请确保：\n1. 教师到岗情况必须为：按时到达、迟到、旷课、其他、正常、异常\n2. 所有必填字段已填写`);
                 } else if (error.code === '23502') {
                     alert(`❌ 提交失败：缺少必填字段\n\n错误: ${error.message}\n\n请确保所有必填字段都已填写`);
-                } else if (error.code === '23505') {
-                    alert(`❌ 提交失败：记录已存在\n\n错误: ${error.message}`);
                 } else if (error.code === '23503') {
                     alert(`❌ 提交失败：外键约束错误\n\n错误: ${error.message}`);
-                } else {
+                } else if (error.code !== '23505') { // 23505已在上面特殊处理
                     alert(`❌ 提交失败: ${error.message}\n错误代码: ${error.code || '未知'}`);
                 }
             } finally {
