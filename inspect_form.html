@@ -4,7 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>填写巡查记录</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="./vendor/supabase-js.min.js"></script>
+    <script>
+        (function ensureSupabaseLoaded() {
+            if (window.supabase) return;
+            var fallback = document.createElement('script');
+            fallback.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+            fallback.defer = true;
+            document.head.appendChild(fallback);
+        })();
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f5f7fa; padding: 20px; }
@@ -176,6 +185,15 @@
         // 全局变量
         let selectedClass = '';
         let supabaseClient = null;
+        let autoFillTimer = null;
+        const scheduleAutoFillCache = new Map();
+        const CACHE_TTL_MS = 10 * 60 * 1000;
+        const PENDING_SUBMISSIONS_KEY = 'pending_inspection_submissions';
+        const SUBMIT_DEDUP_WINDOW_MS = 10 * 1000;
+        const SUBMIT_CLICK_COOLDOWN_MS = 2000;
+        let isSyncingPendingSubmissions = false;
+        let isSubmitting = false;
+        let lastSubmitClickAt = 0;
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
@@ -184,6 +202,11 @@
         
         async function initPage() {
             console.log("页面初始化开始...");
+
+            if (!window.supabase || !window.supabase.createClient) {
+                alert('填写页初始化失败：Supabase SDK 未加载，请刷新重试。');
+                return;
+            }
             
             // 1. 获取班级参数
             const urlParams = new URLSearchParams(window.location.search);
@@ -219,37 +242,214 @@
                 console.log("日期变化:", this.value);
                 const weekDay = calculateWeekDay(this.value);
                 console.log("星期计算结果:", weekDay);
-                setTimeout(() => {
-                    autoFillSchedule();
-                }, 100);
+                triggerAutoFill();
             });
             
             document.getElementById('period').addEventListener('change', function() {
                 console.log("节次变化:", this.value);
-                setTimeout(() => {
-                    autoFillSchedule();
-                }, 100);
+                triggerAutoFill();
             });
             
-            // 5. 加载检查人、跟班老师和任课老师列表
+            // 5. 先用缓存秒开，再后台刷新检查人和老师列表
+            hydrateLookupCache();
+            refreshLookupDataInBackground();
+            
+            // 6. 绑定提交按钮
+            document.getElementById('submitBtn').addEventListener('click', submitForm);
+            
+            // 7. 尝试自动填充课表
+            triggerAutoFill();
+            await syncPendingSubmissions();
+            window.addEventListener('online', syncPendingSubmissions);
+        }
+
+        function getCachedList(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.data) || !parsed.expireAt) return null;
+                if (Date.now() > parsed.expireAt) return null;
+                return parsed.data;
+            } catch (error) {
+                console.warn("读取缓存失败:", key, error);
+                return null;
+            }
+        }
+
+        function setCachedList(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify({
+                    data,
+                    expireAt: Date.now() + CACHE_TTL_MS
+                }));
+            } catch (error) {
+                console.warn("写入缓存失败:", key, error);
+            }
+        }
+
+        function renderOptions(datalistId, values) {
+            const datalist = document.getElementById(datalistId);
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            values.forEach(value => {
+                if (!value) return;
+                const option = document.createElement('option');
+                option.value = value;
+                datalist.appendChild(option);
+            });
+        }
+
+        function hydrateLookupCache() {
+            renderOptions('inspector_list', getCachedList('cache_inspectors') || []);
+            renderOptions('follow_teacher_list', getCachedList('cache_follow_teachers') || []);
+            renderOptions('teacher_name_list', getCachedList('cache_teacher_names') || []);
+        }
+
+        async function refreshLookupDataInBackground() {
             try {
                 await Promise.all([
                     loadInspectors(),
                     loadFollowTeachers(),
                     loadTeachersForDatalist()
                 ]);
-                console.log("老师列表加载完成");
+                console.log("老师列表已后台刷新");
             } catch (error) {
-                console.error("加载老师列表失败:", error);
+                console.error("后台刷新老师列表失败:", error);
             }
-            
-            // 6. 绑定提交按钮
-            document.getElementById('submitBtn').addEventListener('click', submitForm);
-            
-            // 7. 尝试自动填充课表
-            setTimeout(() => {
+        }
+
+        function triggerAutoFill() {
+            if (autoFillTimer) clearTimeout(autoFillTimer);
+            autoFillTimer = setTimeout(() => {
                 autoFillSchedule();
-            }, 300);
+            }, 250);
+        }
+
+        function getPendingSubmissions() {
+            try {
+                const raw = localStorage.getItem(PENDING_SUBMISSIONS_KEY);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (error) {
+                console.warn("读取待同步队列失败:", error);
+                return [];
+            }
+        }
+
+        function savePendingSubmissions(items) {
+            try {
+                localStorage.setItem(PENDING_SUBMISSIONS_KEY, JSON.stringify(items));
+            } catch (error) {
+                console.warn("保存待同步队列失败:", error);
+            }
+        }
+
+        function buildSubmissionFingerprint(formData) {
+            return [
+                formData.date,
+                formData.class_name,
+                formData.period,
+                formData.inspector,
+                formData.arrival_status,
+                formData.subject,
+                formData.teacher_name,
+                formData.problem
+            ].join('|');
+        }
+
+        function enqueueSubmission(formData) {
+            const pendingItems = getPendingSubmissions();
+            const nowMs = Date.now();
+            const fingerprint = buildSubmissionFingerprint(formData);
+
+            const hasRecentDuplicate = pendingItems.some(item => {
+                if (item.fingerprint !== fingerprint) return false;
+                const itemTime = new Date(item.createdAt).getTime();
+                return Number.isFinite(itemTime) && (nowMs - itemTime) <= SUBMIT_DEDUP_WINDOW_MS;
+            });
+
+            if (hasRecentDuplicate) {
+                return { queued: false, total: pendingItems.length };
+            }
+
+            pendingItems.push({
+                id: `${nowMs}_${Math.random().toString(36).slice(2, 8)}`,
+                createdAt: new Date(nowMs).toISOString(),
+                fingerprint,
+                formData
+            });
+            savePendingSubmissions(pendingItems);
+            return { queued: true, total: pendingItems.length };
+        }
+
+        function resetFormAfterSubmit() {
+            document.getElementById('subject').value = '';
+            document.getElementById('teacher_name').value = '';
+            document.getElementById('follow_teacher').value = '';
+            document.getElementById('arrival_status').value = '';
+            document.getElementById('arrival_time_detail').value = '';
+            document.getElementById('student_status').value = '';
+            document.getElementById('environment').value = '';
+            document.getElementById('inspector').value = '';
+            document.getElementById('problem').value = '';
+            document.getElementById('suggestion').value = '';
+            document.getElementById('period').selectedIndex = 0;
+        }
+
+        async function syncPendingSubmissions() {
+            if (isSyncingPendingSubmissions || !supabaseClient || !navigator.onLine) return;
+            const pendingItems = getPendingSubmissions();
+            if (pendingItems.length === 0) return;
+
+            isSyncingPendingSubmissions = true;
+            let syncedCount = 0;
+            const remainItems = [];
+
+            try {
+                for (const item of pendingItems) {
+                    const existed = await hasExistingInspectionSlot(item.formData);
+                    if (existed) {
+                        syncedCount += 1;
+                        continue;
+                    }
+
+                    const { error } = await supabaseClient
+                        .from('inspections')
+                        .insert([item.formData]);
+                    if (!error || error.code === '23505') {
+                        syncedCount += 1;
+                    } else {
+                        remainItems.push(item);
+                    }
+                }
+                savePendingSubmissions(remainItems);
+                if (syncedCount > 0) {
+                    showStatusMessage("已保存成功", "success");
+                }
+            } catch (error) {
+                console.error("同步待提交记录失败:", error);
+            } finally {
+                isSyncingPendingSubmissions = false;
+            }
+        }
+
+        async function hasExistingInspectionSlot(formData) {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('inspections')
+                    .select('id')
+                    .eq('date', formData.date)
+                    .eq('class_name', formData.class_name)
+                    .eq('period', formData.period)
+                    .limit(1);
+                if (error) return false;
+                return Array.isArray(data) && data.length > 0;
+            } catch (error) {
+                console.warn("查重失败，按常规插入处理:", error);
+                return false;
+            }
         }
         
         // 计算星期
@@ -300,15 +500,10 @@
                     return;
                 }
                 
-                const datalist = document.getElementById('inspector_list');
-                datalist.innerHTML = '';
-                
                 if (data && data.length > 0) {
-                    data.forEach(row => {
-                        const option = document.createElement('option');
-                        option.value = row.inspector_name;
-                        datalist.appendChild(option);
-                    });
+                    const inspectorNames = data.map(row => row.inspector_name).filter(Boolean);
+                    renderOptions('inspector_list', inspectorNames);
+                    setCachedList('cache_inspectors', inspectorNames);
                 } else {
                     // 如果inspectors表没有数据，从inspections表获取
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
@@ -318,15 +513,10 @@
                         .order('inspector');
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
-                        // 去重
                         const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector))].sort();
-                        uniqueInspectors.forEach(inspector => {
-                            if (inspector) {
-                                const option = document.createElement('option');
-                                option.value = inspector;
-                                datalist.appendChild(option);
-                            }
-                        });
+                        const inspectorNames = uniqueInspectors.filter(Boolean);
+                        renderOptions('inspector_list', inspectorNames);
+                        setCachedList('cache_inspectors', inspectorNames);
                     }
                 }
             } catch (error) {
@@ -352,15 +542,10 @@
                     return;
                 }
                 
-                const datalist = document.getElementById('follow_teacher_list');
-                datalist.innerHTML = '';
-                
                 if (data && data.length > 0) {
-                    data.forEach(row => {
-                        const option = document.createElement('option');
-                        option.value = row.teacher_name;
-                        datalist.appendChild(option);
-                    });
+                    const teacherNames = data.map(row => row.teacher_name).filter(Boolean);
+                    renderOptions('follow_teacher_list', teacherNames);
+                    setCachedList('cache_follow_teachers', teacherNames);
                 } else {
                     // 如果teachers表没有数据，从inspections表获取已有的跟班老师
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
@@ -370,15 +555,10 @@
                         .order('follow_teacher');
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
-                        // 去重
                         const uniqueTeachers = [...new Set(inspectionsData.map(item => item.follow_teacher))].sort();
-                        uniqueTeachers.forEach(teacher => {
-                            if (teacher) {
-                                const option = document.createElement('option');
-                                option.value = teacher;
-                                datalist.appendChild(option);
-                            }
-                        });
+                        const teacherNames = uniqueTeachers.filter(Boolean);
+                        renderOptions('follow_teacher_list', teacherNames);
+                        setCachedList('cache_follow_teachers', teacherNames);
                     }
                 }
             } catch (error) {
@@ -404,15 +584,10 @@
                     return;
                 }
                 
-                const datalist = document.getElementById('teacher_name_list');
-                datalist.innerHTML = '';
-                
                 if (data && data.length > 0) {
-                    data.forEach(row => {
-                        const option = document.createElement('option');
-                        option.value = row.teacher_name;
-                        datalist.appendChild(option);
-                    });
+                    const teacherNames = data.map(row => row.teacher_name).filter(Boolean);
+                    renderOptions('teacher_name_list', teacherNames);
+                    setCachedList('cache_teacher_names', teacherNames);
                 }
             } catch (error) {
                 console.error("加载任课老师异常:", error);
@@ -487,6 +662,19 @@
             showStatusMessage("正在查询课表信息...", "info");
             
             try {
+                const scheduleCacheKey = `${selectedClass}|${weekDay}|${period}`;
+                const cachedSchedule = scheduleAutoFillCache.get(scheduleCacheKey);
+                if (cachedSchedule) {
+                    document.getElementById('subject').value = cachedSchedule.subject || '';
+                    document.getElementById('teacher_name').value = cachedSchedule.teacher_name || '';
+                    if (cachedSchedule.subject || cachedSchedule.teacher_name) {
+                        showStatusMessage(`已自动填充: ${cachedSchedule.subject || ''} ${cachedSchedule.teacher_name ? `- ${cachedSchedule.teacher_name}` : ''}`, "success");
+                    } else {
+                        showStatusMessage("该时间段无课程安排，请手动填写", "info");
+                    }
+                    return;
+                }
+
                 const { data, error } = await supabaseClient
                     .from('schedule')
                     .select('subject, teacher_name')
@@ -504,6 +692,7 @@
                 }
                 
                 if (data) {
+                    scheduleAutoFillCache.set(scheduleCacheKey, data);
                     // 更新科目
                     const subjectInput = document.getElementById('subject');
                     if (subjectInput) {
@@ -531,6 +720,7 @@
                 } else {
                     console.log("未找到对应的课表信息");
                     showStatusMessage("该时间段无课程安排，请手动填写", "info");
+                    scheduleAutoFillCache.set(scheduleCacheKey, { subject: '', teacher_name: '' });
                     
                     // 清空科目和老师字段
                     const subjectInput = document.getElementById('subject');
@@ -545,13 +735,17 @@
             }
         }
         
-        // 提交表单 - 已修改为三字段检查重复记录
+        // 提交表单
         async function submitForm() {
-            if (!supabaseClient) {
-                alert('系统未初始化完成，请刷新页面重试');
+            const nowMs = Date.now();
+            if (isSubmitting) return;
+            if (nowMs - lastSubmitClickAt < SUBMIT_CLICK_COOLDOWN_MS) {
+                showStatusMessage('已保存成功', "info");
                 return;
             }
-            
+            isSubmitting = true;
+            lastSubmitClickAt = nowMs;
+
             const formData = {
                 date: document.getElementById('inspection_date').value.trim(),
                 week_day: document.getElementById('week_day').value.trim(),
@@ -590,131 +784,35 @@
                 return;
             }
             
-            // ========== 修改点：检查重复记录（仅使用三个字段） ==========
-            try {
-                console.log('开始检查重复记录（使用三字段检查）...');
-                
-                // 查询是否存在相同的关键字段组合：仅检查日期、班级、节次
-                const { data: existingRecords, error: queryError } = await supabaseClient
-                    .from('inspections')
-                    .select('id, date, class_name, period, subject, teacher_name')
-                    .eq('date', formData.date)
-                    .eq('class_name', formData.class_name)
-                    .eq('period', formData.period)  // 仅这三个字段
-                    .limit(1);
-                    
-                if (queryError) {
-                    console.error('查询重复记录失败:', queryError);
-                } else if (existingRecords && existingRecords.length > 0) {
-                    // 找到重复记录
-                    const existingRecord = existingRecords[0];
-                    const confirmMessage = `⚠️ 发现重复记录！
-                    
-已存在的记录信息：
-- 日期：${existingRecord.date}
-- 班级：${existingRecord.class_name}
-- 节次：第${existingRecord.period}节
-${existingRecord.subject ? `- 科目：${existingRecord.subject}` : ''}
-${existingRecord.teacher_name ? `- 老师：${existingRecord.teacher_name}` : ''}
-
-该时间段已存在巡查记录，您可以去查询页面查找并修改这条记录，避免重复提交。
-
-是否仍要提交新记录？（点击"确定"继续提交，点击"取消"返回修改）`;
-                    
-                    const shouldContinue = confirm(confirmMessage);
-                    if (!shouldContinue) {
-                        // 用户选择取消，不提交表单
-                        console.log('用户取消重复提交');
-                        return;
-                    }
-                    // 用户选择继续提交
-                    console.log('用户选择继续提交重复记录');
-                } else {
-                    console.log('未发现重复记录，可以正常提交');
-                }
-            } catch (checkError) {
-                console.error('检查重复记录时发生异常:', checkError);
-            }
-            // ========== 结束重复检查 ==========
-            
             console.log('准备提交的数据:', formData);
+            localStorage.setItem('currentInspectorName', formData.inspector);
             
             const submitBtn = document.getElementById('submitBtn');
             const originalText = submitBtn.textContent;
-            submitBtn.textContent = '提交中...';
+            submitBtn.textContent = '保存中...';
             submitBtn.disabled = true;
             
             try {
-                const { data, error } = await supabaseClient
-                    .from('inspections')
-                    .insert([formData])
-                    .select();
-                    
-                if (error) {
-                    console.error('数据库返回错误:', error);
-                    
-                    // 特殊处理唯一约束冲突（重复记录）
-                    if (error.code === '23505') {
-                        const detailedMessage = `❌ 提交失败：记录已存在！
-                        
-可能的原因：
-1. 相同日期、班级、节次已存在记录
-2. 数据库存在唯一性约束冲突
-
-建议操作：
-1. 前往"查询/修改"页面查找现有记录
-2. 修改现有记录而不是创建新记录
-3. 或联系管理员检查数据库约束
-
-错误详情: ${error.message}`;
-                        
-                        alert(detailedMessage);
-                        return; // 不再继续执行
-                    }
-                    
-                    // 其他类型的错误
-                    throw error;
+                const enqueueResult = enqueueSubmission(formData);
+                if (!enqueueResult.queued) {
+                    showStatusMessage('已保存成功', "info");
+                    alert('已保存成功');
+                    return;
                 }
-                
-                // 提交成功
-                const successMessage = `✅ 巡查记录提交成功！
-                
-已成功提交巡查记录：
-- 日期：${formData.date}
-- 班级：${formData.class_name}
-- 节次：第${formData.period}节
-- 科目：${formData.subject}
-- 老师：${formData.teacher_name}
+                resetFormAfterSubmit();
 
-您可以在"查询/修改"页面查看和管理此记录。`;
-                alert(successMessage);
-                
-                // 重置表单，保留班级和日期
-                document.getElementById('subject').value = '';
-                document.getElementById('teacher_name').value = '';
-                document.getElementById('follow_teacher').value = '';
-                document.getElementById('arrival_status').value = '';
-                document.getElementById('arrival_time_detail').value = '';
-                document.getElementById('student_status').value = '';
-                document.getElementById('environment').value = '';
-                document.getElementById('inspector').value = '';
-                document.getElementById('problem').value = '';
-                document.getElementById('suggestion').value = '';
-                document.getElementById('period').selectedIndex = 0;
-                
+                const saveMessage = navigator.onLine
+                    ? '已保存成功，系统会自动提交'
+                    : '已保存成功，系统会自动提交';
+                showStatusMessage(saveMessage, "success");
+                alert('已保存成功');
+
+                syncPendingSubmissions();
             } catch (error) {
-                console.error("提交失败详情:", error);
-                
-                if (error.code === '23514') {
-                    alert(`❌ 提交失败：数据不符合数据库约束\n\n错误代码: 23514\n错误: ${error.message}\n\n请确保：\n1. 教师到岗情况必须为：按时到达、迟到、旷课、其他、正常、异常\n2. 所有必填字段已填写`);
-                } else if (error.code === '23502') {
-                    alert(`❌ 提交失败：缺少必填字段\n\n错误: ${error.message}\n\n请确保所有必填字段都已填写`);
-                } else if (error.code === '23503') {
-                    alert(`❌ 提交失败：外键约束错误\n\n错误: ${error.message}`);
-                } else if (error.code !== '23505') { // 23505已在上面特殊处理
-                    alert(`❌ 提交失败: ${error.message}\n错误代码: ${error.code || '未知'}`);
-                }
+                console.error("本地保存失败:", error);
+                alert(`❌ 保存失败: ${error.message}`);
             } finally {
+                isSubmitting = false;
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             }

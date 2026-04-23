@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Supabase 连接测试</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="./vendor/supabase-js.min.js"></script>
+    <script>
+        (function ensureSupabaseLoaded() {
+            if (window.supabase) return;
+            var fallback = document.createElement('script');
+            fallback.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+            fallback.defer = true;
+            document.head.appendChild(fallback);
+        })();
+    </script>
     <style>
         body { font-family: sans-serif; padding: 20px; }
         .success { color: green; font-weight: bold; }
@@ -19,13 +28,17 @@
         var supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
         var supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
         
-        // 只创建一次 Supabase 客户端
-        var supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
         var resultDiv = document.getElementById('result');
+        var supabase = null;
         
         // 测试函数
         var runAllTests = async function() {
             var log = '<h3>测试结果：</h3>';
+            if (!window.supabase || !window.supabase.createClient) {
+                resultDiv.innerHTML = '<p class="error">❌ Supabase SDK 未加载成功，请检查 vendor 文件或网络。</p>';
+                return;
+            }
+            supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
             
             try {
                 // 测试1: 查询检查人表

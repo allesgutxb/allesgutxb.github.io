@@ -3,8 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>查询巡课记录</title>
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="./vendor/supabase-js.min.js"></script>
+    <script>
+        (function ensureSupabaseLoaded() {
+            if (window.supabase) return;
+            var fallback = document.createElement('script');
+            fallback.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+            fallback.defer = true;
+            document.head.appendChild(fallback);
+        })();
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
@@ -116,6 +128,50 @@
             padding: 10px 15px;
             border-bottom: 1px solid #f0f0f0;
             font-size: 13px;
+        }
+
+        .result-hint {
+            padding: 8px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+            color: #666;
+            background: #fcfcfd;
+        }
+
+        .pagination-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 15px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fafbfc;
+        }
+
+        .pagination-info {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .pagination-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-page {
+            padding: 6px 10px;
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            background: white;
+            color: #333;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .btn-page:disabled {
+            cursor: not-allowed;
+            color: #999;
+            background: #f3f4f6;
         }
         
         /* 表格样式 */
@@ -475,18 +531,18 @@
     
     <div class="header">
         <h2>🔍 查询巡课记录</h2>
-        <p class="subtitle">支持多条件筛选查询 | 检查人可以修改/删除自己填写的记录</p>
+        <p class="subtitle">支持多条件筛选查询 | 查课人员可下载，且仅可修改/删除本人记录</p>
     </div>
     
     <div class="filter-container">
         <div class="filter-grid">
             <div class="filter-group">
                 <label>开始日期</label>
-                <input type="date" id="filter_date_start">
+                <input type="date" id="filter_date_start" autocomplete="off">
             </div>
             <div class="filter-group">
                 <label>结束日期</label>
-                <input type="date" id="filter_date_end">
+                <input type="date" id="filter_date_end" autocomplete="off">
             </div>
             <div class="filter-group">
                 <label>星期</label>
@@ -543,6 +599,11 @@
                 <datalist id="filter_inspector_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
+            <div class="filter-group searchable-group full-width">
+                <label>当前查课人员（用于权限判断）</label>
+                <input type="text" id="current_inspector" list="filter_inspector_list" placeholder="请输入你的姓名">
+                <div class="search-icon">👤</div>
+            </div>
             <div class="filter-group full-width">
                 <label>到岗情况</label>
                 <select id="filter_arrival">
@@ -565,6 +626,16 @@
     <div class="table-container">
         <div class="result-count">
             查询结果：<span id="resultCount">0</span> 条记录
+        </div>
+        <div class="result-hint">
+            默认显示当天数据，可按日期和条件筛选更长时间
+        </div>
+        <div class="pagination-bar">
+            <div class="pagination-info" id="paginationInfo">第 1 页 / 共 1 页</div>
+            <div class="pagination-actions">
+                <button class="btn-page" id="prevPageBtn" onclick="goPrevPage()" disabled>上一页</button>
+                <button class="btn-page" id="nextPageBtn" onclick="goNextPage()" disabled>下一页</button>
+            </div>
         </div>
         
         <div class="table-wrapper">
@@ -695,31 +766,43 @@
     <script>
         let supabaseClient = null;
         let allData = [];
+        const QUERY_CACHE_TTL_MS = 10 * 60 * 1000;
+        const PAGE_SIZE = 100;
+        let teacherNamesPromise = null;
+        let currentPage = 1;
+        let totalRows = 0;
+        let totalPages = 1;
+        let hasNextPage = false;
+        let activeFilterSignature = '';
+        let pageStartCursors = { 1: null };
+        let currentInspectorIsAdmin = false;
+        let userTouchedDateRange = false;
         
         document.addEventListener('DOMContentLoaded', function() {
             initPage();
         });
         
         async function initPage() {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - 7);
-            document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
-            document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+            if (!window.supabase || !window.supabase.createClient) {
+                alert('查询页初始化失败：Supabase SDK 未加载，请刷新重试。');
+                return;
+            }
+
+            bindDateRangeGuard();
+            setTodayDateRange(true);
+            // 移动端可能在页面恢复后回填旧值，这里做多次兜底覆盖
+            window.setTimeout(() => setTodayDateRange(true), 150);
+            window.setTimeout(() => setTodayDateRange(true), 600);
             
             const supabaseUrl = 'https://dpyennxjaejstvbbjmbt.supabase.co';
             const supabaseKey = 'sb_publishable_v3N76dVRe9uxrmlj-DwbfA_FYAcD06R';
             supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             
-            await Promise.all([
-                loadFilterClasses(),
-                loadFilterSubjects(),
-                loadFilterTeachers(),
-                loadFilterFollowTeachers(),
-                loadFilterInspectors(),
-                loadFollowTeachersForEdit(),
-                loadTeachersForEditDatalist()
-            ]);
+            hydrateFilterCache();
+            refreshFilterOptionsInBackground();
+            hydrateCurrentInspector();
+            bindCurrentInspectorInput();
+            await refreshCurrentInspectorRole();
             
             document.getElementById('edit_date').addEventListener('change', function() {
                 calculateWeekDayForEdit(this.value);
@@ -732,7 +815,145 @@
                 }
             });
             
-            await fetchData();
+            await fetchData(true);
+        }
+        
+        function bindDateRangeGuard() {
+            const startInput = document.getElementById('filter_date_start');
+            const endInput = document.getElementById('filter_date_end');
+            if (!startInput || !endInput) return;
+            const markTouched = function() {
+                userTouchedDateRange = true;
+            };
+            startInput.addEventListener('change', markTouched);
+            endInput.addEventListener('change', markTouched);
+            startInput.addEventListener('input', markTouched);
+            endInput.addEventListener('input', markTouched);
+            window.addEventListener('pageshow', function() {
+                userTouchedDateRange = false;
+                setTodayDateRange(true);
+            });
+        }
+
+        function getCachedList(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || !Array.isArray(parsed.data) || !parsed.expireAt) return null;
+                if (Date.now() > parsed.expireAt) return null;
+                return parsed.data;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function setCachedList(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify({
+                    data,
+                    expireAt: Date.now() + QUERY_CACHE_TTL_MS
+                }));
+            } catch (error) {
+                console.warn("写入缓存失败:", key, error);
+            }
+        }
+
+        function fillDatalist(datalistId, values) {
+            const datalist = document.getElementById(datalistId);
+            if (!datalist) return;
+            datalist.innerHTML = '';
+            values.forEach(value => {
+                if (!value) return;
+                datalist.appendChild(new Option(value, value));
+            });
+        }
+
+        function fillSelect(selectId, values, keepFirstOption = true) {
+            const select = document.getElementById(selectId);
+            if (!select) return;
+            const firstOption = keepFirstOption ? select.options[0] : null;
+            select.innerHTML = '';
+            if (firstOption) select.appendChild(firstOption);
+            values.forEach(value => {
+                if (!value) return;
+                select.add(new Option(value, value));
+            });
+        }
+
+        function hydrateFilterCache() {
+            fillSelect('filter_class', getCachedList('cache_query_classes') || []);
+            fillDatalist('filter_subject_list', getCachedList('cache_query_subjects') || []);
+            const teacherNames = getCachedList('cache_query_teachers') || [];
+            fillDatalist('filter_teacher_list', teacherNames);
+            fillDatalist('filter_follow_teacher_list', teacherNames);
+            fillDatalist('edit_teacher_name_list', teacherNames);
+            fillDatalist('edit_follow_teacher_list', teacherNames);
+            fillDatalist('filter_inspector_list', getCachedList('cache_query_inspectors') || []);
+        }
+
+        function hydrateCurrentInspector() {
+            const cachedName = (localStorage.getItem('currentInspectorName') || '').trim();
+            if (cachedName) {
+                const input = document.getElementById('current_inspector');
+                if (input) input.value = cachedName;
+            }
+        }
+
+        function bindCurrentInspectorInput() {
+            const input = document.getElementById('current_inspector');
+            if (!input) return;
+            input.addEventListener('change', async function() {
+                const name = (this.value || '').trim();
+                if (name) {
+                    localStorage.setItem('currentInspectorName', name);
+                } else {
+                    localStorage.removeItem('currentInspectorName');
+                }
+                await refreshCurrentInspectorRole();
+            });
+        }
+
+        function getCurrentInspectorName() {
+            const input = document.getElementById('current_inspector');
+            return input ? (input.value || '').trim() : '';
+        }
+
+        async function refreshCurrentInspectorRole() {
+            const currentInspector = getCurrentInspectorName();
+            currentInspectorIsAdmin = false;
+            if (!currentInspector || !supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient
+                    .from('inspectors')
+                    .select('is_admin')
+                    .eq('inspector_name', currentInspector)
+                    .limit(1);
+                if (error) {
+                    console.warn("读取管理员角色失败:", error);
+                    return;
+                }
+                currentInspectorIsAdmin = Array.isArray(data) && data.length > 0 && !!data[0].is_admin;
+            } catch (error) {
+                console.warn("读取管理员角色异常:", error);
+            }
+        }
+
+        function canManageRecord(record) {
+            const currentInspector = getCurrentInspectorName();
+            return !!currentInspector && !!record && record.inspector === currentInspector;
+        }
+
+        async function refreshFilterOptionsInBackground() {
+            await Promise.all([
+                loadFilterClasses(),
+                loadFilterSubjects(),
+                loadFilterTeachers(),
+                loadFilterFollowTeachers(),
+                loadFilterInspectors(),
+                loadFollowTeachersForEdit(),
+                loadTeachersForEditDatalist()
+            ]);
         }
         
         function calculateWeekDayForEdit(dateString) {
@@ -745,21 +966,48 @@
                 console.error("计算星期失败:", error);
             }
         }
+
+        async function getTeacherNames() {
+            if (teacherNamesPromise) return teacherNamesPromise;
+            teacherNamesPromise = (async function() {
+                const names = [];
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('teachers')
+                        .select('teacher_name')
+                        .order('teacher_name');
+                    if (!error && data && data.length > 0) {
+                        data.forEach(item => item.teacher_name && names.push(item.teacher_name));
+                    }
+                } catch (error) {
+                    console.warn("读取 teachers 失败:", error);
+                }
+
+                if (names.length === 0) {
+                    try {
+                        const { data: fallbackData } = await supabaseClient
+                            .from('inspections')
+                            .select('teacher_name, follow_teacher')
+                            .order('created_at', { ascending: false })
+                            .limit(500);
+                        (fallbackData || []).forEach(item => {
+                            if (item.teacher_name) names.push(item.teacher_name);
+                            if (item.follow_teacher) names.push(item.follow_teacher);
+                        });
+                    } catch (error) {
+                        console.warn("读取 inspections 老师回退失败:", error);
+                    }
+                }
+
+                return [...new Set(names)].sort();
+            })();
+            return teacherNamesPromise;
+        }
         
         async function loadFollowTeachersForEdit() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('teachers')
-                    .select('teacher_name')
-                    .order('teacher_name');
-                    
-                if (!error && data) {
-                    const datalist = document.getElementById('edit_follow_teacher_list');
-                    data.forEach(teacher => {
-                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
-                        datalist.appendChild(option);
-                    });
-                }
+                const names = await getTeacherNames();
+                fillDatalist('edit_follow_teacher_list', names);
             } catch (error) {
                 console.error("加载编辑用跟班老师列表失败:", error);
             }
@@ -767,18 +1015,8 @@
         
         async function loadTeachersForEditDatalist() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('teachers')
-                    .select('teacher_name')
-                    .order('teacher_name');
-                    
-                if (!error && data) {
-                    const datalist = document.getElementById('edit_teacher_name_list');
-                    data.forEach(teacher => {
-                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
-                        datalist.appendChild(option);
-                    });
-                }
+                const names = await getTeacherNames();
+                fillDatalist('edit_teacher_name_list', names);
             } catch (error) {
                 console.error("加载编辑用任课老师列表失败:", error);
             }
@@ -792,11 +1030,9 @@
                     .order('class_name');
                     
                 if (!error && data) {
-                    const select = document.getElementById('filter_class');
-                    data.forEach(cls => {
-                        const option = new Option(cls.class_name, cls.class_name);
-                        select.add(option);
-                    });
+                    const classNames = data.map(cls => cls.class_name).filter(Boolean);
+                    fillSelect('filter_class', classNames);
+                    setCachedList('cache_query_classes', classNames);
                 }
             } catch (error) {
                 console.error("加载班级筛选失败:", error);
@@ -806,17 +1042,15 @@
         async function loadFilterSubjects() {
             try {
                 const { data, error } = await supabaseClient
-                    .from('inspections')
+                    .from('schedule')
                     .select('subject')
                     .not('subject', 'is', null);
                     
                 if (!error && data) {
                     const uniqueSubjects = [...new Set(data.map(item => item.subject).filter(s => s))];
-                    const datalist = document.getElementById('filter_subject_list');
-                    uniqueSubjects.sort().forEach(subject => {
-                        const option = new Option(subject, subject);
-                        datalist.appendChild(option);
-                    });
+                    const sortedSubjects = uniqueSubjects.sort();
+                    fillDatalist('filter_subject_list', sortedSubjects);
+                    setCachedList('cache_query_subjects', sortedSubjects);
                 }
             } catch (error) {
                 console.error("加载科目筛选失败:", error);
@@ -825,33 +1059,9 @@
         
         async function loadFilterTeachers() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('teachers')
-                    .select('teacher_name')
-                    .order('teacher_name');
-                    
-                if (!error && data) {
-                    const datalist = document.getElementById('filter_teacher_list');
-                    data.forEach(teacher => {
-                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
-                        datalist.appendChild(option);
-                    });
-                } else {
-                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
-                        .from('inspections')
-                        .select('teacher_name')
-                        .not('teacher_name', 'is', null)
-                        .order('teacher_name');
-                        
-                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
-                        const uniqueTeachers = [...new Set(inspectionsData.map(item => item.teacher_name).filter(t => t))];
-                        const datalist = document.getElementById('filter_teacher_list');
-                        uniqueTeachers.sort().forEach(teacher => {
-                            const option = new Option(teacher, teacher);
-                            datalist.appendChild(option);
-                        });
-                    }
-                }
+                const names = await getTeacherNames();
+                fillDatalist('filter_teacher_list', names);
+                setCachedList('cache_query_teachers', names);
             } catch (error) {
                 console.error("加载老师筛选失败:", error);
             }
@@ -859,33 +1069,8 @@
         
         async function loadFilterFollowTeachers() {
             try {
-                const { data, error } = await supabaseClient
-                    .from('teachers')
-                    .select('teacher_name')
-                    .order('teacher_name');
-                    
-                if (!error && data) {
-                    const datalist = document.getElementById('filter_follow_teacher_list');
-                    data.forEach(teacher => {
-                        const option = new Option(teacher.teacher_name, teacher.teacher_name);
-                        datalist.appendChild(option);
-                    });
-                } else {
-                    const { data: inspectionsData, error: inspectionsError } = await supabaseClient
-                        .from('inspections')
-                        .select('follow_teacher')
-                        .not('follow_teacher', 'is', null)
-                        .order('follow_teacher');
-                        
-                    if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
-                        const uniqueTeachers = [...new Set(inspectionsData.map(item => item.follow_teacher).filter(i => i))];
-                        const datalist = document.getElementById('filter_follow_teacher_list');
-                        uniqueTeachers.sort().forEach(teacher => {
-                            const option = new Option(teacher, teacher);
-                            datalist.appendChild(option);
-                        });
-                    }
-                }
+                const names = await getTeacherNames();
+                fillDatalist('filter_follow_teacher_list', names);
             } catch (error) {
                 console.error("加载跟班老师筛选失败:", error);
             }
@@ -899,11 +1084,9 @@
                     .order('inspector_name');
                     
                 if (!error && data) {
-                    const datalist = document.getElementById('filter_inspector_list');
-                    data.forEach(insp => {
-                        const option = new Option(insp.inspector_name, insp.inspector_name);
-                        datalist.appendChild(option);
-                    });
+                    const inspectors = data.map(insp => insp.inspector_name).filter(Boolean);
+                    fillDatalist('filter_inspector_list', inspectors);
+                    setCachedList('cache_query_inspectors', inspectors);
                 } else {
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
                         .from('inspections')
@@ -913,11 +1096,9 @@
                         
                     if (!inspectionsError && inspectionsData && inspectionsData.length > 0) {
                         const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
-                        const datalist = document.getElementById('filter_inspector_list');
-                        uniqueInspectors.sort().forEach(inspector => {
-                            const option = new Option(inspector, inspector);
-                            datalist.appendChild(option);
-                        });
+                        const inspectors = uniqueInspectors.sort();
+                        fillDatalist('filter_inspector_list', inspectors);
+                        setCachedList('cache_query_inspectors', inspectors);
                     }
                 }
             } catch (error) {
@@ -925,7 +1106,58 @@
             }
         }
         
-        async function fetchData() {
+        function updatePaginationUI() {
+            totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+            const pageInfo = document.getElementById('paginationInfo');
+            const prevBtn = document.getElementById('prevPageBtn');
+            const nextBtn = document.getElementById('nextPageBtn');
+
+            pageInfo.textContent = `第 ${currentPage} 页 / 共 ${totalPages} 页`;
+            prevBtn.disabled = currentPage <= 1;
+            nextBtn.disabled = !hasNextPage;
+        }
+
+        function setTodayDateRange(force = false) {
+            if (userTouchedDateRange && !force) return;
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            document.getElementById('filter_date_start').value = todayStr;
+            document.getElementById('filter_date_end').value = todayStr;
+        }
+
+        function toPeriodFilterValue(rawValue) {
+            if (!rawValue) return null;
+            const num = Number(rawValue);
+            return Number.isInteger(num) ? num : null;
+        }
+
+        function buildFilterSignature(startDate, endDate, filters) {
+            return JSON.stringify({ startDate: startDate || null, endDate: endDate || null, filters });
+        }
+
+        function applyCursorFilter(query, cursor) {
+            if (!cursor) return query;
+            const dateValue = String(cursor.date || '').replace(/"/g, '\\"');
+            const createdAtValue = String(cursor.created_at || '').replace(/"/g, '\\"');
+            const idValue = Number(cursor.id);
+            if (!dateValue || !createdAtValue || !Number.isFinite(idValue)) return query;
+
+            return query.or(
+                `date.lt.${dateValue},and(date.eq.${dateValue},created_at.lt.${createdAtValue}),and(date.eq.${dateValue},created_at.eq.${createdAtValue},id.lt.${idValue})`
+            );
+        }
+
+        function applyQueryFilters(query, startDate, endDate, filters) {
+            let nextQuery = query;
+            if (startDate) nextQuery = nextQuery.gte('date', startDate);
+            if (endDate) nextQuery = nextQuery.lte('date', endDate);
+            Object.keys(filters).forEach(key => {
+                if (filters[key]) nextQuery = nextQuery.eq(key, filters[key]);
+            });
+            return nextQuery;
+        }
+
+        async function fetchData(resetPage = true) {
             if (!supabaseClient) {
                 alert('系统正在初始化，请稍后重试');
                 return;
@@ -937,47 +1169,112 @@
             const filters = {
                 week_day: document.getElementById('filter_weekday').value || null,
                 class_name: document.getElementById('filter_class').value || null,
-                period: document.getElementById('filter_period').value || null,
+                period: toPeriodFilterValue(document.getElementById('filter_period').value),
                 teacher_name: document.getElementById('filter_teacher').value || null,
                 follow_teacher: document.getElementById('filter_follow_teacher').value || null,
                 subject: document.getElementById('filter_subject').value || null,
                 inspector: document.getElementById('filter_inspector').value || null,
                 arrival_status: document.getElementById('filter_arrival').value || null
             };
+
+            const nextSignature = buildFilterSignature(startDate, endDate, filters);
+            const filterChanged = nextSignature !== activeFilterSignature;
+            if (resetPage || filterChanged) {
+                currentPage = 1;
+                pageStartCursors = { 1: null };
+            }
+            activeFilterSignature = nextSignature;
             
             const tbody = document.getElementById('resultBody');
             tbody.innerHTML = '<tr><td colspan="13" class="no-data">正在查询...</td></tr>';
             
             try {
-                let query = supabaseClient
+                const pageCursor = pageStartCursors[currentPage] || null;
+                const needCount = resetPage || filterChanged || totalRows === 0;
+
+                const countBaseQuery = needCount
+                    ? supabaseClient
+                        .from('inspections')
+                        .select('id', { count: 'exact', head: true })
+                    : null;
+
+                const dataBaseQuery = supabaseClient
                     .from('inspections')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-                
-                if (startDate) query = query.gte('date', startDate);
-                if (endDate) query = query.lte('date', endDate);
-                
-                Object.keys(filters).forEach(key => {
-                    if (filters[key]) {
-                        query = query.eq(key, filters[key]);
+                    .select('id,date,week_day,class_name,period,subject,teacher_name,inspector,follow_teacher,arrival_status,arrival_time,student_status,environment,problem,suggestion,created_at')
+                    .order('date', { ascending: false })
+                    .order('created_at', { ascending: false })
+                    .order('id', { ascending: false })
+                    .limit(PAGE_SIZE + 1);
+
+                const dataQuery = applyCursorFilter(
+                    applyQueryFilters(dataBaseQuery, startDate, endDate, filters),
+                    pageCursor
+                );
+
+                if (needCount) {
+                    const countQuery = applyQueryFilters(countBaseQuery, startDate, endDate, filters);
+                    const [{ count, error: countError }, { data, error }] = await Promise.all([
+                        countQuery,
+                        dataQuery
+                    ]);
+                    
+                    if (countError) throw countError;
+                    if (error) {
+                        console.error("查询失败:", error);
+                        throw error;
                     }
-                });
-                
-                const { data, error } = await query;
-                
-                if (error) {
-                    console.error("查询失败:", error);
-                    throw error;
+                    totalRows = count || 0;
+                    const rows = (data || []);
+                    hasNextPage = rows.length > PAGE_SIZE;
+                    allData = hasNextPage ? rows.slice(0, PAGE_SIZE) : rows;
+                } else {
+                    const { data, error } = await dataQuery;
+                    if (error) {
+                        console.error("查询失败:", error);
+                        throw error;
+                    }
+                    const rows = (data || []);
+                    hasNextPage = rows.length > PAGE_SIZE;
+                    allData = hasNextPage ? rows.slice(0, PAGE_SIZE) : rows;
                 }
                 
-                allData = data || [];
+                totalPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE));
+                if (currentPage > totalPages) {
+                    currentPage = totalPages;
+                    return await fetchData(false);
+                }
+
+                if (allData.length > 0 && hasNextPage) {
+                    const lastRecord = allData[allData.length - 1];
+                    pageStartCursors[currentPage + 1] = {
+                        date: lastRecord.date,
+                        created_at: lastRecord.created_at,
+                        id: lastRecord.id
+                    };
+                } else {
+                    delete pageStartCursors[currentPage + 1];
+                }
+
                 renderTable(allData);
-                document.getElementById('resultCount').textContent = allData.length;
+                document.getElementById('resultCount').textContent = totalRows;
+                updatePaginationUI();
                 
             } catch (error) {
                 console.error("查询失败:", error);
                 tbody.innerHTML = `<tr><td colspan="13" class="no-data">查询失败: ${error.message}</td></tr>`;
             }
+        }
+
+        function goPrevPage() {
+            if (currentPage <= 1) return;
+            currentPage -= 1;
+            fetchData(false);
+        }
+
+        function goNextPage() {
+            if (!hasNextPage) return;
+            currentPage += 1;
+            fetchData(false);
         }
         
         // 渲染表格
@@ -997,7 +1294,30 @@
                 if (record.arrival_status === '旷课') statusClass = 'status-absent';
                 if (record.arrival_status === '其他') statusClass = 'status-absent';
                 
-                // 操作按钮布局改为两行：第一行详情和修改，第二行删除
+                const canManage = canManageRecord(record);
+                const actionButtons = canManage
+                    ? `
+                        <div class="action-buttons">
+                            <div class="button-row top-row">
+                                <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
+                                <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
+                            </div>
+                            <div class="button-row bottom-row">
+                                <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
+                            </div>
+                        </div>
+                      `
+                    : `
+                        <div class="action-buttons">
+                            <div class="button-row top-row">
+                                <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
+                            </div>
+                            <div class="button-row bottom-row">
+                                <button class="btn-action" disabled style="background:#e5e7eb;color:#666;">仅可操作本人记录</button>
+                            </div>
+                        </div>
+                      `;
+
                 html += `
                     <tr>
                         <td>${record.date || ''}</td>
@@ -1013,15 +1333,7 @@
                         <td title="${record.environment || ''}" class="text-wrap">${record.environment || ''}</td>
                         <td title="${record.problem || ''}" class="text-wrap">${record.problem || ''}</td>
                         <td>
-                            <div class="action-buttons">
-                                <div class="button-row top-row">
-                                    <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
-                                    <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
-                                </div>
-                                <div class="button-row bottom-row">
-                                    <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
-                                </div>
-                            </div>
+                            ${actionButtons}
                         </td>
                     </tr>
                 `;
@@ -1059,10 +1371,9 @@
                 alert('未找到记录');
                 return;
             }
-            
-            const password = prompt('请输入修改密码：');
-            if (password !== '123') {
-                alert('密码错误，无法修改记录！');
+
+            if (!canManageRecord(record)) {
+                alert('仅可修改本人提交的记录，请先确认“当前查课人员”姓名。');
                 return;
             }
             
@@ -1129,7 +1440,7 @@
                 alert('✅ 记录修改成功！');
                 closeEditModal();
                 
-                await fetchData();
+                await fetchData(false);
                 
             } catch (error) {
                 console.error("修改失败:", error);
@@ -1144,10 +1455,9 @@
                 alert('未找到记录');
                 return;
             }
-            
-            const password = prompt('请输入删除密码：');
-            if (password !== '123') {
-                alert('密码错误，无法删除记录！');
+
+            if (!canManageRecord(record)) {
+                alert('仅可删除本人提交的记录，请先确认“当前查课人员”姓名。');
                 return;
             }
             
@@ -1166,7 +1476,7 @@
                 
                 alert('✅ 记录删除成功！');
                 
-                await fetchData();
+                await fetchData(false);
                 
             } catch (error) {
                 console.error("删除失败:", error);
@@ -1175,13 +1485,9 @@
         }
         
         // 重置筛选条件
-        function resetFilters() {
-            const endDate = new Date();
-            const startDate = new Date();
-            startDate.setDate(startDate.getDate() - 7);
-            
-            document.getElementById('filter_date_start').value = startDate.toISOString().split('T')[0];
-            document.getElementById('filter_date_end').value = endDate.toISOString().split('T')[0];
+        async function resetFilters() {
+            userTouchedDateRange = false;
+            setTodayDateRange(true);
             document.getElementById('filter_weekday').value = '';
             document.getElementById('filter_class').value = '';
             document.getElementById('filter_period').value = '';
@@ -1191,16 +1497,18 @@
             document.getElementById('filter_inspector').value = '';
             document.getElementById('filter_arrival').value = '';
             
-            allData = [];
-            document.getElementById('resultBody').innerHTML = '<tr><td colspan="13" class="no-data">点击"查询"按钮加载数据</td></tr>';
-            document.getElementById('resultCount').textContent = '0';
+            await fetchData(true);
         }
         
-        // 下载数据（带密码验证）
+        // 下载数据（仅 admin 开放）
         function downloadDataWithPassword() {
-            const password = prompt('请输入下载密码：');
-            if (password !== 'admin') {
-                alert('密码错误，无法下载数据！');
+            const currentInspector = getCurrentInspectorName();
+            if (!currentInspector) {
+                alert('请先填写“当前查课人员（用于权限判断）”。');
+                return;
+            }
+            if (!currentInspectorIsAdmin) {
+                alert('下载权限仅对 admin 开放。');
                 return;
             }
             downloadData();

@@ -53,17 +53,29 @@
         .grade-8 { background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%); }
         .grade-9 { background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%); }
         .back-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
+            padding: 8px 15px;
             background: #666;
             color: white;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .top-header {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
         }
     </style>
 </head>
 <body>
+    <div class="top-header">
+        <a href="index.html" class="back-btn">← 返回首页</a>
+    </div>
+
     <div class="header">
         <h2>📚 请选择巡查班级</h2>
         <p class="instruction">点击下方班级图标开始巡查</p>
@@ -92,10 +104,6 @@
         <div class="class-btn grade-9" onclick="selectClass('九6班')">九6班</div>
     </div>
     
-    <div style="text-align: center; margin-top: 30px;">
-        <a href="index.html" class="back-btn">← 返回首页</a>
-    </div>
-
     <script>
         function selectClass(className) {
             localStorage.setItem('currentInspectClass', className);
