@@ -599,11 +599,6 @@
                 <datalist id="filter_inspector_list"></datalist>
                 <div class="search-icon">🔍</div>
             </div>
-            <div class="filter-group searchable-group full-width">
-                <label>当前查课人员（用于权限判断）</label>
-                <input type="text" id="current_inspector" list="filter_inspector_list" placeholder="请输入你的姓名">
-                <div class="search-icon">👤</div>
-            </div>
             <div class="filter-group full-width">
                 <label>到岗情况</label>
                 <select id="filter_arrival">
@@ -775,7 +770,6 @@
         let hasNextPage = false;
         let activeFilterSignature = '';
         let pageStartCursors = { 1: null };
-        let currentInspectorIsAdmin = false;
         let userTouchedDateRange = false;
         
         document.addEventListener('DOMContentLoaded', function() {
@@ -800,9 +794,6 @@
             
             hydrateFilterCache();
             refreshFilterOptionsInBackground();
-            hydrateCurrentInspector();
-            bindCurrentInspectorInput();
-            await refreshCurrentInspectorRole();
             
             document.getElementById('edit_date').addEventListener('change', function() {
                 calculateWeekDayForEdit(this.value);
@@ -890,58 +881,6 @@
             fillDatalist('edit_teacher_name_list', teacherNames);
             fillDatalist('edit_follow_teacher_list', teacherNames);
             fillDatalist('filter_inspector_list', getCachedList('cache_query_inspectors') || []);
-        }
-
-        function hydrateCurrentInspector() {
-            const cachedName = (localStorage.getItem('currentInspectorName') || '').trim();
-            if (cachedName) {
-                const input = document.getElementById('current_inspector');
-                if (input) input.value = cachedName;
-            }
-        }
-
-        function bindCurrentInspectorInput() {
-            const input = document.getElementById('current_inspector');
-            if (!input) return;
-            input.addEventListener('change', async function() {
-                const name = (this.value || '').trim();
-                if (name) {
-                    localStorage.setItem('currentInspectorName', name);
-                } else {
-                    localStorage.removeItem('currentInspectorName');
-                }
-                await refreshCurrentInspectorRole();
-            });
-        }
-
-        function getCurrentInspectorName() {
-            const input = document.getElementById('current_inspector');
-            return input ? (input.value || '').trim() : '';
-        }
-
-        async function refreshCurrentInspectorRole() {
-            const currentInspector = getCurrentInspectorName();
-            currentInspectorIsAdmin = false;
-            if (!currentInspector || !supabaseClient) return;
-            try {
-                const { data, error } = await supabaseClient
-                    .from('inspectors')
-                    .select('is_admin')
-                    .eq('inspector_name', currentInspector)
-                    .limit(1);
-                if (error) {
-                    console.warn("读取管理员角色失败:", error);
-                    return;
-                }
-                currentInspectorIsAdmin = Array.isArray(data) && data.length > 0 && !!data[0].is_admin;
-            } catch (error) {
-                console.warn("读取管理员角色异常:", error);
-            }
-        }
-
-        function canManageRecord(record) {
-            const currentInspector = getCurrentInspectorName();
-            return !!currentInspector && !!record && record.inspector === currentInspector;
         }
 
         async function refreshFilterOptionsInBackground() {
@@ -1294,29 +1233,17 @@
                 if (record.arrival_status === '旷课') statusClass = 'status-absent';
                 if (record.arrival_status === '其他') statusClass = 'status-absent';
                 
-                const canManage = canManageRecord(record);
-                const actionButtons = canManage
-                    ? `
-                        <div class="action-buttons">
-                            <div class="button-row top-row">
-                                <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
-                                <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
-                            </div>
-                            <div class="button-row bottom-row">
-                                <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
-                            </div>
+                const actionButtons = `
+                    <div class="action-buttons">
+                        <div class="button-row top-row">
+                            <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
+                            <button class="btn-action btn-edit" onclick="showEditModal(${record.id})">修改</button>
                         </div>
-                      `
-                    : `
-                        <div class="action-buttons">
-                            <div class="button-row top-row">
-                                <button class="btn-action btn-detail" onclick="viewDetail(${record.id})">详情</button>
-                            </div>
-                            <div class="button-row bottom-row">
-                                <button class="btn-action" disabled style="background:#e5e7eb;color:#666;">仅可操作本人记录</button>
-                            </div>
+                        <div class="button-row bottom-row">
+                            <button class="btn-action btn-delete" onclick="deleteRecord(${record.id})">删除</button>
                         </div>
-                      `;
+                    </div>
+                `;
 
                 html += `
                     <tr>
@@ -1372,8 +1299,9 @@
                 return;
             }
 
-            if (!canManageRecord(record)) {
-                alert('仅可修改本人提交的记录，请先确认“当前查课人员”姓名。');
+            const password = prompt('请输入修改密码：');
+            if (password !== '123') {
+                alert('密码错误，无法修改记录！');
                 return;
             }
             
@@ -1456,8 +1384,9 @@
                 return;
             }
 
-            if (!canManageRecord(record)) {
-                alert('仅可删除本人提交的记录，请先确认“当前查课人员”姓名。');
+            const password = prompt('请输入删除密码：');
+            if (password !== '123') {
+                alert('密码错误，无法删除记录！');
                 return;
             }
             
@@ -1500,15 +1429,11 @@
             await fetchData(true);
         }
         
-        // 下载数据（仅 admin 开放）
+        // 下载数据（带密码验证）
         function downloadDataWithPassword() {
-            const currentInspector = getCurrentInspectorName();
-            if (!currentInspector) {
-                alert('请先填写“当前查课人员（用于权限判断）”。');
-                return;
-            }
-            if (!currentInspectorIsAdmin) {
-                alert('下载权限仅对 admin 开放。');
+            const password = prompt('请输入下载密码：');
+            if (password !== 'admin') {
+                alert('密码错误，无法下载数据！');
                 return;
             }
             downloadData();
