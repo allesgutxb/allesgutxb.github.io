@@ -600,6 +600,12 @@
                 <div class="search-icon">🔍</div>
             </div>
             <div class="filter-group full-width">
+                <label>当前操作人（修改/删除权限）</label>
+                <select id="current_operator">
+                    <option value="">请选择当前操作人</option>
+                </select>
+            </div>
+            <div class="filter-group full-width">
                 <label>到岗情况</label>
                 <select id="filter_arrival">
                     <option value="">全部</option>
@@ -794,6 +800,8 @@
             
             hydrateFilterCache();
             refreshFilterOptionsInBackground();
+            hydrateCurrentOperator();
+            bindCurrentOperator();
             
             document.getElementById('edit_date').addEventListener('change', function() {
                 calculateWeekDayForEdit(this.value);
@@ -880,7 +888,35 @@
             fillDatalist('filter_follow_teacher_list', teacherNames);
             fillDatalist('edit_teacher_name_list', teacherNames);
             fillDatalist('edit_follow_teacher_list', teacherNames);
-            fillDatalist('filter_inspector_list', getCachedList('cache_query_inspectors') || []);
+            const inspectors = getCachedList('cache_query_inspectors') || [];
+            fillDatalist('filter_inspector_list', inspectors);
+            fillSelect('current_operator', inspectors);
+        }
+
+        function hydrateCurrentOperator() {
+            const currentName = (localStorage.getItem('currentInspectorName') || '').trim();
+            if (!currentName) return;
+            const operatorSelect = document.getElementById('current_operator');
+            if (!operatorSelect) return;
+
+            const hasOption = Array.from(operatorSelect.options).some(opt => opt.value === currentName);
+            if (!hasOption) {
+                operatorSelect.add(new Option(currentName, currentName));
+            }
+            operatorSelect.value = currentName;
+        }
+
+        function bindCurrentOperator() {
+            const operatorSelect = document.getElementById('current_operator');
+            if (!operatorSelect) return;
+            operatorSelect.addEventListener('change', function() {
+                const selectedName = (this.value || '').trim();
+                if (selectedName) {
+                    localStorage.setItem('currentInspectorName', selectedName);
+                } else {
+                    localStorage.removeItem('currentInspectorName');
+                }
+            });
         }
 
         async function refreshFilterOptionsInBackground() {
@@ -1025,7 +1061,9 @@
                 if (!error && data) {
                     const inspectors = data.map(insp => insp.inspector_name).filter(Boolean);
                     fillDatalist('filter_inspector_list', inspectors);
+                    fillSelect('current_operator', inspectors);
                     setCachedList('cache_query_inspectors', inspectors);
+                    hydrateCurrentOperator();
                 } else {
                     const { data: inspectionsData, error: inspectionsError } = await supabaseClient
                         .from('inspections')
@@ -1037,7 +1075,9 @@
                         const uniqueInspectors = [...new Set(inspectionsData.map(item => item.inspector).filter(i => i))];
                         const inspectors = uniqueInspectors.sort();
                         fillDatalist('filter_inspector_list', inspectors);
+                        fillSelect('current_operator', inspectors);
                         setCachedList('cache_query_inspectors', inspectors);
+                        hydrateCurrentOperator();
                     }
                 }
             } catch (error) {
@@ -1065,16 +1105,23 @@
         }
 
         function getCurrentInspectorNameFromLocal() {
-            return (localStorage.getItem('currentInspectorName') || '').trim();
+            const operatorSelect = document.getElementById('current_operator');
+            const selectedName = operatorSelect ? (operatorSelect.value || '').trim() : '';
+            return selectedName || (localStorage.getItem('currentInspectorName') || '').trim();
+        }
+
+        function normalizeInspectorName(name) {
+            return String(name || '').trim().replace(/\s+/g, '');
         }
 
         function ensureOwnerPermission(record, actionLabel) {
             const currentInspector = getCurrentInspectorNameFromLocal();
             if (!currentInspector) {
-                alert(`未识别当前检查人员，无法${actionLabel}。请先在填写页提交一条记录后再操作。`);
+                alert(`请先选择“当前操作人”后再${actionLabel}。`);
                 return false;
             }
-            if (!record || record.inspector !== currentInspector) {
+            const recordInspector = normalizeInspectorName(record && record.inspector);
+            if (!record || recordInspector !== normalizeInspectorName(currentInspector)) {
                 alert('仅可本人操作记录');
                 return false;
             }
