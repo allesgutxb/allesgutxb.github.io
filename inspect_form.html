@@ -384,6 +384,18 @@
             return { queued: true, total: pendingItems.length };
         }
 
+        function isSameInspectionSlot(a, b) {
+            if (!a || !b) return false;
+            return a.date === b.date
+                && a.class_name === b.class_name
+                && Number(a.period) === Number(b.period);
+        }
+
+        function hasPendingInspectionSlot(formData) {
+            const pendingItems = getPendingSubmissions();
+            return pendingItems.some(item => isSameInspectionSlot(item.formData, formData));
+        }
+
         function resetFormAfterSubmit() {
             document.getElementById('subject').value = '';
             document.getElementById('teacher_name').value = '';
@@ -793,6 +805,21 @@
             submitBtn.disabled = true;
             
             try {
+                if (hasPendingInspectionSlot(formData)) {
+                    showStatusMessage("该节次记录已在待提交队列中，请勿重复提交", "info");
+                    alert('该记录已提交，请勿重复点击');
+                    return;
+                }
+
+                if (navigator.onLine) {
+                    const existed = await hasExistingInspectionSlot(formData);
+                    if (existed) {
+                        showStatusMessage("该节次记录已存在，请勿重复提交", "info");
+                        alert('该记录已存在，请勿重复提交');
+                        return;
+                    }
+                }
+
                 const enqueueResult = enqueueSubmission(formData);
                 if (!enqueueResult.queued) {
                     showStatusMessage('已保存成功', "info");

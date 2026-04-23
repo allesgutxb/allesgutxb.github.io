@@ -1064,6 +1064,23 @@
             document.getElementById('filter_date_end').value = todayStr;
         }
 
+        function getCurrentInspectorNameFromLocal() {
+            return (localStorage.getItem('currentInspectorName') || '').trim();
+        }
+
+        function ensureOwnerPermission(record, actionLabel) {
+            const currentInspector = getCurrentInspectorNameFromLocal();
+            if (!currentInspector) {
+                alert(`未识别当前检查人员，无法${actionLabel}。请先在填写页提交一条记录后再操作。`);
+                return false;
+            }
+            if (!record || record.inspector !== currentInspector) {
+                alert('仅可本人操作记录');
+                return false;
+            }
+            return true;
+        }
+
         function toPeriodFilterValue(rawValue) {
             if (!rawValue) return null;
             const num = Number(rawValue);
@@ -1298,6 +1315,7 @@
                 alert('未找到记录');
                 return;
             }
+            if (!ensureOwnerPermission(record, '修改')) return;
 
             const password = prompt('请输入修改密码：');
             if (password !== '123') {
@@ -1383,6 +1401,7 @@
                 alert('未找到记录');
                 return;
             }
+            if (!ensureOwnerPermission(record, '删除')) return;
 
             const password = prompt('请输入删除密码：');
             if (password !== '123') {
