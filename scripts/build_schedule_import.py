@@ -4,17 +4,23 @@
 
 表字段（与 schedule_rows 一致）: class_name, week_day, period, subject, teacher_name
 不含 id（由数据库自增）或含默认 id 由导入方式决定；此处 SQL 不显式写 id。
+
+默认数据源放在仓库内：data/schedule/timetable.xlsx、data/schedule/teachers.xlsx
+（可用命令行参数覆盖路径。）
 """
 from __future__ import annotations
 
+import argparse
 import math
 import re
+import sys
 from pathlib import Path
 
 import pandas as pd
 
-TIMETABLE_PATH = Path(r"C:\Users\Administrator\Desktop\2025-2026学年第二学期春季课表4-7(3)(1).xlsx")
-TEACHER_PATH = Path(r"C:\Users\Administrator\Desktop\任课老师.xlsx")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_TIMETABLE = REPO_ROOT / "data" / "schedule" / "timetable.xlsx"
+DEFAULT_TEACHER = REPO_ROOT / "data" / "schedule" / "teachers.xlsx"
 OUT_DIR = Path(__file__).resolve().parent
 OUT_CSV = OUT_DIR / "schedule_generated.csv"
 OUT_SQL = OUT_DIR / "schedule_replace_generated.sql"
@@ -76,8 +82,8 @@ def sql_escape(s: str) -> str:
     return s.replace("'", "''")
 
 
-def load_teacher_map() -> dict[tuple[str, str], str]:
-    df = pd.read_excel(TEACHER_PATH, sheet_name=0)
+def load_teacher_map(teacher_path: Path) -> dict[tuple[str, str], str]:
+    df = pd.read_excel(teacher_path, sheet_name=0)
     # 列名：班级、科目、老师
     m: dict[tuple[str, str], str] = {}
     for _, row in df.iterrows():
@@ -167,14 +173,23 @@ def parse_sheet(df: pd.DataFrame, grade_cn: str, teacher_map: dict) -> list[dict
     return rows
 
 
-def main() -> None:
-    teacher_map = load_teacher_map()
+def main(timetable_path: Path, teacher_path: Path) -> None:
+    if not timetable_path.is_file():
+        print(f"错误：找不到课表文件：{timetable_path}", file=sys.stderr)
+        print("请将新课表保存为 data/schedule/timetable.xlsx，或使用 --timetable 指定路径。", file=sys.stderr)
+        sys.exit(1)
+    if not teacher_path.is_file():
+        print(f"错误：找不到任课老师文件：{teacher_path}", file=sys.stderr)
+        print("请将文件保存为 data/schedule/teachers.xlsx，或使用 --teachers 指定路径。", file=sys.stderr)
+        sys.exit(1)
+
+    teacher_map = load_teacher_map(teacher_path)
     all_rows: list[dict] = []
-    xl = pd.ExcelFile(TIMETABLE_PATH)
+    xl = pd.ExcelFile(timetable_path)
     for sheet in xl.sheet_names:
         if sheet not in SHEET_GRADE:
             continue
-        df = pd.read_excel(TIMETABLE_PATH, sheet_name=sheet, header=None)
+        df = pd.read_excel(timetable_path, sheet_name=sheet, header=None)
         part = parse_sheet(df, SHEET_GRADE[sheet], teacher_map)
         all_rows.extend(part)
 
@@ -231,4 +246,18 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="从课表与任课老师 Excel 生成 schedule 导入 SQL/CSV")
+    parser.add_argument(
+        "--timetable",
+        type=Path,
+        default=DEFAULT_TIMETABLE,
+        help=f"春季课表 xlsx（默认：{DEFAULT_TIMETABLE}）",
+    )
+    parser.add_argument(
+        "--teachers",
+        type=Path,
+        default=DEFAULT_TEACHER,
+        help=f"任课老师 xlsx（默认：{DEFAULT_TEACHER}）",
+    )
+    args = parser.parse_args()
+    main(args.timetable.resolve(), args.teachers.resolve())
