@@ -1,7 +1,7 @@
-# 一键：根据 data/schedule 下 xlsx 重新生成 SQL/CSV 并提交推送到 GitHub
-# 用法（在仓库根目录）:  .\scripts\publish_schedule_data.ps1
-# 仅生成不推送:        .\scripts\publish_schedule_data.ps1 -NoPush
-# 自定义提交说明:      .\scripts\publish_schedule_data.ps1 -Message "更新春季课表"
+# Regenerate schedule SQL/CSV from data/schedule xlsx, then git commit/push.
+# Run from repo root:  .\scripts\publish_schedule_data.ps1
+# No push:              .\scripts\publish_schedule_data.ps1 -NoPush
+# Custom message:       .\scripts\publish_schedule_data.ps1 -Message "update schedule"
 
 param(
     [switch]$NoPush,
@@ -12,10 +12,11 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 Set-Location $RepoRoot
 
-Write-Host "==> 生成 schedule SQL/CSV (Python)..." -ForegroundColor Cyan
-python (Join-Path $RepoRoot "scripts\build_schedule_import.py")
+Write-Host "==> build_schedule_import.py" -ForegroundColor Cyan
+$py = Join-Path $RepoRoot "scripts\build_schedule_import.py"
+python $py
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "生成失败，已中止。" -ForegroundColor Red
+    Write-Host "Python failed." -ForegroundColor Red
     exit $LASTEXITCODE
 }
 
@@ -31,9 +32,10 @@ $toAdd = @(
     "db_checklist_supabase.sql"
 )
 
-Write-Host "==> git add ..." -ForegroundColor Cyan
+Write-Host "==> git add" -ForegroundColor Cyan
 foreach ($p in $toAdd) {
-    $full = Join-Path $RepoRoot $p.Replace("/", "\"))
+    $rel = $p -replace "/", "\"
+    $full = Join-Path $RepoRoot $rel
     if (Test-Path -LiteralPath $full) {
         git add -- $p
     }
@@ -41,23 +43,24 @@ foreach ($p in $toAdd) {
 
 $status = git status --short
 if (-not $status) {
-    Write-Host "无变更可提交。" -ForegroundColor Yellow
+    Write-Host "Nothing to commit." -ForegroundColor Yellow
     exit 0
 }
 
 if (-not $Message) {
-    $Message = "更新课表数据与导入 SQL $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    $ts = Get-Date -Format "yyyy-MM-dd HH:mm"
+    $Message = "更新课表数据与导入 SQL $ts"
 }
 
 Write-Host "==> git commit" -ForegroundColor Cyan
 git commit -m $Message
 
 if ($NoPush) {
-    Write-Host "已跳过推送（-NoPush）。本地提交已完成。" -ForegroundColor Yellow
+    Write-Host "Skipped push (-NoPush)." -ForegroundColor Yellow
     exit 0
 }
 
 Write-Host "==> git push" -ForegroundColor Cyan
 git push
 
-Write-Host "完成。请在 Supabase 执行 scripts/schedule_replace_generated.sql 以更新数据库。" -ForegroundColor Green
+Write-Host "Done. Run scripts/schedule_replace_generated.sql in Supabase." -ForegroundColor Green
