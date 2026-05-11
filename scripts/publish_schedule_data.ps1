@@ -34,7 +34,8 @@ $toAdd = @(
 
 Write-Host "==> git add" -ForegroundColor Cyan
 foreach ($p in $toAdd) {
-    $rel = $p -replace "/", "\"
+    # Use single-quoted '\' — double-quoted "\" breaks PS 5.1 parsing and causes bogus "missing }" errors later.
+    $rel = $p.Replace('/', '\')
     $full = Join-Path $RepoRoot $rel
     if (Test-Path -LiteralPath $full) {
         git add -- $p
@@ -48,8 +49,8 @@ if (-not $status) {
 }
 
 if (-not $Message) {
-    $ts = Get-Date -Format "yyyy-MM-dd HH:mm"
-    $Message = "更新课表数据与导入 SQL $ts"
+    $ts = Get-Date -Format 'yyyy-MM-dd HH:mm'
+    $Message = "update schedule data $ts"
 }
 
 Write-Host "==> git commit" -ForegroundColor Cyan
