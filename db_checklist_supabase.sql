@@ -184,7 +184,7 @@ limit 200;
 explain analyze
 select subject, teacher_name
 from schedule
-where class_name = '七年级1班'
+where class_name = '七1班'
   and week_day = '星期一'
   and period = 1;
 
@@ -210,3 +210,19 @@ analyze public.inspectors;
 --   on mv_inspections_recent_30d (created_at desc);
 --
 -- 刷新：refresh materialized view concurrently mv_inspections_recent_30d;
+
+-- ============================================================
+-- 8) 课表全量替换（春季新课表 + 任课老师表生成）
+-- ============================================================
+-- 已根据「桌面 2025-2026学年第二学期春季课表4-7(3)(1).xlsx」与「桌面 任课老师.xlsx」
+-- 生成与 public.schedule 一致的数据（字段：class_name, week_day, period, subject, teacher_name）。
+--
+-- 生成脚本：scripts/build_schedule_import.py（修改源路径后可在本机重新运行）
+-- 成品 SQL：scripts/schedule_replace_generated.sql（约 714 条；会先 delete 再 insert）
+-- 校验 CSV：scripts/schedule_generated.csv
+--
+-- 执行步骤（Supabase SQL Editor）：
+-- 1) 建议先备份：insert into public.schedule_backup select * from public.schedule;（若已有备份表）
+-- 2) 打开 scripts/schedule_replace_generated.sql，整段执行（含 begin/commit）
+--
+-- 说明：任课老师.xlsx 当前无九年级「生物」行，脚本对九年级「生物/生物实验」教师回退为「尤艳蕾」（与旧课表一致）；「科普」映射为生物教师。
